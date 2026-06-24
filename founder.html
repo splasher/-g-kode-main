@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-KODE — Founder Access</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .container { background: #111; padding: 30px; border-radius: 12px; border: 1px solid #333; max-width: 400px; width: 100%; text-align: center; }
+        h1 { color: #FFD700; font-size: 20px; margin-bottom: 5px; }
+        .sub { color: #888; font-size: 12px; margin-bottom: 25px; }
+        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #000; color: #fff; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; background: #006400; color: #FFD700; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
+        .footer { color: #006400; font-style: italic; margin-top: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container" id="loginBox">
+        <h1>🔐 G-KODE</h1>
+        <p class="sub">Founder Access Only</p>
+        <input type="password" id="passphrase" placeholder="Passphrase">
+        <input type="text" id="emergencyCode" placeholder="Emergency Code">
+        <button class="btn" onclick="authenticate()">AUTHENTICATE</button>
+        <p class="footer">Unauthorized access is logged.</p>
+    </div>
+    <div class="container hidden" id="panel">
+        <h1>🚨 FOUNDER PANEL</h1>
+        <p class="sub">All actions logged.</p>
+        <button class="btn" onclick="viewUsers()">👥 View Users</button>
+        <button class="btn" onclick="downloadBackup()">💾 Download Backup</button>
+        <button class="btn" onclick="logoutFounder()" style="background:#333;">Logout</button>
+        <div id="output" style="margin-top:20px;font-size:12px;color:#888;"></div>
+    </div>
+    <script>
+        var PASSPHRASE = 'MAYA', CODE = 'MAYA';
+        function authenticate() { if (document.getElementById('passphrase').value === PASSPHRASE && document.getElementById('emergencyCode').value === CODE) { document.getElementById('loginBox').classList.add('hidden'); document.getElementById('panel').classList.remove('hidden'); } else { alert('Denied.'); } }
+        function viewUsers() { var u = JSON.parse(localStorage.getItem('gkode_users') || '[]'); document.getElementById('output').innerHTML = u.map(function(x) { return '• ' + x.name + ' | ' + x.phone; }).join('<br>'); }
+        function downloadBackup() { var d = { users: JSON.parse(localStorage.getItem('gkode_users') || '[]'), gigs: JSON.parse(localStorage.getItem('gkode_gigs') || '[]') }; var b = new Blob([JSON.stringify(d)]); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'gkode-backup.json'; a.click(); }
+        function logoutFounder() { location.reload(); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>G-KODE — Emergency</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fff;padding:20px;max-width:500px;margin:0 auto;text-align:center;min-height:100vh}
+        h1{color:#cc0000;font-size:28px;margin-bottom:5px}
+        .sub{color:#555;font-size:14px;margin-bottom:25px}
+        .btn{display:block;width:100%;padding:16px;font-size:18px;font-weight:bold;border:none;border-radius:12px;cursor:pointer;margin-bottom:12px;text-decoration:none;color:#fff;background:#cc0000;transition:all 0.3s;text-align:center}
+        .btn:active{transform:scale(0.96)}
+        .btn:hover{opacity:0.9}
+        .btn.outline{background:#fff;color:#cc0000;border:2px solid #cc0000}
+        .btn.outline:active{background:#fff5f5}
+        .btn.green{background:#006400;color:#FFD700}
+        .btn.blue{background:#2196F3;color:#fff}
+        .btn.gray{background:#666;color:#fff}
+        .divider{margin:20px 0;border-top:2px solid #eee}
+        .footer{margin-top:30px;color:#006400;font-style:italic;font-size:14px}
+        .back{display:inline-block;margin-top:15px;color:#006400;text-decoration:none;font-weight:bold;padding:10px 20px;border:2px solid #006400;border-radius:8px;transition:all 0.3s}
+        .back:active{transform:scale(0.95)}
+        .back:hover{background:#e8f5e9}
+        .location-status{background:#e8f5e9;padding:10px;border-radius:8px;margin:10px 0;font-size:13px;color:#006400}
+        .emergency-icon{font-size:48px;margin-bottom:10px}
+        .device-badge{background:#f5f5f5;padding:8px;border-radius:8px;font-size:11px;color:#666;margin-bottom:15px}
+        .note{font-size:11px;color:#888;margin-top:5px}
+    </style>
+</head>
+<body>
+    <div class="emergency-icon">🚨</div>
+    <h1>EMERGENCY</h1>
+    <p class="sub">Tap any button to call. Your location will be sent automatically.</p>
+
+    <div class="device-badge" id="deviceInfo">📱 Detecting your device...</div>
+
+    <!-- ===== PRIMARY EMERGENCY ===== -->
+    <a href="tel:999" class="btn" id="callPolice">📞 CALL POLICE (999)</a>
+    <a href="tel:999" class="btn" id="callFire">📞 CALL FIRE (999)</a>
+    <a href="tel:999" class="btn" id="callAmbulance">📞 CALL AMBULANCE (999)</a>
+
+    <div class="divider"></div>
+
+    <!-- ===== SECONDARY EMERGENCY ===== -->
+    <a href="tel:0721225285" class="btn outline">📞 St. John Ambulance (0721 225 285)</a>
+    <a href="tel:1199" class="btn outline">📞 Red Cross (1199)</a>
+    <a href="tel:1195" class="btn outline">📞 GBV Hotline (1195)</a>
+    <a href="tel:116" class="btn outline">📞 Child Helpline (116)</a>
+
+    <div class="divider"></div>
+
+    <!-- ===== LOCATION ===== -->
+    <div id="locationStatus" class="location-status">📍 Tap "Send Location" to share your location</div>
+    <button class="btn green" onclick="sendLocation()">🆘 SEND MY LOCATION NOW</button>
+    
+    <div class="divider"></div>
+    
+    <!-- ===== SUPPORT ===== -->
+    <a href="tel:0711991467" class="btn blue">📞 G-KODE Support (Admin)</a>
+
+    <!-- ===== DESKTOP ONLY - Copy Number ===== -->
+    <div id="desktopCopy" style="display:none; margin-top:10px;">
+        <button class="btn gray" onclick="copyNumber('999')">📋 Copy Police Number (999)</button>
+        <button class="btn gray" onclick="copyNumber('0721225285')">📋 Copy St. John Number</button>
+        <p class="note">💡 On desktop, copy the number and call using your phone or VoIP app.</p>
+    </div>
+
+    <p class="footer">G-KODE. Kenya Helping Kenya.</p>
+    <a href="index.html" class="back">← Back to G-KODE</a>
+
+    <script>
+        // ============================================
+        // DETECT DEVICE TYPE
+        // ============================================
+        function detectDevice() {
+            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            var info = document.getElementById('deviceInfo');
+            
+            if (isMobile) {
+                info.innerHTML = '📱 Mobile Device Detected - Tap to call';
+                info.style.background = '#e8f5e9';
+                info.style.color = '#006400';
+                document.getElementById('desktopCopy').style.display = 'none';
+            } else {
+                info.innerHTML = '💻 Desktop Detected - Click to copy number or use VoIP';
+                info.style.background = '#fff3e0';
+                info.style.color = '#e65100';
+                document.getElementById('desktopCopy').style.display = 'block';
+                
+                // Show a message for desktop users
+                var callButtons = document.querySelectorAll('a[href^="tel:"]');
+                for (var i = 0; i < callButtons.length; i++) {
+                    callButtons[i].addEventListener('click', function(e) {
+                        if (!confirm('📞 You are on a desktop.\n\nClick OK to try calling using your default calling app.\nCancel to copy the number instead.')) {
+                            e.preventDefault();
+                            var number = this.getAttribute('href').replace('tel:', '');
+                            copyNumber(number);
+                        }
+                    });
+                }
+            }
+        }
+
+        // ============================================
+        // COPY NUMBER FUNCTION (Desktop)
+        // ============================================
+        function copyNumber(number) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(number).then(function() {
+                    showToast('✅ Number copied: ' + number);
+                }).catch(function() {
+                    fallbackCopy(number);
+                });
+            } else {
+                fallbackCopy(number);
+            }
+        }
+
+        function fallbackCopy(number) {
+            var textarea = document.createElement('textarea');
+            textarea.value = number;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('✅ Number copied: ' + number);
+            } catch (e) {
+                alert('📞 Please manually dial: ' + number);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showToast(message) {
+            var toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#006400;color:#fff;padding:15px 25px;border-radius:10px;z-index:9999;font-weight:bold;max-width:90%;animation:slideUp 0.3s ease';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(function() { toast.remove(); }, 500);
+            }, 3000);
+        }
+
+        // ============================================
+        // SEND LOCATION
+        // ============================================
+        function sendLocation() {
+            var s = document.getElementById('locationStatus');
+            
+            if (!navigator.geolocation) {
+                s.innerHTML = '❌ GPS not supported. Please call emergency numbers directly.';
+                s.style.background = '#ffebee';
+                s.style.color = '#cc0000';
+                return;
+            }
+            
+            s.innerHTML = '📍 Getting your location...';
+            s.style.background = '#fff3e0';
+            s.style.color = '#e65100';
+            
+            navigator.geolocation.getCurrentPosition(
+                function(p) {
+                    var url = 'https://maps.google.com/?q=' + p.coords.latitude + ',' + p.coords.longitude;
+                    s.innerHTML = '✅ Location found! Opening map...';
+                    s.style.background = '#e8f5e9';
+                    s.style.color = '#006400';
+                    window.open(url, '_blank');
+                    
+                    // Copy location to clipboard
+                    var locationText = '📍 My location: ' + url;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(locationText).then(function() {
+                            s.innerHTML = '✅ Location copied! Map opened.';
+                        }).catch(function() {
+                            s.innerHTML = '✅ Map opened! Share: ' + url;
+                        });
+                    } else {
+                        s.innerHTML = '✅ Map opened! Share: ' + url;
+                    }
+                },
+                function(e) {
+                    var m = '❌ Could not get location. ';
+                    if (e.code === 1) m += 'Enable GPS in browser settings.';
+                    else if (e.code === 2) m += 'GPS signal unavailable.';
+                    else if (e.code === 3) m += 'GPS timed out. Try again.';
+                    else m += 'Error: ' + e.message;
+                    s.innerHTML = m;
+                    s.style.background = '#ffebee';
+                    s.style.color = '#cc0000';
+                    
+                    if (confirm('❌ Could not get location.\n\nOpen Google Maps to share manually?')) {
+                        window.open('https://www.google.com/maps', '_blank');
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        // ============================================
+        // ADD STYLE FOR TOAST ANIMATION
+        // ============================================
+        var style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(50px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // ============================================
+        // INIT
+        // ============================================
+        detectDevice();
+        console.log('🚨 Emergency page ready');
+        console.log('📱 Device: ' + (navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'));
+    </script>
+</body>
+</html>

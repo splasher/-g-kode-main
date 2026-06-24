@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-KODE — Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; }
+        h1 { color: #FFD700; text-align: center; margin-bottom: 5px; }
+        .sub { color: #888; text-align: center; font-size: 12px; margin-bottom: 20px; }
+        input { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #333; border-radius: 8px; background: #111; color: #fff; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; background: #006400; color: #FFD700; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 16px; transition: all 0.3s; }
+        .btn:hover { transform: scale(1.02); }
+        .btn:active { transform: scale(0.98); }
+        .btn.red { background: #cc0000; color: #fff; }
+        .btn.orange { background: #ff9800; color: #000; }
+        .btn.blue { background: #2196F3; color: #fff; }
+        .hidden { display: none; }
+        .card { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
+        .card h3 { color: #FFD700; margin-bottom: 5px; }
+        .card p { font-size: 13px; margin-bottom: 3px; color: #ccc; }
+        .log { background: #111; padding: 8px; border-left: 3px solid #FFD700; margin-bottom: 5px; font-size: 11px; color: #aaa; }
+        .stats { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stats-item { background: #1a1a1a; padding: 10px; border-radius: 5px; }
+        .stats-item .number { font-size: 24px; color: #FFD700; font-weight: bold; }
+        .stats-item .label { font-size: 11px; color: #888; }
+        .section-title { color: #FFD700; font-size: 14px; margin: 15px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .status-badge.on { background: #006400; color: #FFD700; }
+        .status-badge.off { background: #cc0000; color: #fff; }
+        .back { display: block; text-align: center; margin-top: 20px; color: #666; text-decoration: none; font-size: 12px; }
+        .back:hover { color: #FFD700; }
+        .flex { display: flex; gap: 5px; }
+        .flex .btn { flex: 1; font-size: 13px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- ===== LOGIN BOX ===== -->
+    <div id="loginBox">
+        <h1>🔐 ADMIN PANEL</h1>
+        <p class="sub">Founder Access Only — Splasher</p>
+        <input type="password" id="adminPass" placeholder="Enter Admin Key" onkeydown="if(event.key==='Enter') adminLogin()">
+        <button class="btn" onclick="adminLogin()">AUTHENTICATE</button>
+        <a href="index.html" class="back">← Back to G-KODE</a>
+    </div>
+
+    <!-- ===== ADMIN PANEL ===== -->
+    <div id="adminPanel" class="hidden">
+        <h1>🚨 ADMIN PANEL</h1>
+        <p class="sub">All data stored locally. Download backups regularly.</p>
+
+        <!-- ===== STATS DASHBOARD ===== -->
+        <div class="stats" id="statsBox">
+            <div class="stats-grid">
+                <div class="stats-item">
+                    <div class="number" id="statUsers">0</div>
+                    <div class="label">👥 Users</div>
+                </div>
+                <div class="stats-item">
+                    <div class="number" id="statGigs">0</div>
+                    <div class="label">📋 Gigs</div>
+                </div>
+                <div class="stats-item">
+                    <div class="number" id="statRevenue">Ksh 0</div>
+                    <div class="label">💰 Revenue</div>
+                </div>
+                <div class="stats-item">
+                    <div class="number" id="statPaid">0</div>
+                    <div class="label">✅ Paid Users</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAYMENT KILL SWITCH ===== -->
+        <div class="section-title">💳 PAYMENT SYSTEM</div>
+        <div style="background:#1a1a1a; padding:15px; border-radius:8px; margin-bottom:10px; text-align:center;">
+            <p style="margin-bottom:5px;">Status: <span id="paymentStatus" class="status-badge on">🔒 ON</span></p>
+            <p style="font-size:11px; color:#888; margin-bottom:10px;">User Fee: Ksh 300 | Commission: 3%</p>
+            <button class="btn orange" onclick="togglePaymentSystem()" id="paymentToggleBtn">🔒 TURN PAYMENT OFF</button>
+        </div>
+
+        <!-- ===== ADMIN ACTIONS ===== -->
+        <div class="section-title">🔧 ADMIN ACTIONS</div>
+        <div class="flex">
+            <button class="btn" onclick="viewUsers()">👥 View Users</button>
+            <button class="btn" onclick="viewGigs()">📋 View Gigs</button>
+            <button class="btn" onclick="viewCompanies()">🏢 Businesses</button>
+        </div>
+        <div class="flex">
+            <button class="btn blue" onclick="downloadBackup()">💾 Backup</button>
+            <button class="btn blue" onclick="viewFinancialReport()">📊 Report</button>
+            <button class="btn blue" onclick="viewLogs()">📜 Logs</button>
+        </div>
+
+        <!-- ===== SECURITY ACTIONS ===== -->
+        <div class="section-title">🛡️ SECURITY</div>
+        <div class="flex">
+            <button class="btn blue" onclick="systemHealthCheck()">🏥 Health</button>
+            <button class="btn orange" onclick="emergencyRecovery()">🚨 Recovery</button>
+            <button class="btn blue" onclick="detectFraud()">🛡️ Fraud Scan</button>
+        </div>
+        <div class="flex">
+            <button class="btn blue" onclick="legalComplianceCheck()">⚖️ Legal</button>
+            <button class="btn blue" onclick="generateDailyLegalLog()">📋 Daily Log</button>
+            <button class="btn blue" onclick="viewAllBackups()">📂 Backups</button>
+        </div>
+
+        <!-- ===== DANGER ZONE ===== -->
+        <div class="section-title" style="border-bottom-color:#cc0000;">⚠️ DANGER ZONE</div>
+        <button class="btn red" onclick="clearAll()">🔥 RESET ALL DATA</button>
+
+        <!-- ===== OUTPUT ===== -->
+        <div id="output" style="margin-top:20px; max-height:400px; overflow-y:auto;"></div>
+
+        <!-- ===== LOGOUT ===== -->
+        <button class="btn" onclick="location.reload()" style="background:#333; margin-top:20px;">🚪 Logout</button>
+        <a href="index.html" class="back">← Back to G-KODE</a>
+    </div>
+
+    <script>
+        var ADMIN_KEY = 'MAYA';
+
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
+        function adminLogin() {
+            if (document.getElementById('adminPass').value === ADMIN_KEY) {
+                document.getElementById('loginBox').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadStats();
+                updatePaymentStatus();
+            } else {
+                alert('❌ Access denied.');
+            }
+        }
+
+        // ============================================
+        // DATA HELPERS
+        // ============================================
+        function getData(key) {
+            try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; }
+        }
+        function setData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        function getUsers() { return getData('gkode_users'); }
+        function getGigs() { return getData('gkode_gigs'); }
+        function getCompanies() { return getData('gkode_companies'); }
+        function getProducts() { return getData('gkode_products'); }
+        function getOrders() { return getData('gkode_orders'); }
+        function getPayments() { return getData('gkode_payments'); }
+        function getLogs() { return getData('gkode_adminLogs'); }
+        function setLogs(l) { setData('gkode_adminLogs', l); }
+        function getSystemState() {
+            try { return JSON.parse(localStorage.getItem('gkode_systemState') || '{}'); } catch(e) { return {}; }
+        }
+        function setSystemState(s) { localStorage.setItem('gkode_systemState', JSON.stringify(s)); }
+
+        // ============================================
+        // LOAD STATS
+        // ============================================
+        function loadStats() {
+            var users = getUsers();
+            var gigs = getGigs();
+            var payments = getPayments();
+            var totalRevenue = 0;
+            var paidUsers = 0;
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].paymentStatus === 'PAID') paidUsers++;
+            }
+            for (var i = 0; i < payments.length; i++) {
+                if (payments[i].verified) totalRevenue += payments[i].amount;
+            }
+            document.getElementById('statUsers').textContent = users.length;
+            document.getElementById('statGigs').textContent = gigs.length;
+            document.getElementById('statRevenue').textContent = 'Ksh ' + totalRevenue.toLocaleString();
+            document.getElementById('statPaid').textContent = paidUsers;
+            updatePaymentStatus();
+        }
+
+        // ============================================
+        // PAYMENT KILL SWITCH
+        // ============================================
+        function getPaymentEnabled() {
+            var state = getSystemState();
+            if (state.paymentEnabled === undefined) return true;
+            return state.paymentEnabled;
+        }
+
+        function updatePaymentStatus() {
+            var enabled = getPaymentEnabled();
+            var status = document.getElementById('paymentStatus');
+            var btn = document.getElementById('paymentToggleBtn');
+            if (enabled) {
+                status.textContent = '🔒 ON';
+                status.className = 'status-badge on';
+                btn.textContent = '🔒 TURN PAYMENT OFF';
+                btn.className = 'btn orange';
+            } else {
+                status.textContent = '🔓 OFF (Testing)';
+                status.className = 'status-badge off';
+                btn.textContent = '🔓 TURN PAYMENT ON';
+                btn.className = 'btn green';
+            }
+        }
+
+        function togglePaymentSystem() {
+            var state = getSystemState();
+            state.paymentEnabled = !state.paymentEnabled;
+            state.paymentToggledAt = new Date().toISOString();
+            setSystemState(state);
+            updatePaymentStatus();
+            alert('✅ Payment system: ' + (state.paymentEnabled ? 'ON' : 'OFF'));
+            
+            var logs = getLogs();
+            logs.push({
+                type: 'PAYMENT_TOGGLED',
+                status: state.paymentEnabled ? 'ON' : 'OFF',
+                time: new Date().toISOString()
+            });
+            setLogs(logs);
+            loadStats();
+        }
+
+        // ============================================
+        // VIEW FUNCTIONS
+        // ============================================
+        function viewUsers() {
+            var users = getUsers();
+            var h = '<h3>👥 All Users (' + users.length + ')</h3>';
+            if (users.length === 0) { document.getElementById('output').innerHTML = h + '<p>No users.</p>'; return; }
+            for (var i = 0; i < users.length; i++) {
+                var u = users[i];
+                h += '<div class="card"><h3>' + u.name + '</h3>';
+                h += '<p>📞 ' + u.phone + ' | 🆔 ' + u.id + '</p>';
+                h += '<p>📍 ' + u.location + ' | 👔 ' + u.profession + '</p>';
+                h += '<p>💳 ' + (u.paymentStatus === 'PAID' ? '✅ Paid' : '❌ Unpaid') + '</p>';
+                h += '<p>⭐ ' + (u.rating || 0) + ' | ⚠️ ' + (u.strikes || 0) + ' strikes</p>';
+                h += '</div>';
+            }
+            document.getElementById('output').innerHTML = h;
+        }
+
+        function viewGigs() {
+            var gigs = getGigs();
+            var h = '<h3>📋 All Gigs (' + gigs.length + ')</h3>';
+            if (gigs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No gigs.</p>'; return; }
+            for (var i = 0; i < gigs.length; i++) {
+                var g = gigs[i];
+                h += '<div class="card"><h3>' + g.title + '</h3>';
+                h += '<p>Status: ' + g.status + ' | Client: ' + g.client + '</p>';
+                h += '<p>Skill: ' + g.skill + ' | 📍 ' + g.location + '</p>';
+                h += '<p>💰 Ksh ' + g.budgetMin + ' - ' + g.budgetMax + '</p>';
+                if (g.worker) h += '<p>👷 Worker: ' + g.worker + '</p>';
+                h += '</div>';
+            }
+            document.getElementById('output').innerHTML = h;
+        }
+
+        function viewCompanies() {
+            var companies = getCompanies();
+            var h = '<h3>🏢 Businesses (' + companies.length + ')</h3>';
+            if (companies.length === 0) { document.getElementById('output').innerHTML = h + '<p>No businesses.</p>'; return; }
+            for (var i = 0; i < companies.length; i++) {
+                var c = companies[i];
+                h += '<div class="card"><h3>' + c.name + '</h3>';
+                h += '<p>Type: ' + c.type + ' | 📍 ' + c.location + '</p>';
+                h += '<p>📞 ' + c.phone + '</p>';
+                h += '<p>💰 Sales: Ksh ' + (c.totalSales || 0).toLocaleString() + '</p>';
+                h += '</div>';
+            }
+            document.getElementById('output').innerHTML = h;
+        }
+
+        function viewLogs() {
+            var logs = getLogs();
+            var h = '<h3>📜 Activity Logs (' + logs.length + ')</h3>';
+            if (logs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No logs.</p>'; return; }
+            for (var i = logs.length - 1; i >= Math.max(0, logs.length - 50); i--) {
+                var l = logs[i];
+                h += '<div class="log"><b>' + l.type + '</b> | ' + (l.user || l.userName || 'System') + ' | ' + new Date(l.time || l.timestamp).toLocaleString() + '</div>';
+            }
+            document.getElementById('output').innerHTML = h;
+        }
+
+        function viewFinancialReport() {
+            var users = getUsers();
+            var gigs = getGigs();
+            var companies = getCompanies();
+            var orders = getOrders();
+            var payments = getPayments();
+            
+            var paidUsers = 0;
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].paymentStatus === 'PAID') paidUsers++;
+            }
+            
+            var totalRevenue = 0;
+            var userFees = 0;
+            var businessFees = 0;
+            for (var i = 0; i < payments.length; i++) {
+                if (payments[i].verified) {
+                    totalRevenue += payments[i].amount;
+                    if (payments[i].type === 'user_fee') userFees += payments[i].amount;
+                    else if (payments[i].type === 'business_fee') businessFees += payments[i].amount;
+                }
+            }
+            
+            var totalSales = 0;
+            var totalCommission = 0;
+            for (var i = 0; i < orders.length; i++) {
+                totalSales += orders[i].subtotal || 0;
+                totalCommission += orders[i].commission || 0;
+            }
+            
+            var h = '<h3>📊 FINANCIAL REPORT</h3>';
+            h += '<div class="card"><h3>👥 Users</h3>';
+            h += '<p>Total: ' + users.length + ' | Paid: ' + paidUsers + '</p></div>';
+            h += '<div class="card"><h3>📋 Gigs</h3>';
+            h += '<p>Total: ' + gigs.length + '</p></div>';
+            h += '<div class="card"><h3>🏢 Businesses</h3>';
+            h += '<p>Total: ' + companies.length + '</p></div>';
+            h += '<div class="card"><h3>💰 Revenue</h3>';
+            h += '<p>Total: Ksh ' + totalRevenue.toLocaleString() + '</p>';
+            h += '<p>User Fees: Ksh ' + userFees.toLocaleString() + '</p>';
+            h += '<p>Business Fees: Ksh ' + businessFees.toLocaleString() + '</p>';
+            h += '<p>Commission (3%): Ksh ' + totalCommission.toLocaleString() + '</p>';
+            h += '<p>Sales: Ksh ' + totalSales.toLocaleString() + '</p></div>';
+            document.getElementById('output').innerHTML = h;
+        }
+
+        // ============================================
+        // BACKUP SYSTEM
+        // ============================================
+        function downloadBackup() {
+            var data = {
+                app: 'G-KODE',
+                version: '3.0',
+                exportedAt: new Date().toISOString(),
+                systemState: getSystemState(),
+                users: getUsers(),
+                gigs: getGigs(),
+                companies: getCompanies(),
+                products: getProducts(),
+                orders: getOrders(),
+                payments: getPayments(),
+                logs: getLogs()
+            };
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'gkode-backup-' + new Date().toISOString().split('T')[0] + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert('✅ Backup downloaded!');
+        }
+
+        function viewAllBackups() {
+            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
+            var h = '<h3>📂 Backups (' + backups.length + ')</h3>';
+            if (backups.length === 0) { document.getElementById('output').innerHTML = h + '<p>No backups.</p>'; return; }
+            for (var i = backups.length - 1; i >= 0; i--) {
+                var b = backups[i];
+                h += '<div class="log">📅 ' + new Date(b.timestamp).toLocaleString() + ' | ID: ' + b.id.slice(-6) + '</div>';
+            }
+            document.getElementById('output').innerHTML = h;
+        }
+
+        // ============================================
+        // SECURITY FUNCTIONS
+        // ============================================
+        function systemHealthCheck() {
+            var users = getUsers();
+            var gigs = getGigs();
+            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
+            var msg = '🏥 SYSTEM HEALTH\n\n';
+            msg += '👥 Users: ' + users.length + '\n';
+            msg += '📋 Gigs: ' + gigs.length + '\n';
+            msg += '📂 Backups: ' + backups.length + '\n';
+            msg += '💾 Storage Used: ' + Math.round(JSON.stringify(localStorage).length / 1024) + ' KB\n';
+            msg += '✅ System is healthy.';
+            alert(msg);
+        }
+
+        function emergencyRecovery() {
+            if (!confirm('🚨 EMERGENCY RECOVERY\n\nThis will restore from latest backup. Continue?')) return;
+            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
+            if (backups.length === 0) {
+                alert('❌ No backups found.');
+                return;
+            }
+            var latest = backups[backups.length - 1];
+            if (!confirm('Restore from backup dated: ' + new Date(latest.timestamp).toLocaleString())) return;
+            
+            var data = latest.data;
+            localStorage.setItem('gkode_users', JSON.stringify(data.users || []));
+            localStorage.setItem('gkode_gigs', JSON.stringify(data.gigs || []));
+            localStorage.setItem('gkode_companies', JSON.stringify(data.companies || []));
+            localStorage.setItem('gkode_products', JSON.stringify(data.products || []));
+            localStorage.setItem('gkode_orders', JSON.stringify(data.orders || []));
+            localStorage.setItem('gkode_payments', JSON.stringify(data.payments || []));
+            localStorage.setItem('gkode_adminLogs', JSON.stringify(data.logs || []));
+            
+            alert('✅ System restored from backup!');
+            location.reload();
+        }
+
+        function detectFraud() {
+            var users = getUsers();
+            var warnings = [];
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].strikes >= 4) {
+                    warnings.push('⚠️ ' + users[i].name + ' has ' + users[i].strikes + ' strikes');
+                }
+                if (users[i].paymentStatus !== 'PAID' && users[i].status === 'Active') {
+                    warnings.push('⚠️ ' + users[i].name + ' is active but unpaid');
+                }
+            }
+            if (warnings.length === 0) {
+                alert('✅ No fraud warnings detected.');
+            } else {
+                alert('🚨 FRAUD WARNINGS:\n\n' + warnings.join('\n'));
+            }
+        }
+
+        function legalComplianceCheck() {
+            var users = getUsers();
+            var issues = [];
+            for (var i = 0; i < users.length; i++) {
+                if (!users[i].userAgreementAccepted) {
+                    issues.push('⚠️ ' + users[i].name + ' has not accepted user agreement');
+                }
+                if (users[i].isBusinessOwner && !users[i].businessAgreementAccepted) {
+                    issues.push('⚠️ ' + users[i].name + ' has not accepted business agreement');
+                }
+            }
+            if (issues.length === 0) {
+                alert('✅ All users are compliant.');
+            } else {
+                alert('⚖️ COMPLIANCE ISSUES:\n\n' + issues.join('\n'));
+            }
+        }
+
+        function generateDailyLegalLog() {
+            var users = getUsers();
+            var today = new Date().toISOString().split('T')[0];
+            var log = {
+                date: today,
+                totalUsers: users.length,
+                unpaidUsers: 0,
+                agreementsAccepted: 0
+            };
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].paymentStatus !== 'PAID') log.unpaidUsers++;
+                if (users[i].userAgreementAccepted) log.agreementsAccepted++;
+            }
+            var msg = '📋 DAILY LEGAL LOG - ' + today + '\n\n';
+            msg += '👥 Total Users: ' + log.totalUsers + '\n';
+            msg += '❌ Unpaid Users: ' + log.unpaidUsers + '\n';
+            msg += '📜 Agreements Accepted: ' + log.agreementsAccepted + '\n';
+            msg += '✅ Log generated successfully.';
+            alert(msg);
+            
+            var logs = getLogs();
+            logs.push({
+                type: 'DAILY_LEGAL_LOG',
+                data: log,
+                time: new Date().toISOString()
+            });
+            setLogs(logs);
+        }
+
+        // ============================================
+        // DANGER ZONE
+        // ============================================
+        function clearAll() {
+            if (confirm('⚠️ DELETE ALL DATA?')) {
+                if (confirm('FINAL WARNING: This cannot be undone!')) {
+                    localStorage.clear();
+                    alert('✅ All data cleared.');
+                    location.reload();
+                }
+            }
+        }
+
+        // ============================================
+        // AUTO REFRESH STATS
+        // ============================================
+        setInterval(function() {
+            if (!document.getElementById('adminPanel').classList.contains('hidden')) {
+                loadStats();
+            }
+        }, 30000);
+
+        console.log('🚀 Admin panel loaded successfully!');
+    </script>
+</body>
+</html>
