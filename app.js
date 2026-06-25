@@ -778,7 +778,7 @@ function verifyCode() {
     completeRegistration();
 }
 
-// ============ REGISTRATION - FIXED GPS ============
+// ============ REGISTRATION - WITH EMAIL ============
 async function register(e) {
     e.preventDefault();
     var btn = document.getElementById('registerBtn');
@@ -789,6 +789,7 @@ async function register(e) {
         var name = document.getElementById('regName').value.trim();
         var phone = document.getElementById('regPhone').value.trim();
         var id = document.getElementById('regID').value.trim();
+        var email = document.getElementById('regEmail').value.trim();  // <-- ADD THIS
         var password = document.getElementById('regPassword').value.trim();
         var location = document.getElementById('regLocation').value.trim();
         var profession = document.getElementById('regProfession').value;
@@ -797,10 +798,28 @@ async function register(e) {
         var photoFile = document.getElementById('regPhoto').files[0];
         var idScanFile = document.getElementById('regIDScan').files[0];
 
+        // ===== VALIDATE EMAIL =====
+        if (!email) {
+            showToast('Please enter your email address.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'REGISTER';
+            return;
+        }
+        
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showToast('Please enter a valid email address.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'REGISTER';
+            return;
+        }
+
+        // Store in pending registration
         window._pendingRegistration = {
             name: name,
             phone: phone,
             id: id,
+            email: email,  // <-- ADD THIS
             password: password,
             location: location,
             profession: profession,
@@ -880,20 +899,7 @@ async function register(e) {
             return;
         }
 
-        showToast('🔐 Verifying identity documents...', 'info');
-        btn.textContent = '⏳ VERIFYING IDENTITY...';
-
-        var verifyResult = await verifyIdentityDocuments(name, id, photoFile, idScanFile);
-        
-        if (!verifyResult.allValid) {
-            showToast('❌ Verification failed: ' + verifyResult.messages.join(' | '), 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        showToast('✅ Identity verified! ' + verifyResult.messages.join(' | '), 'success');
-
+        // ===== CHECK IF EMAIL OR PHONE ALREADY EXISTS =====
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone && users[i].id === id) {
@@ -915,34 +921,45 @@ async function register(e) {
                 btn.textContent = 'REGISTER';
                 return;
             }
-        }
-
-        if (isPaymentRequired()) {
-            showPaymentPrompt(phone, function(paid) {
-                if (paid) {
-                    window._pendingRegistration.paymentVerified = true;
-                    var vCode = generateVerificationCode();
-                    pendingVerificationPhone = phone;
-                    pendingVerificationCode = vCode;
-                    sendVerificationCode(phone, vCode);
-                    showVerificationModal(phone, vCode);
-                } else {
-                    showToast('Payment required to complete registration.', 'error');
-                    window._pendingRegistration = null;
-                    showScreen('profile');
-                }
+            if (users[i].email === email) {
+                showToast('Email already registered.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'REGISTER';
-            });
-        } else {
-            var vCode = generateVerificationCode();
-            pendingVerificationPhone = phone;
-            pendingVerificationCode = vCode;
-            sendVerificationCode(phone, vCode);
-            showVerificationModal(phone, vCode);
+                return;
+            }
+        }
+
+        showToast('🔐 Verifying identity documents...', 'info');
+        btn.textContent = '⏳ VERIFYING IDENTITY...';
+
+        var verifyResult = await verifyIdentityDocuments(name, id, photoFile, idScanFile);
+        
+        if (!verifyResult.allValid) {
+            showToast('❌ Verification failed: ' + verifyResult.messages.join(' | '), 'error');
             btn.disabled = false;
             btn.textContent = 'REGISTER';
+            return;
         }
+
+        showToast('✅ Identity verified! ' + verifyResult.messages.join(' | '), 'success');
+
+        // ===== GENERATE AND SEND OTP =====
+        var vCode = generateVerificationCode();
+        pendingVerificationPhone = phone;
+        pendingVerificationCode = vCode;
+        sendVerificationCode(phone, vCode);
+        
+        // ===== SEND OTP EMAIL =====
+        sendOTPEmail(email, name, vCode);
+
+        // ===== SHOW MODAL OR EMAIL CONFIRMATION =====
+        showToast('📧 Verification code sent to ' + email, 'success');
+        
+        // Still show modal as fallback (or for users who prefer it)
+        showVerificationModal(phone, vCode);
+        
+        btn.disabled = false;
+        btn.textContent = 'REGISTER';
 
     } catch (err) {
         showToast('Registration error: ' + err.message, 'error');
@@ -950,7 +967,6 @@ async function register(e) {
         btn.textContent = 'REGISTER';
     }
 }
-
 // ============ COMPLETE REGISTRATION - FIXED GPS ============
 function completeRegistration() {
     var data = window._pendingRegistration;
@@ -1053,6 +1069,7 @@ function completeRegistration() {
                         type: 'USER_REGISTERED',
                         user: name,
                         phone: phone,
+                        email: email, 
                         id: id,
                         lat: lat,
                         lon: lon,
@@ -2999,3 +3016,103 @@ setTimeout(function() {
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
 console.log('💳 Payment System: ' + (isPaymentRequired() ? '🔒 ON' : '🔓 OFF'));
+// ============================================
+// EMAILJS CONFIG - FULLY CONFIGURED
+// ============================================
+
+var EMAILJS_CONFIG = {
+    serviceID: 'service_hw35xfu',
+    publicKey: 'vc371wcNfQy56zlH8',
+    otpTemplateID: 'template_qycsjak',
+    resetTemplateID: 'template_0787ox7'
+};
+
+// ============ LOAD EMAILJS ============
+function loadEmailJS(callback) {
+    if (typeof emailjs !== 'undefined') {
+        callback();
+        return;
+    }
+    
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    document.head.appendChild(script);
+    
+    script.onload = function() {
+        emailjs.init(EMAILJS_CONFIG.publicKey);
+        callback();
+    };
+    
+    script.onerror = function() {
+        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
+        callback();
+    };
+}
+
+// ============ SEND OTP EMAIL ============
+function sendOTPEmail(userEmail, userName, code) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('📱 Your code: ' + code, 'info');
+            return;
+        }
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            code: code,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.otpTemplateID,
+            templateParams
+        ).then(
+            function(response) {
+                console.log('✅ OTP email sent!', response.status);
+                showToast('📧 Verification code sent to your email!', 'success');
+            },
+            function(error) {
+                console.log('❌ OTP email failed:', error);
+                showToast('📱 Your code: ' + code, 'info');
+            }
+        );
+    });
+}
+
+// ============ SEND PASSWORD RESET EMAIL ============
+function sendPasswordResetEmail(userEmail, userName, resetCode) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('⚠️ Email service unavailable. Please contact support.', 'error');
+            return;
+        }
+        
+        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            reset_link: resetLink,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.resetTemplateID,
+            templateParams
+        ).then(
+            function(response) {
+                console.log('✅ Password reset email sent!', response.status);
+                showToast('📧 Password reset link sent to your email!', 'success');
+            },
+            function(error) {
+                console.log('❌ Reset email failed:', error);
+                showToast('⚠️ Please contact support for password reset', 'error');
+            }
+        );
+    });
+}
