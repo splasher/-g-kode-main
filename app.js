@@ -1,6 +1,6 @@
 // ============================================
-// G-KODE APP - COMPLETE WORKING VERSION
-// GPS FIXED - NO ERRORS
+// G-KODE APP - COMPLETE FIXED VERSION
+// Registration & Login WORKING
 // ============================================
 
 // ============ GLOBAL ============
@@ -13,42 +13,13 @@ var loginLocked = false;
 var loginLockTime = null;
 var pendingVerificationPhone = null;
 var pendingVerificationCode = null;
-// ============================================
-// SECURITY INITIALIZATION
-// ============================================
 
-// Override getData and setData to use encryption
-var originalGetData = getData;
-var originalSetData = setData;
-
-getData = function(key) {
-    var data = localStorage.getItem(key);
-    if (!data) return [];
-    try {
-        var decrypted = secureDecrypt(data);
-        if (Array.isArray(decrypted)) {
-            return decrypted;
-        }
-        return JSON.parse(decrypted);
-    } catch(e) {
-        return originalGetData(key);
-    }
-};
-
-setData = function(key, data) {
-    try {
-        var encrypted = secureEncrypt(data);
-        localStorage.setItem(key, encrypted);
-    } catch(e) {
-        originalSetData(key, data);
-    }
-};
 // ============ ADMIN SYSTEM ============
 var ADMIN_PHONES = ['0703428192', '0711991467'];
 
 // ============ CONFIG ============
 var CONFIG = {
-    paymentEnabled: true,
+    paymentEnabled: false,
     userFee: 300,
     commissionRate: 3,
     tillNumber: '9876543',
@@ -60,8 +31,15 @@ var CONFIG = {
     reentryDays: 90,
     reentryFee: 1500,
     businessRegistrationFee: 500,
-    marketplaceListingFee: 100,
-    premiumBusinessFee: 1000
+    marketplaceListingFee: 100
+};
+
+// ============ EMAILJS CONFIG ============
+var EMAILJS_CONFIG = {
+    serviceID: 'service_hw35xfu',
+    publicKey: 'vc371wcNfQy56zlH8',
+    otpTemplateID: 'template_qycsjak',
+    resetTemplateID: 'template_0787ox7'
 };
 
 // ============ DATA STORAGE ============
@@ -489,20 +467,8 @@ async function verifyIdentityDocuments(name, idNumber, photoFile, idScanFile) {
 // ============ PAYMENT SYSTEM ============
 function isPaymentRequired() {
     var state = getSystemState();
-    if (state.paymentEnabled === undefined) return true;
+    if (state.paymentEnabled === undefined) return false;
     return state.paymentEnabled;
-}
-
-function togglePaymentSystem() {
-    if (!isAdmin()) {
-        showToast('⛔ Admin only!', 'error');
-        return;
-    }
-    var state = getSystemState();
-    state.paymentEnabled = !state.paymentEnabled;
-    state.paymentToggledAt = new Date().toISOString();
-    setSystemState(state);
-    showToast('💳 Payment: ' + (state.paymentEnabled ? 'ON' : 'OFF'), 'info');
 }
 
 function checkPaymentStatus(user) {
@@ -626,48 +592,11 @@ function verifyMpesaPayment() {
     }
 }
 
-// ============ PAYMENT PROMPT ============
-function showPaymentPrompt(phone, callback) {
-    var fee = CONFIG.userFee;
-    var confirmMsg = '💳 G-KODE REGISTRATION FEE\n\n' +
-                     'Phone: ' + phone + '\n' +
-                     'Amount: Ksh ' + fee + '\n\n' +
-                     '📌 This is a ONE-TIME fee for LIFE.\n' +
-                     'No subscriptions. No hidden charges.\n\n' +
-                     'Payment Details:\n' +
-                     '📱 Till Number: ' + CONFIG.tillNumber + '\n' +
-                     '📱 Paybill: ' + CONFIG.paybill + '\n' +
-                     '📱 Account: ' + CONFIG.account + '\n\n' +
-                     'After sending M-Pesa, enter the confirmation code.\n\n' +
-                     'Do you want to pay now?';
-
-    if (confirm(confirmMsg)) {
-        var code = prompt('📱 Enter M-Pesa confirmation code:\n\n' +
-                          '1. Send Ksh ' + fee + ' to Till ' + CONFIG.tillNumber + '\n' +
-                          '2. Enter the confirmation code below:');
-        
-        if (code && code.length >= 5) {
-            if (verifyPayment(code, fee, phone)) {
-                showToast('✅ Payment verified! Welcome to G-KODE!', 'success');
-                callback(true);
-                return;
-            } else {
-                showToast('❌ Invalid confirmation code.', 'error');
-                var retry = confirm('Invalid code. Try again?');
-                if (retry) {
-                    showPaymentPrompt(phone, callback);
-                } else {
-                    callback(false);
-                }
-                return;
-            }
-        } else {
-            showToast('Payment cancelled.', 'error');
-            callback(false);
-        }
-    } else {
-        callback(false);
-    }
+function getPaymentStatusText(user) {
+    if (!user) return 'Not paid';
+    if (!isPaymentRequired()) return '🔓 Free Mode (Testing)';
+    if (user.paymentStatus === 'PAID') return '✅ Paid - Ksh ' + (user.paymentAmount || CONFIG.userFee);
+    return '❌ Unpaid - Pay Ksh ' + CONFIG.userFee;
 }
 
 // ============ CUSTOM VERIFICATION MODAL ============
@@ -778,7 +707,95 @@ function verifyCode() {
     completeRegistration();
 }
 
-// ============ REGISTRATION - WITH EMAIL ============
+// ============ EMAILJS FUNCTIONS ============
+function loadEmailJS(callback) {
+    if (typeof emailjs !== 'undefined') {
+        callback();
+        return;
+    }
+    
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    document.head.appendChild(script);
+    
+    script.onload = function() {
+        emailjs.init(EMAILJS_CONFIG.publicKey);
+        callback();
+    };
+    
+    script.onerror = function() {
+        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
+        callback();
+    };
+}
+
+function sendOTPEmail(userEmail, userName, code) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('📱 Your code: ' + code, 'info');
+            return;
+        }
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            code: code,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.otpTemplateID,
+            templateParams
+        ).then(
+            function(response) {
+                console.log('✅ OTP email sent!', response.status);
+                showToast('📧 Verification code sent to your email!', 'success');
+            },
+            function(error) {
+                console.log('❌ OTP email failed:', error);
+                showToast('📱 Your code: ' + code, 'info');
+            }
+        );
+    });
+}
+
+function sendPasswordResetEmail(userEmail, userName, resetCode) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('⚠️ Email service unavailable. Please contact support.', 'error');
+            return;
+        }
+        
+        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            reset_link: resetLink,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.resetTemplateID,
+            templateParams
+        ).then(
+            function(response) {
+                console.log('✅ Password reset email sent!', response.status);
+                showToast('📧 Password reset link sent to your email!', 'success');
+            },
+            function(error) {
+                console.log('❌ Reset email failed:', error);
+                showToast('⚠️ Please contact support for password reset', 'error');
+            }
+        );
+    });
+}
+
+// ============ REGISTRATION - FIXED ============
 async function register(e) {
     e.preventDefault();
     var btn = document.getElementById('registerBtn');
@@ -789,7 +806,7 @@ async function register(e) {
         var name = document.getElementById('regName').value.trim();
         var phone = document.getElementById('regPhone').value.trim();
         var id = document.getElementById('regID').value.trim();
-        var email = document.getElementById('regEmail').value.trim();  // <-- ADD THIS
+        var email = document.getElementById('regEmail').value.trim();
         var password = document.getElementById('regPassword').value.trim();
         var location = document.getElementById('regLocation').value.trim();
         var profession = document.getElementById('regProfession').value;
@@ -805,8 +822,6 @@ async function register(e) {
             btn.textContent = 'REGISTER';
             return;
         }
-        
-        // Validate email format
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showToast('Please enter a valid email address.', 'error');
             btn.disabled = false;
@@ -814,12 +829,11 @@ async function register(e) {
             return;
         }
 
-        // Store in pending registration
         window._pendingRegistration = {
             name: name,
             phone: phone,
             id: id,
-            email: email,  // <-- ADD THIS
+            email: email,
             password: password,
             location: location,
             profession: profession,
@@ -899,18 +913,12 @@ async function register(e) {
             return;
         }
 
-        // ===== CHECK IF EMAIL OR PHONE ALREADY EXISTS =====
+        // ===== CHECK IF USER EXISTS =====
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
-            if (users[i].phone === phone && users[i].id === id) {
-                showToast('Already registered. Please login.', 'warning');
-                showScreen('login');
-                btn.disabled = false;
-                btn.textContent = 'REGISTER';
-                return;
-            }
             if (users[i].phone === phone) {
-                showToast('Phone already registered.', 'error');
+                showToast('Phone already registered. Please login.', 'warning');
+                showScreen('login');
                 btn.disabled = false;
                 btn.textContent = 'REGISTER';
                 return;
@@ -952,10 +960,7 @@ async function register(e) {
         // ===== SEND OTP EMAIL =====
         sendOTPEmail(email, name, vCode);
 
-        // ===== SHOW MODAL OR EMAIL CONFIRMATION =====
         showToast('📧 Verification code sent to ' + email, 'success');
-        
-        // Still show modal as fallback (or for users who prefer it)
         showVerificationModal(phone, vCode);
         
         btn.disabled = false;
@@ -967,7 +972,8 @@ async function register(e) {
         btn.textContent = 'REGISTER';
     }
 }
-// ============ COMPLETE REGISTRATION - FIXED GPS ============
+
+// ============ COMPLETE REGISTRATION ============
 function completeRegistration() {
     var data = window._pendingRegistration;
     if (!data) {
@@ -983,6 +989,7 @@ function completeRegistration() {
         var name = data.name;
         var phone = data.phone;
         var id = data.id;
+        var email = data.email;
         var password = data.password;
         var location = data.location;
         var profession = data.profession;
@@ -1000,7 +1007,7 @@ function completeRegistration() {
         r1.onload = function(e1) {
             var r2 = new FileReader();
             r2.onload = function(e2) {
-                // GPS is OPTIONAL - no error if it fails
+                // GPS is OPTIONAL
                 var lat = null;
                 var lon = null;
                 if (navigator.geolocation) {
@@ -1008,8 +1015,7 @@ function completeRegistration() {
                         function(pos) {
                             proceedRegistration(pos.coords.latitude, pos.coords.longitude);
                         },
-                        function(err) {
-                            // Silent fail - continue without GPS
+                        function() {
                             proceedRegistration(null, null);
                         }
                     );
@@ -1029,6 +1035,7 @@ function completeRegistration() {
                         name: name,
                         phone: phone,
                         id: id,
+                        email: email,
                         password: simpleEncode(password),
                         location: location,
                         profession: profession,
@@ -1069,7 +1076,7 @@ function completeRegistration() {
                         type: 'USER_REGISTERED',
                         user: name,
                         phone: phone,
-                        email: email, 
+                        email: email,
                         id: id,
                         lat: lat,
                         lon: lon,
@@ -1105,7 +1112,7 @@ function completeRegistration() {
     }
 }
 
-// ============ LOGIN ============
+// ============ LOGIN - FIXED ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -1190,6 +1197,7 @@ function login(e) {
             }
         }
 
+        // Check if user has paid (only if payment is required)
         if (isPaymentRequired() && found.paymentStatus !== 'PAID') {
             showToast('⚠️ Payment required: Ksh ' + CONFIG.userFee + ' to access G-KODE.', 'warning');
             currentUser = found;
@@ -1200,7 +1208,7 @@ function login(e) {
             return;
         }
 
-        // GPS is OPTIONAL - silent fail
+        // GPS is OPTIONAL
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(pos) {
@@ -1234,6 +1242,7 @@ function login(e) {
                 type: 'USER_LOGIN',
                 user: user.name,
                 phone: user.phone,
+                email: user.email,
                 time: new Date().toISOString()
             });
             setLogs(logs);
@@ -1244,7 +1253,6 @@ function login(e) {
                 if (currentUser && !currentUser.userAgreementAccepted) {
                     showAgreement('user');
                 }
-                checkAdminAccess();
             }, 1000);
             
             showScreen('home');
@@ -1622,18 +1630,11 @@ function acceptGig(id) {
     setLogs(logs);
 
     showToast('✅ Gig accepted! Chat with ' + gig.client, 'success');
-    
-    document.getElementById('chatGigId').value = id;
-    var chatPartner = gig.client === currentUser.name ? gig.worker : gig.client;
-    document.getElementById('chatPartner').textContent = '💬 Chat: ' + gig.title + ' — ' + chatPartner;
-    showScreen('chat');
-    loadChatMessages(id);
+    openChat(id);
 }
 
 // ============ CHAT ============
 function openChat(gigId) {
-    console.log('💬 Opening chat for gig:', gigId);
-    
     var gigs = getGigs();
     var gig = null;
     for (var i = 0; i < gigs.length; i++) {
@@ -1715,17 +1716,16 @@ function sendMessage(e) {
     loadChatMessages(gigId);
 }
 
+// ============ SHARE LOCATION ============
 function shareLiveLocation() {
-    console.log('📍 Share location called');
-    
     if (!currentUser) {
-        showToast('Please login first.', 'error');
+        showToast('Login first.', 'error');
         return;
     }
 
     if (!navigator.geolocation) {
         showToast('❌ GPS not supported on this device.', 'error');
-        if (confirm('GPS not supported. Open Google Maps to share location manually?')) {
+        if (confirm('GPS not supported. Open Google Maps manually?')) {
             window.open('https://www.google.com/maps', '_blank');
         }
         return;
@@ -1735,14 +1735,11 @@ function shareLiveLocation() {
     
     navigator.geolocation.getCurrentPosition(
         function(pos) {
-            console.log('📍 Location found:', pos.coords.latitude, pos.coords.longitude);
-            
             var lat = pos.coords.latitude;
             var lon = pos.coords.longitude;
             var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
             
             var gigId = document.getElementById('chatGigId').value;
-            console.log('📋 Gig ID:', gigId);
             
             var logs = getLogs();
             logs.push({
@@ -1776,7 +1773,6 @@ function shareLiveLocation() {
             localStorage.setItem('gkode_currentUser', JSON.stringify(currentUser));
         },
         function(err) {
-            console.error('❌ GPS Error:', err);
             var errorMsg = '❌ Could not get location. ';
             switch(err.code) {
                 case 1: errorMsg += 'Please enable GPS in browser settings.'; break;
@@ -1785,8 +1781,7 @@ function shareLiveLocation() {
                 default: errorMsg += 'Error: ' + err.message;
             }
             showToast(errorMsg, 'error');
-            
-            if (confirm('❌ Could not get location.\n\nOpen Google Maps to share manually?')) {
+            if (confirm('❌ Could not get location.\n\nOpen Google Maps manually?')) {
                 window.open('https://www.google.com/maps', '_blank');
             }
         },
@@ -1797,19 +1792,17 @@ function shareLiveLocation() {
         }
     );
 }
+
+// ============ NAVIGATE TO CLIENT ============
 function navigateToClient() {
-    console.log('🧭 Navigate to client called');
-    
     if (!currentUser) {
-        showToast('Please login first.', 'error');
+        showToast('Login first.', 'error');
         return;
     }
 
     var gigId = document.getElementById('chatGigId').value;
-    console.log('📋 Gig ID for navigation:', gigId);
-    
     if (!gigId) {
-        showToast('No active gig found. Please accept a gig first.', 'error');
+        showToast('No active gig found.', 'error');
         return;
     }
 
@@ -1827,17 +1820,15 @@ function navigateToClient() {
         return;
     }
 
-    console.log('📋 Gig found:', gig.title);
-
     var lat = null;
     var lon = null;
     var clientName = gig.client;
     var clientPhone = gig.clientPhone;
 
+    // Try to get client location
     if (gig.clientGPSLat && gig.clientGPSLon) {
         lat = gig.clientGPSLat;
         lon = gig.clientGPSLon;
-        console.log('📍 Found client location in gig data');
     } else {
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
@@ -1845,7 +1836,6 @@ function navigateToClient() {
                 if (users[i].gpsLat && users[i].gpsLon) {
                     lat = users[i].gpsLat;
                     lon = users[i].gpsLon;
-                    console.log('📍 Found client location in user data');
                     break;
                 }
             }
@@ -1853,68 +1843,39 @@ function navigateToClient() {
     }
 
     if (!lat || !lon) {
-        var logs = getLogs();
-        for (var i = logs.length - 1; i >= 0; i--) {
-            if (logs[i].gigId === gigId && logs[i].isLocation && logs[i].sender === clientName) {
-                lat = logs[i].lat;
-                lon = logs[i].lon;
-                console.log('📍 Found client location in chat history');
-                break;
-            }
-        }
-    }
-
-    if (!lat || !lon) {
         showToast('❌ Client location not available.', 'error');
-        var callClient = confirm('Client location not available.\n\nDo you want to call ' + clientName + '?');
-        if (callClient && clientPhone) {
+        if (confirm('Call ' + clientName + '?')) {
             window.location.href = 'tel:' + clientPhone;
         }
         return;
     }
 
-    showToast('🧭 Getting directions to ' + clientName + '...', 'info');
+    showToast('🧭 Getting directions...', 'info');
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                console.log('📍 Current location found for directions');
-                openDirections(pos.coords.latitude, pos.coords.longitude, lat, lon, clientName);
+                var fromLat = pos.coords.latitude;
+                var fromLon = pos.coords.longitude;
+                var url = 'https://www.google.com/maps/dir/?api=1&origin=' + fromLat + ',' + fromLon + '&destination=' + lat + ',' + lon + '&travelmode=driving';
+                if (confirm('🧭 Navigate to ' + clientName + '?')) {
+                    window.open(url, '_blank');
+                    showToast('✅ Navigation started!', 'success');
+                }
             },
-            function(err) {
-                console.log('📍 Using client location only (no current location)');
-                openDirections(null, null, lat, lon, clientName);
-            },
-            { enableHighAccuracy: true, timeout: 10000 }
+            function() {
+                var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+                if (confirm('📍 Open ' + clientName + '\'s location?')) {
+                    window.open(url, '_blank');
+                    showToast('📍 Location opened.', 'success');
+                }
+            }
         );
     } else {
-        openDirections(null, null, lat, lon, clientName);
-    }
-}
-
-function openDirections(fromLat, fromLon, toLat, toLon, clientName) {
-    var url;
-    var clientAddress = 'https://www.google.com/maps?q=' + toLat + ',' + toLon;
-    
-    if (fromLat && fromLon) {
-        url = 'https://www.google.com/maps/dir/?api=1&origin=' + fromLat + ',' + fromLon + '&destination=' + toLat + ',' + toLon + '&travelmode=driving';
-        var msg = '🧭 DIRECTIONS TO ' + clientName.toUpperCase() + '\n\n' +
-                  '📍 From: Your current location\n' +
-                  '📍 To: Client\'s location\n\n' +
-                  'Tap OK to open Google Maps for turn-by-turn directions.';
-        if (confirm(msg)) {
+        var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+        if (confirm('📍 Open ' + clientName + '\'s location?')) {
             window.open(url, '_blank');
-            showToast('✅ Directions opened!', 'success');
-        }
-    } else {
-        var msg = '📍 CLIENT LOCATION\n\n' +
-                  '📍 ' + clientName + ' is at:\n' +
-                  'Latitude: ' + toLat.toFixed(6) + '\n' +
-                  'Longitude: ' + toLon.toFixed(6) + '\n\n' +
-                  'Tap OK to open in Google Maps.';
-        if (confirm(msg)) {
-            window.open(clientAddress, '_blank');
-            showToast('📍 Client location opened.', 'success');
+            showToast('📍 Location opened.', 'success');
         }
     }
 }
@@ -2926,13 +2887,6 @@ function deleteAccount() {
     showScreen('welcome');
 }
 
-function getPaymentStatusText(user) {
-    if (!user) return 'Not paid';
-    if (!isPaymentRequired()) return '🔓 Free Mode (Testing)';
-    if (user.paymentStatus === 'PAID') return '✅ Paid - Ksh ' + (user.paymentAmount || CONFIG.userFee);
-    return '❌ Unpaid - Pay Ksh ' + CONFIG.userFee;
-}
-
 // ============ ADMIN ACCESS BUTTON ============
 function checkAdminAccess() {
     var btn = document.getElementById('adminAccessBtn');
@@ -2955,7 +2909,6 @@ function checkAdminAccess() {
     }
 }
 
-// ============ IS ADMIN ============
 function isAdmin() {
     if (!currentUser) return false;
     for (var i = 0; i < ADMIN_PHONES.length; i++) {
@@ -3016,103 +2969,4 @@ setTimeout(function() {
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
 console.log('💳 Payment System: ' + (isPaymentRequired() ? '🔒 ON' : '🔓 OFF'));
-// ============================================
-// EMAILJS CONFIG - FULLY CONFIGURED
-// ============================================
-
-var EMAILJS_CONFIG = {
-    serviceID: 'service_hw35xfu',
-    publicKey: 'vc371wcNfQy56zlH8',
-    otpTemplateID: 'template_qycsjak',
-    resetTemplateID: 'template_0787ox7'
-};
-
-// ============ LOAD EMAILJS ============
-function loadEmailJS(callback) {
-    if (typeof emailjs !== 'undefined') {
-        callback();
-        return;
-    }
-    
-    var script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    document.head.appendChild(script);
-    
-    script.onload = function() {
-        emailjs.init(EMAILJS_CONFIG.publicKey);
-        callback();
-    };
-    
-    script.onerror = function() {
-        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
-        callback();
-    };
-}
-
-// ============ SEND OTP EMAIL ============
-function sendOTPEmail(userEmail, userName, code) {
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('📱 Your code: ' + code, 'info');
-            return;
-        }
-        
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            code: code,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        
-        emailjs.send(
-            EMAILJS_CONFIG.serviceID,
-            EMAILJS_CONFIG.otpTemplateID,
-            templateParams
-        ).then(
-            function(response) {
-                console.log('✅ OTP email sent!', response.status);
-                showToast('📧 Verification code sent to your email!', 'success');
-            },
-            function(error) {
-                console.log('❌ OTP email failed:', error);
-                showToast('📱 Your code: ' + code, 'info');
-            }
-        );
-    });
-}
-
-// ============ SEND PASSWORD RESET EMAIL ============
-function sendPasswordResetEmail(userEmail, userName, resetCode) {
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('⚠️ Email service unavailable. Please contact support.', 'error');
-            return;
-        }
-        
-        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
-        
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            reset_link: resetLink,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        
-        emailjs.send(
-            EMAILJS_CONFIG.serviceID,
-            EMAILJS_CONFIG.resetTemplateID,
-            templateParams
-        ).then(
-            function(response) {
-                console.log('✅ Password reset email sent!', response.status);
-                showToast('📧 Password reset link sent to your email!', 'success');
-            },
-            function(error) {
-                console.log('❌ Reset email failed:', error);
-                showToast('⚠️ Please contact support for password reset', 'error');
-            }
-        );
-    });
-}
+console.log('📧 EmailJS: Configured and ready!');
