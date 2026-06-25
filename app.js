@@ -13,7 +13,36 @@ var loginLocked = false;
 var loginLockTime = null;
 var pendingVerificationPhone = null;
 var pendingVerificationCode = null;
+// ============================================
+// SECURITY INITIALIZATION
+// ============================================
 
+// Override getData and setData to use encryption
+var originalGetData = getData;
+var originalSetData = setData;
+
+getData = function(key) {
+    var data = localStorage.getItem(key);
+    if (!data) return [];
+    try {
+        var decrypted = secureDecrypt(data);
+        if (Array.isArray(decrypted)) {
+            return decrypted;
+        }
+        return JSON.parse(decrypted);
+    } catch(e) {
+        return originalGetData(key);
+    }
+};
+
+setData = function(key, data) {
+    try {
+        var encrypted = secureEncrypt(data);
+        localStorage.setItem(key, encrypted);
+    } catch(e) {
+        originalSetData(key, data);
+    }
+};
 // ============ ADMIN SYSTEM ============
 var ADMIN_PHONES = ['0703428192', '0711991467'];
 
