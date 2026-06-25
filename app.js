@@ -1605,11 +1605,18 @@ function acceptGig(id) {
     setLogs(logs);
 
     showToast('✅ Gig accepted! Chat with ' + gig.client, 'success');
-    openChat(id);
+    
+    document.getElementById('chatGigId').value = id;
+    var chatPartner = gig.client === currentUser.name ? gig.worker : gig.client;
+    document.getElementById('chatPartner').textContent = '💬 Chat: ' + gig.title + ' — ' + chatPartner;
+    showScreen('chat');
+    loadChatMessages(id);
 }
 
 // ============ CHAT ============
 function openChat(gigId) {
+    console.log('💬 Opening chat for gig:', gigId);
+    
     var gigs = getGigs();
     var gig = null;
     for (var i = 0; i < gigs.length; i++) {
@@ -1625,7 +1632,8 @@ function openChat(gigId) {
     }
 
     document.getElementById('chatGigId').value = gigId;
-    document.getElementById('chatPartner').textContent = '💬 Chat: ' + gig.title + ' — ' + (gig.client === currentUser.name ? gig.worker : gig.client);
+    var chatPartner = gig.client === currentUser.name ? gig.worker : gig.client;
+    document.getElementById('chatPartner').textContent = '💬 Chat: ' + gig.title + ' — ' + chatPartner;
     showScreen('chat');
     loadChatMessages(gigId);
 }
@@ -1691,41 +1699,103 @@ function sendMessage(e) {
 }
 
 function shareLiveLocation() {
-    if (!navigator.geolocation) {
-        showToast('GPS not supported.', 'error');
+    console.log('📍 Share location called');
+    
+    if (!currentUser) {
+        showToast('Please login first.', 'error');
         return;
     }
 
-    showToast('📍 Sharing location...', 'info');
+    if (!navigator.geolocation) {
+        showToast('❌ GPS not supported on this device.', 'error');
+        if (confirm('GPS not supported. Open Google Maps to share location manually?')) {
+            window.open('https://www.google.com/maps', '_blank');
+        }
+        return;
+    }
+
+    showToast('📍 Getting your location...', 'info');
+    
     navigator.geolocation.getCurrentPosition(
         function(pos) {
+            console.log('📍 Location found:', pos.coords.latitude, pos.coords.longitude);
+            
             var lat = pos.coords.latitude;
             var lon = pos.coords.longitude;
-            var url = 'https://maps.google.com/?q=' + lat + ',' + lon;
-
-            var logs = getLogs();
+            var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+            
             var gigId = document.getElementById('chatGigId').value;
+            console.log('📋 Gig ID:', gigId);
+            
+            var logs = getLogs();
             logs.push({
                 type: 'CHAT_MESSAGE',
                 gigId: gigId,
                 sender: currentUser.name,
                 text: '📍 My location: ' + url,
-                time: new Date().toISOString()
+                time: new Date().toISOString(),
+                isLocation: true,
+                lat: lat,
+                lon: lon
             });
             setLogs(logs);
-
-            window.open(url, '_blank');
+            
             loadChatMessages(gigId);
-            showToast('✅ Location shared!', 'success');
+            window.open(url, '_blank');
+            showToast('✅ Location shared successfully!', 'success');
+            
+            var users = getUsers();
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].phone === currentUser.phone) {
+                    users[i].gpsLat = lat;
+                    users[i].gpsLon = lon;
+                    users[i].gpsUpdatedAt = new Date().toISOString();
+                    break;
+                }
+            }
+            setUsers(users);
+            currentUser.gpsLat = lat;
+            currentUser.gpsLon = lon;
+            localStorage.setItem('gkode_currentUser', JSON.stringify(currentUser));
         },
-        function() {
-            showToast('❌ Enable GPS.', 'error');
+        function(err) {
+            console.error('❌ GPS Error:', err);
+            var errorMsg = '❌ Could not get location. ';
+            switch(err.code) {
+                case 1: errorMsg += 'Please enable GPS in browser settings.'; break;
+                case 2: errorMsg += 'GPS signal unavailable. Try going outside.'; break;
+                case 3: errorMsg += 'GPS timed out. Please try again.'; break;
+                default: errorMsg += 'Error: ' + err.message;
+            }
+            showToast(errorMsg, 'error');
+            
+            if (confirm('❌ Could not get location.\n\nOpen Google Maps to share manually?')) {
+                window.open('https://www.google.com/maps', '_blank');
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
         }
     );
 }
-
 function navigateToClient() {
+    console.log('🧭 Navigate to client called');
+    
+    if (!currentUser) {
+        showToast('Please login first.', 'error');
+        return;
+    }
+
     var gigId = document.getElementById('chatGigId').value;
+    console.log('📋 Gig ID for navigation:', gigId);
+    
+    if (!gigId) {
+        showToast('No active gig found. Please accept a gig first.', 'error');
+        return;
+    }
+
     var gigs = getGigs();
     var gig = null;
     for (var i = 0; i < gigs.length; i++) {
@@ -1740,39 +1810,95 @@ function navigateToClient() {
         return;
     }
 
-    var lat = gig.clientGPSLat;
-    var lon = gig.clientGPSLon;
+    console.log('📋 Gig found:', gig.title);
 
-    if (!lat || !lon) {
+    var lat = null;
+    var lon = null;
+    var clientName = gig.client;
+    var clientPhone = gig.clientPhone;
+
+    if (gig.clientGPSLat && gig.clientGPSLon) {
+        lat = gig.clientGPSLat;
+        lon = gig.clientGPSLon;
+        console.log('📍 Found client location in gig data');
+    } else {
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
-            if (users[i].name === gig.client || users[i].phone === gig.clientPhone) {
-                lat = users[i].gpsLat;
-                lon = users[i].gpsLon;
+            if (users[i].name === clientName || users[i].phone === clientPhone) {
+                if (users[i].gpsLat && users[i].gpsLon) {
+                    lat = users[i].gpsLat;
+                    lon = users[i].gpsLon;
+                    console.log('📍 Found client location in user data');
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!lat || !lon) {
+        var logs = getLogs();
+        for (var i = logs.length - 1; i >= 0; i--) {
+            if (logs[i].gigId === gigId && logs[i].isLocation && logs[i].sender === clientName) {
+                lat = logs[i].lat;
+                lon = logs[i].lon;
+                console.log('📍 Found client location in chat history');
                 break;
             }
         }
     }
 
     if (!lat || !lon) {
-        showToast('Client location not available. Call: ' + gig.clientPhone, 'warning');
+        showToast('❌ Client location not available.', 'error');
+        var callClient = confirm('Client location not available.\n\nDo you want to call ' + clientName + '?');
+        if (callClient && clientPhone) {
+            window.location.href = 'tel:' + clientPhone;
+        }
         return;
     }
+
+    showToast('🧭 Getting directions to ' + clientName + '...', 'info');
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                var url = 'https://www.google.com/maps/dir/?api=1&origin=' + pos.coords.latitude + ',' + pos.coords.longitude + '&destination=' + lat + ',' + lon + '&travelmode=driving';
-                window.open(url, '_blank');
+                console.log('📍 Current location found for directions');
+                openDirections(pos.coords.latitude, pos.coords.longitude, lat, lon, clientName);
             },
-            function() {
-                var url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
-                window.open(url, '_blank');
-            }
+            function(err) {
+                console.log('📍 Using client location only (no current location)');
+                openDirections(null, null, lat, lon, clientName);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     } else {
-        var url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
-        window.open(url, '_blank');
+        openDirections(null, null, lat, lon, clientName);
+    }
+}
+
+function openDirections(fromLat, fromLon, toLat, toLon, clientName) {
+    var url;
+    var clientAddress = 'https://www.google.com/maps?q=' + toLat + ',' + toLon;
+    
+    if (fromLat && fromLon) {
+        url = 'https://www.google.com/maps/dir/?api=1&origin=' + fromLat + ',' + fromLon + '&destination=' + toLat + ',' + toLon + '&travelmode=driving';
+        var msg = '🧭 DIRECTIONS TO ' + clientName.toUpperCase() + '\n\n' +
+                  '📍 From: Your current location\n' +
+                  '📍 To: Client\'s location\n\n' +
+                  'Tap OK to open Google Maps for turn-by-turn directions.';
+        if (confirm(msg)) {
+            window.open(url, '_blank');
+            showToast('✅ Directions opened!', 'success');
+        }
+    } else {
+        var msg = '📍 CLIENT LOCATION\n\n' +
+                  '📍 ' + clientName + ' is at:\n' +
+                  'Latitude: ' + toLat.toFixed(6) + '\n' +
+                  'Longitude: ' + toLon.toFixed(6) + '\n\n' +
+                  'Tap OK to open in Google Maps.';
+        if (confirm(msg)) {
+            window.open(clientAddress, '_blank');
+            showToast('📍 Client location opened.', 'success');
+        }
     }
 }
 

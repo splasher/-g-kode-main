@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>G-KODE — Kenya Helping Kenya</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="security.js"></script>
-</head>
+
 <body>
 
     <!-- ===== BACKGROUND WRAPPER ===== -->
     <div id="bgWrapper" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed;animation:bgRotate 360s infinite;"></div>
     <div id="bgOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.82);z-index:-1;"></div>
 
-    <!-- ===== TOAST CONTAINER ===== -->
-    <div id="toast-container"></div>
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>G-KODE — Kenya Helping Kenya</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYrHHuLii7iM9_l3KQ8fvzKj9VnVChvAg&libraries=places"></script>
+    <script src="security.js"></script>
+</head>
+<div id="toast-container"></div>
 
     <!-- ===== EMERGENCY FLOAT ===== -->
     <button class="emergency-float" onclick="emergencyCall()" aria-label="Emergency">🚨</button>
@@ -180,22 +181,27 @@
         </form>
     </div>
 
-    <!-- ===== CHAT SCREEN ===== -->
-    <div id="chat" class="screen">
-        <h2>💬 Chat</h2>
-        <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
-        <div id="chatMessages" class="chat-messages"></div>
-        <input type="hidden" id="chatGigId" />
-        <form id="chatForm" onsubmit="sendMessage(event)">
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="chatInput" placeholder="Type your message..." required style="flex:1;" />
-                <button type="submit" class="btn green" style="width:auto; padding:14px 20px;">SEND</button>
-            </div>
-        </form>
-        <button type="button" class="btn outline" onclick="shareLiveLocation()">📍 SHARE MY LIVE LOCATION</button>
-        <button type="button" class="btn green" onclick="navigateToClient()">🧭 NAVIGATE TO CLIENT</button>
-        <button type="button" class="btn outline" onclick="showScreen('home')">BACK TO HOME</button>
+<!-- ===== CHAT SCREEN ===== -->
+<div id="chat" class="screen">
+    <h2>💬 Chat</h2>
+    <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
+    <div id="chatMessages" class="chat-messages"></div>
+    <input type="hidden" id="chatGigId" />
+    
+    <form id="chatForm" onsubmit="sendMessage(event)">
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="chatInput" placeholder="Type your message..." required style="flex:1;" />
+            <button type="submit" class="btn green" style="width:auto; padding:14px 20px;">SEND</button>
+        </div>
+    </form>
+    
+    <div style="display:flex; gap:5px; margin-top:5px;">
+        <button type="button" class="btn outline" onclick="shareLiveLocation()" style="flex:1; font-size:13px; padding:10px;">📍 SHARE LOCATION</button>
+        <button type="button" class="btn green" onclick="navigateToClient()" style="flex:1; font-size:13px; padding:10px;">🧭 NAVIGATE</button>
     </div>
+    
+    <button type="button" class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
+</div>
 
     <!-- ===== REVIEW SCREEN ===== -->
     <div id="review" class="screen">
