@@ -5,141 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>G-KODE — Kenya Helping Kenya</title>
     <link rel="stylesheet" href="style.css" />
-    <!-- Google Maps API (your key) -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYrHHuLii7iM9_l3KQ8fvzKj9VnVChvAg&libraries=places">
-    </script>
-    <!-- Security module (must load first) -->
-    <script src="security.js"></script>
 </head>
 <body>
 
-    <!-- ===== BACKGROUND WRAPPER ===== -->
-    <div id="bgWrapper" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed;animation:bgRotate 360s infinite;"></div>
-    <div id="bgOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.82);z-index:-1;"></div>
-
-    <!-- ===== TOAST CONTAINER ===== -->
+    <!-- ===== TOAST ===== -->
     <div id="toast-container"></div>
 
-    <!-- ===== EMERGENCY FLOAT ===== -->
-    <button class="emergency-float" onclick="emergencyCall()" aria-label="Emergency">🚨</button>
+    <!-- ===== EMERGENCY ===== -->
+    <button class="emergency-float" onclick="emergencyCall()">🚨</button>
 
-    <!-- ===== WELCOME SCREEN ===== -->
+    <!-- ===== WELCOME ===== -->
     <div id="welcome" class="screen active">
-        <img src="https://i.postimg.cc/zfQY4nKc/GKODE-2.png" alt="G-KODE" class="logo"
-        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%2280%22%3E%3Crect width=%22180%22 height=%2280%22 fill=%22%23006400%22/%3E%3Ctext x=%2290%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23FFD700%22 font-size=%2230%22 font-family=%22Arial%22 font-weight=%22bold%22%3EG-KODE%3C/text%3E%3C/svg%3E'" />
-        <p class="tagline">Skill is Currency. Trust is the Bank.<br />Community is the Network.</p>
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='80'%3E%3Crect width='180' height='80' fill='%23006400'/%3E%3Ctext x='90' y='45' text-anchor='middle' fill='%23FFD700' font-size='30' font-family='Arial' font-weight='bold'%3EG-KODE%3C/text%3E%3C/svg%3E" style="width:180px;display:block;margin:30px auto 10px;">
+        <p class="tagline">Skill is Currency. Trust is the Bank.<br>Community is the Network.</p>
         <button class="btn green" onclick="showScreen('register')">REGISTER</button>
         <button class="btn outline" onclick="showScreen('login')">LOGIN</button>
         <p class="footer-text">Kenya Helping Kenya.</p>
-        <p style="text-align:center; margin-top:20px; font-size:12px;">
-            <a href="bill-of-rights.html" style="color:#006400;">🇰🇪 Your Rights Under the Kenyan Constitution</a>
-        </p>
-        <p style="text-align:center; margin-top:10px; font-size:11px;">
-            <a href="kabambe.html" style="color:#006400;">📱 Kabambe Version (No Smartphone Needed)</a>
-        </p>
     </div>
 
-    <!-- ===== REGISTER SCREEN ===== -->
+    <!-- ===== REGISTER ===== -->
     <div id="register" class="screen">
         <h2>Create Account</h2>
         <form id="registerForm" onsubmit="register(event)">
-            <input type="text" id="regName" placeholder="Full Name (First & Last) *" required />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Must match the name on your National ID</small>
-
+            <input type="text" id="regName" placeholder="Full Name *" required />
             <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
-            <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small>
-
+            <input type="email" id="regEmail" placeholder="Email Address *" required />
             <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
-
             <div style="position:relative;">
-                <input type="password" id="regPassword" placeholder="Password (8+ chars, mix letters & numbers) *" required minlength="8" style="padding-right:50px;" />
-                <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+                <input type="password" id="regPassword" placeholder="Password (8+ chars) *" required minlength="8" style="padding-right:50px;" />
+                <span onclick="togglePassword('regPassword', this)" style="position:absolute;right:15px;top:14px;cursor:pointer;font-size:20px;">👁️</span>
             </div>
-            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 8+ characters with both letters and numbers</small>
-
-            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
-
+            <input type="text" id="regLocation" placeholder="Location *" required />
+            
             <select id="regProfession" required onchange="checkProfession()">
-                <option value="">-- Select Your Profession * --</option>
+                <option value="">-- Select Profession * --</option>
             </select>
             <div id="otherProfessionBox" style="display:none;">
-                <input type="text" id="regOtherProfession" placeholder="Please specify your profession *" />
-                <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
+                <input type="text" id="regOtherProfession" placeholder="Specify profession *" />
             </div>
-
-            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
-
-            <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo (Clear face photo) *</label>
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="file" id="regPhoto" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
-                <button type="button" onclick="capturePhoto('regPhoto')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Camera</button>
+            
+            <input type="text" id="regSkills" placeholder="Additional skills (optional)" />
+            
+            <!-- Profile Photo with Camera -->
+            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
+            <div style="display:flex;gap:5px;margin-bottom:10px;">
+                <input type="file" id="regPhoto" accept="image/*" style="flex:1;padding:10px;" />
+                <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸 Camera</button>
             </div>
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📸 Take photo or choose from gallery. Minimum 200x200 pixels.</small>
-
-            <!-- ===== ID SCAN WITH CAMERA ===== -->
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="file" id="regIDScan" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
-                <button type="button" onclick="capturePhoto('regIDScan')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Scan ID</button>
+            
+            <!-- ID Scan with Camera -->
+            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
+            <div style="display:flex;gap:5px;margin-bottom:10px;">
+                <input type="file" id="regIDScan" accept="image/*" style="flex:1;padding:10px;" />
+                <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸 Scan ID</button>
             </div>
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">🆔 Take a photo of your ID card or upload from gallery.</small>
-
+            
             <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
             <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
         </form>
     </div>
 
-    <!-- ===== LOGIN SCREEN ===== -->
+    <!-- ===== LOGIN ===== -->
     <div id="login" class="screen">
         <h2>Login</h2>
         <form id="loginForm" onsubmit="login(event)">
             <input type="tel" id="loginPhone" placeholder="Phone Number" required />
             <div style="position:relative;">
                 <input type="password" id="loginPassword" placeholder="Password" required style="padding-right:50px;" />
-                <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+                <span onclick="togglePassword('loginPassword', this)" style="position:absolute;right:15px;top:14px;cursor:pointer;font-size:20px;">👁️</span>
             </div>
-            <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:14px; margin-bottom:10px;">Forgot Password?</button>
+            <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none;color:#cc0000;border:none;font-size:14px;margin-bottom:10px;">Forgot Password?</button>
             <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
             <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-            <button type="button" class="btn outline" onclick="startFresh()" style="background:none; color:#cc0000; border:1px solid #cc0000; font-size:12px; margin-top:5px;">🆕 New User on Shared Phone? Tap Here</button>
+            <button type="button" class="btn outline" onclick="startFresh()" style="background:none;color:#cc0000;border:1px solid #cc0000;font-size:12px;margin-top:5px;">🆕 New User on Shared Phone?</button>
         </form>
     </div>
 
-    <!-- ===== RESET PASSWORD SCREEN ===== -->
+    <!-- ===== RESET PASSWORD ===== -->
     <div id="resetPassword" class="screen">
         <h2>🔑 Reset Password</h2>
-        <p style="font-size:14px; color:#666; margin-bottom:15px;">Forgot your password? Verify your identity to reset it.</p>
-        <form id="resetForm" onsubmit="verifyIdentity(event)">
-            <input type="tel" id="resetPhone" placeholder="Registered Phone Number *" required />
-            <input type="text" id="resetID" placeholder="National ID Number *" required />
-            <input type="text" id="resetProfession" placeholder="Your Registered Profession *" required />
-            <input type="text" id="resetLocation" placeholder="Your Registered Location *" required />
-            <small style="color:#cc0000; display:block; margin-bottom:10px;">⚠️ All fields must match your registration details exactly.</small>
-            <button type="submit" class="btn green" id="verifyBtn">VERIFY IDENTITY</button>
-        </form>
+        <p style="font-size:14px;color:#666;margin-bottom:15px;">Verify your identity to reset your password.</p>
+        <input type="tel" id="resetPhone" placeholder="Phone Number *" />
+        <input type="text" id="resetID" placeholder="National ID *" />
+        <input type="text" id="resetProfession" placeholder="Profession *" />
+        <input type="text" id="resetLocation" placeholder="Location *" />
+        <button class="btn green" onclick="verifyIdentity()">VERIFY IDENTITY</button>
         <div id="newPasswordSection" style="display:none;">
             <hr style="margin:15px 0;" />
-            <p style="color:#006400; font-weight:bold;">✅ Identity Verified</p>
-            <div style="position:relative;">
-                <input type="password" id="newPassword" placeholder="New Password (8+ chars, letters & numbers) *" required minlength="8" style="padding-right:50px;" />
-                <span onclick="togglePassword('newPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-            </div>
-            <div style="position:relative;">
-                <input type="password" id="confirmPassword" placeholder="Confirm New Password *" required style="padding-right:50px;" />
-                <span onclick="togglePassword('confirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-            </div>
-            <button type="button" class="btn green" onclick="resetPassword()">RESET PASSWORD</button>
+            <p style="color:#006400;font-weight:bold;">✅ Identity Verified</p>
+            <input type="password" id="newPassword" placeholder="New Password *" minlength="8" />
+            <input type="password" id="confirmPassword" placeholder="Confirm Password *" />
+            <button class="btn green" onclick="resetPassword()">RESET PASSWORD</button>
         </div>
-        <button type="button" class="btn outline" onclick="showScreen('login')">BACK TO LOGIN</button>
+        <button class="btn outline" onclick="showScreen('login')">BACK TO LOGIN</button>
     </div>
 
-    <!-- ===== PAYMENT SCREEN ===== -->
+    <!-- ===== PAYMENT ===== -->
     <div id="payment" class="screen">
         <h2>💳 Payment</h2>
-        <div style="background:#e8f5e9; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px;">
+        <div style="background:#e8f5e9;padding:15px;border-radius:10px;text-align:center;margin-bottom:15px;">
             <h3>ONE-TIME FEE: KSH 300</h3>
             <p>For Life. No Subscriptions. No Hidden Charges.</p>
         </div>
@@ -151,42 +115,31 @@
         <button class="btn outline" onclick="showScreen('home')">PAY LATER</button>
     </div>
 
-    <!-- ===== HOME SCREEN ===== -->
+    <!-- ===== HOME ===== -->
     <div id="home" class="screen">
         <h2>📍 Gigs Near You</h2>
-
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="text" id="searchGigs" placeholder="🔍 Search gigs..." style="flex:1; margin-bottom:0;" oninput="loadGigs()" />
-            <select id="filterSkill" onchange="loadGigs()" style="flex:1; margin-bottom:0;">
-                <option value="">All Skills</option>
-            </select>
-        </div>
-
         <div class="tab-container">
-            <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN GIGS</button>
+            <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN</button>
             <button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button>
         </div>
         <div id="gigsList">
-            <div class="text-center" style="padding:40px 0;">
-                <div class="loader"></div>
-                <p style="margin-top:10px; color:#666;">Loading gigs...</p>
-            </div>
+            <div style="padding:40px 0;text-align:center;color:#666;">Loading gigs...</div>
         </div>
         <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
         <button class="btn outline" onclick="logout()">LOGOUT</button>
     </div>
 
-    <!-- ===== POST GIG SCREEN ===== -->
+    <!-- ===== POST GIG ===== -->
     <div id="postGig" class="screen">
         <h2>Post a Gig</h2>
         <form id="postGigForm" onsubmit="postGig(event)">
-            <input type="text" id="gigTitle" placeholder="Title (e.g., Leaking Sink)" required />
-            <input type="text" id="gigSkill" placeholder="Skill Needed (e.g., Plumbing)" required />
-            <input type="text" id="gigLocation" placeholder="Location" required />
+            <input type="text" id="gigTitle" placeholder="Title *" required />
+            <input type="text" id="gigSkill" placeholder="Skill Needed *" required />
+            <input type="text" id="gigLocation" placeholder="Location *" required />
             <button type="button" class="btn outline" onclick="captureGigLocation()">📍 CAPTURE MY LOCATION</button>
             <input type="hidden" id="gigGPSLat" />
             <input type="hidden" id="gigGPSLon" />
-            <small id="gigLocationStatus" style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">No location captured yet</small>
+            <small id="gigLocationStatus" style="color:#666;display:block;margin-top:-10px;margin-bottom:10px;">No location captured</small>
             <select id="gigUrgency" required>
                 <option value="Normal">Normal</option>
                 <option value="Urgent">Urgent</option>
@@ -194,32 +147,30 @@
             </select>
             <input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)" required min="1" />
             <input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)" required min="1" />
-            <textarea id="gigDesc" placeholder="Describe the job..." required></textarea>
+            <textarea id="gigDesc" placeholder="Description..." required></textarea>
             <button type="submit" class="btn green" id="postGigBtn">POST GIG</button>
             <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
         </form>
     </div>
 
-    <!-- ===== CHAT SCREEN ===== -->
+    <!-- ===== CHAT ===== -->
     <div id="chat" class="screen">
         <h2>💬 Chat</h2>
-        <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
+        <p id="chatPartner" style="color:#006400;font-weight:bold;margin-bottom:10px;"></p>
         <div id="chatMessages" class="chat-messages"></div>
         <input type="hidden" id="chatGigId" />
         <form id="chatForm" onsubmit="sendMessage(event)">
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="chatInput" placeholder="Type your message..." required style="flex:1;" />
-                <button type="submit" class="btn green" style="width:auto; padding:14px 20px;">SEND</button>
+            <div style="display:flex;gap:5px;">
+                <input type="text" id="chatInput" placeholder="Type message..." required style="flex:1;" />
+                <button type="submit" class="btn green" style="width:auto;padding:14px 20px;">SEND</button>
             </div>
         </form>
-        <div style="display:flex; gap:5px; margin-top:5px;">
-            <button type="button" class="btn outline" onclick="shareLiveLocation()" style="flex:1; font-size:13px; padding:10px;">📍 SHARE LOCATION</button>
-            <button type="button" class="btn green" onclick="navigateToClient()" style="flex:1; font-size:13px; padding:10px;">🧭 NAVIGATE</button>
-        </div>
-        <button type="button" class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
+        <button type="button" class="btn outline" onclick="shareLiveLocation()">📍 SHARE LOCATION</button>
+        <button type="button" class="btn green" onclick="navigateToClient()">🧭 NAVIGATE</button>
+        <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
-    <!-- ===== REVIEW SCREEN ===== -->
+    <!-- ===== REVIEW ===== -->
     <div id="review" class="screen">
         <h2>⭐ Rate & Review</h2>
         <select id="reviewRating">
@@ -234,10 +185,10 @@
         <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
-    <!-- ===== COMPLAINT SCREEN ===== -->
+    <!-- ===== COMPLAINT ===== -->
     <div id="complaint" class="screen">
         <h2>🚩 File a Complaint</h2>
-        <p style="font-size:14px; color:#666;">This adds a strike to the user's account. 6 strikes = disqualification.</p>
+        <p style="font-size:14px;color:#666;">This adds a strike to the user's account. 6 strikes = disqualification.</p>
         <input type="hidden" id="complaintUserId" />
         <select id="complaintReason">
             <option value="">Select reason...</option>
@@ -253,90 +204,69 @@
             <option value="Other">Other</option>
         </select>
         <textarea id="complaintDetails" placeholder="Describe what happened in detail..."></textarea>
-        <label style="font-size:12px; color:#cc0000;">⚠️ False complaints will result in a strike against YOU.</label>
+        <label style="font-size:12px;color:#cc0000;">⚠️ False complaints will result in a strike against YOU.</label>
         <button class="btn green" onclick="submitComplaint()">SUBMIT COMPLAINT</button>
         <button class="btn outline" onclick="showScreen('home')">CANCEL</button>
     </div>
 
-    <!-- ===== PROFILE SCREEN ===== -->
+    <!-- ===== PROFILE ===== -->
     <div id="profile" class="screen">
         <h2>👤 My Profile</h2>
         <div class="text-center">
-            <img id="profilePhoto" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23006400'/%3E%3Ctext x='50' y='55' text-anchor='middle' fill='%23FFD700' font-size='30' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E" style="width:100px; height:100px; border-radius:50%; margin-bottom:10px; object-fit:cover;" alt="Profile" />
+            <img id="profilePhoto" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23006400'/%3E%3Ctext x='50' y='55' text-anchor='middle' fill='%23FFD700' font-size='30' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E" style="width:100px;height:100px;border-radius:50%;margin-bottom:10px;object-fit:cover;">
             <h3 id="profileName"></h3>
             <p id="profilePhone"></p>
             <p id="profileLocation"></p>
             <p id="profileProfession"></p>
             <p id="profileSkills"></p>
             <p id="profileStatus"></p>
-            <p id="profileRating"></p>
-            <hr style="margin:20px 0;" />
+            <hr style="margin:20px 0;">
             <h3 style="color:#006400;">My Gigs</h3>
             <div id="myGigsList"></div>
-            <hr style="margin:20px 0;" />
-            <button class="btn outline" onclick="showPaymentScreen()">💳 Pay Ksh 300 (One-Time)</button>
+            <hr style="margin:20px 0;">
+            <button class="btn outline" onclick="showPaymentScreen()">💳 Pay Ksh 300</button>
             <button class="btn outline" onclick="showScreen('companyRegister')">🏢 Register Business</button>
             <button class="btn outline" onclick="showScreen('companyDashboard')">📊 My Business</button>
             <button class="btn outline" onclick="showScreen('marketplace')">🛒 Marketplace</button>
-            <button class="btn outline" onclick="showScreen('terms')">📄 Terms of Use</button>
-            <button class="btn outline" onclick="showScreen('privacy')">🔒 Privacy Policy</button>
-            <button class="btn outline" onclick="showScreen('guide')">📖 How It Works</button>
-
-            <!-- ===== LEGAL SECTION ===== -->
-            <hr style="margin:20px 0;" />
+            
+            <hr style="margin:20px 0;">
             <h3 style="color:#006400;">⚖️ Legal</h3>
             <button class="btn outline" onclick="showLegalNotice('privacy')" style="font-size:12px;">🔒 Privacy Notice</button>
-            <button class="btn outline" onclick="showLegalNotice('terms')" style="font-size:12px;">📜 Terms of Service</button>
+            <button class="btn outline" onclick="showLegalNotice('terms')" style="font-size:12px;">📜 Terms</button>
             <button class="btn outline" onclick="showLegalNotice('disclaimer')" style="font-size:12px;">⚠️ Disclaimer</button>
-            <button class="btn outline" onclick="exportUserData()" style="font-size:12px;">📤 Export My Data</button>
-            <button class="btn red" onclick="deleteAccount()" style="font-size:12px;">🗑️ Delete My Account</button>
-
-            <!-- ===== ADMIN ACCESS ===== -->
-            <div id="adminAccessBtn" style="display:none; margin-top:10px;">
-                <hr style="margin:10px 0;" />
-                <button class="btn outline" onclick="window.open('admin.html','_blank')" style="font-size:14px; background:#FFD700; color:#006400; border:2px solid #FFD700; font-weight:bold; padding:12px;">
-                    🔐 Admin Panel
-                </button>
+            <button class="btn outline" onclick="exportUserData()" style="font-size:12px;">📤 Export Data</button>
+            <button class="btn red" onclick="deleteAccount()" style="font-size:12px;">🗑️ Delete Account</button>
+            
+            <div id="adminAccessBtn" style="display:none;margin-top:10px;">
+                <button class="btn outline" onclick="openAdminPanel()" style="background:#FFD700;color:#006400;border:2px solid #FFD700;font-weight:bold;">🔐 Admin Panel</button>
             </div>
-
-            <button type="button" class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
+            
+            <button class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
         </div>
     </div>
 
-    <!-- ===== COMPANY REGISTER SCREEN ===== -->
+    <!-- ===== COMPANY REGISTER ===== -->
     <div id="companyRegister" class="screen">
         <h2>🏢 Register Business</h2>
-        <div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px; border-left:4px solid #ff9800;">
-            <p><strong>💳 Registration Fee:</strong> Ksh 500 (One-time)</p>
-            <p><strong>📜</strong> Business must be legally registered in Kenya</p>
-            <p><strong>⚠️</strong> You must accept the Business Agreement to proceed</p>
-        </div>
         <form id="companyForm" onsubmit="registerCompany(event)">
             <input type="text" id="compName" placeholder="Business Name *" required />
             <select id="compType" required>
-                <option value="">-- Business Type * --</option>
+                <option value="">-- Business Type --</option>
                 <option value="School">School</option>
-                <option value="Church">Church / Religious</option>
-                <option value="Government">Government Office</option>
-                <option value="Construction">Construction Project</option>
-                <option value="Hardware">Hardware Shop</option>
-                <option value="Beauty Supply">Beauty Supply Shop</option>
-                <option value="Food Supply">Food / Catering Supply</option>
-                <option value="Electronics">Electronics Shop</option>
-                <option value="Agrovet">Agrovet / Farm Supply</option>
-                <option value="Auto Parts">Auto Parts / Garage</option>
-                <option value="Retail">Retail Shop</option>
-                <option value="Wholesale">Wholesale Supplier</option>
-                <option value="Hospital">Hospital / Clinic</option>
-                <option value="Hotel">Hotel / Restaurant</option>
-                <option value="Other">Other Business</option>
+                <option value="Church">Church</option>
+                <option value="Government">Government</option>
+                <option value="Hardware">Hardware</option>
+                <option value="Retail">Retail</option>
+                <option value="Hospital">Hospital</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Other">Other</option>
             </select>
-            <input type="text" id="compRegNo" placeholder="Business Registration No. (Required)" required />
-            <input type="text" id="compLocation" placeholder="Business Location *" required />
-            <input type="tel" id="compPhone" placeholder="Business Phone *" required />
-            <input type="email" id="compEmail" placeholder="Business Email (Optional)" />
-            <textarea id="compDesc" placeholder="Describe your business..."></textarea>
-            <button type="submit" class="btn green" id="compRegisterBtn">REGISTER BUSINESS</button>
+            <input type="text" id="compRegNo" placeholder="Registration No *" required />
+            <input type="text" id="compLocation" placeholder="Location *" required />
+            <input type="tel" id="compPhone" placeholder="Phone *" required />
+            <input type="email" id="compEmail" placeholder="Email" />
+            <textarea id="compDesc" placeholder="Description"></textarea>
+            <button type="submit" class="btn green" id="compRegisterBtn">REGISTER</button>
             <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
         </form>
     </div>
@@ -344,7 +274,7 @@
     <!-- ===== COMPANY DASHBOARD ===== -->
     <div id="companyDashboard" class="screen">
         <h2>🏢 My Business</h2>
-        <div id="compInfo" style="background:#e8f5e9; padding:15px; border-radius:10px; margin-bottom:15px;"></div>
+        <div id="compInfo" style="background:#e8f5e9;padding:15px;border-radius:10px;margin-bottom:15px;"></div>
         <div class="tab-container">
             <button onclick="showCompTab('products')" id="tabProducts" class="active">📦 Products</button>
             <button onclick="showCompTab('orders')" id="tabOrders">📋 Orders</button>
@@ -352,31 +282,39 @@
         </div>
         <div id="compTabContent"></div>
         <button class="btn green" onclick="showScreen('addProduct')">➕ ADD PRODUCT</button>
-        <button class="btn outline" onclick="showScreen('home')">BACK TO HOME</button>
+        <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
-    <!-- ===== ADD PRODUCT SCREEN ===== -->
+    <!-- ===== ADD PRODUCT ===== -->
     <div id="addProduct" class="screen">
         <h2>📦 Add Product</h2>
-        <div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px; border-left:4px solid #ff9800;">
-            <p><strong>💳 Listing Fee:</strong> Ksh 100 (First product only)</p>
-            <p><strong>💰 Commission:</strong> 3% on every sale</p>
-        </div>
         <form id="productForm" onsubmit="addProduct(event)">
             <input type="text" id="prodName" placeholder="Product Name *" required />
             <select id="prodCategory" required>
-                <option value="">-- Category * --</option>
+                <option value="">-- Category --</option>
+                <option value="Cement">Cement</option>
+                <option value="Pipes">Pipes</option>
+                <option value="Taps">Taps</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Paint">Paint</option>
+                <option value="Timber">Timber</option>
+                <option value="Steel">Steel</option>
+                <option value="Tiles">Tiles</option>
+                <option value="Tools">Tools</option>
+                <option value="Beauty">Beauty</option>
+                <option value="Food">Food</option>
+                <option value="Other">Other</option>
             </select>
-            <input type="text" id="prodUnit" placeholder="Unit (e.g., kg, piece, bag, litre) *" required />
-            <input type="number" id="prodPrice" placeholder="Price per unit (Ksh) *" required step="0.01" min="1" />
-            <input type="number" id="prodStock" placeholder="Quantity in stock *" required min="1" />
-            <textarea id="prodDesc" placeholder="Product description..."></textarea>
-            <button type="submit" class="btn green" id="addProductBtn">ADD PRODUCT</button>
+            <input type="text" id="prodUnit" placeholder="Unit (kg, piece, etc) *" required />
+            <input type="number" id="prodPrice" placeholder="Price (Ksh) *" required step="0.01" min="1" />
+            <input type="number" id="prodStock" placeholder="Stock *" required min="1" />
+            <textarea id="prodDesc" placeholder="Description"></textarea>
+            <button type="submit" class="btn green" id="addProductBtn">ADD</button>
             <button type="button" class="btn outline" onclick="showScreen('companyDashboard')">BACK</button>
         </form>
     </div>
 
-    <!-- ===== MARKETPLACE SCREEN ===== -->
+    <!-- ===== MARKETPLACE ===== -->
     <div id="marketplace" class="screen">
         <h2>🛒 Marketplace</h2>
         <select id="marketCategory" onchange="loadMarketplace()">
@@ -386,76 +324,49 @@
         <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
-    <!-- ===== TERMS SCREEN ===== -->
+    <!-- ===== TERMS ===== -->
     <div id="terms" class="screen">
         <h2>📄 Terms of Use</h2>
-        <div style="background:#fff; padding:15px; border-radius:10px; max-height:400px; overflow-y:auto; font-size:13px; line-height:1.6;">
-            <p><strong>1. Acceptance</strong><br />By using G-KODE, you agree to these terms.</p>
-            <p><strong>2. G-KODE is a Connector</strong><br />We connect workers and clients. We are not an employer.</p>
-            <p><strong>3. User Responsibilities</strong><br />Workers: Show up, do good work. Clients: Pay agreed amounts.</p>
-            <p><strong>4. One-Time Fee</strong><br />Ksh 300 once. For life. No subscriptions. No hidden charges.</p>
-            <p><strong>5. Escrow & Payments</strong><br />Payment held securely until work is confirmed.</p>
-            <p><strong>6. Strikes & Penalties</strong><br />6 strikes = disqualification. Re-entry: 90 days + Ksh 1,500.</p>
-            <p><strong>7. Marketplace</strong><br />3% commission on all marketplace sales. Auto-deducted.</p>
-            <p><strong>8. Prohibited Conduct</strong><br />No fraud, theft, abuse, harassment, or fake profiles.</p>
-            <p><strong>9. Limitation of Liability</strong><br />G-KODE is not liable for disputes between users.</p>
-            <p><strong>10. Governing Law</strong><br />Laws of the Republic of Kenya. Constitution of Kenya, 2010.</p>
-            <p><strong>11. Contact</strong><br />Founder: Splasher</p>
+        <div style="background:#fff;padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.6;">
+            <p><strong>1. Acceptance</strong><br>By using G-KODE, you agree to these terms.</p>
+            <p><strong>2. G-KODE is a Connector</strong><br>We connect workers and clients. We are not an employer.</p>
+            <p><strong>3. One-Time Fee</strong><br>Ksh 300 once. For life. No hidden charges.</p>
+            <p><strong>4. Strikes & Penalties</strong><br>6 strikes = disqualification.</p>
+            <p><strong>5. Governing Law</strong><br>Laws of the Republic of Kenya.</p>
         </div>
-        <button class="btn outline" onclick="showScreen('profile')" style="margin-top:10px;">BACK TO PROFILE</button>
+        <button class="btn outline" onclick="showScreen('profile')">BACK</button>
     </div>
 
-    <!-- ===== PRIVACY SCREEN ===== -->
+    <!-- ===== PRIVACY ===== -->
     <div id="privacy" class="screen">
         <h2>🔒 Privacy Policy</h2>
-        <div style="background:#fff; padding:15px; border-radius:10px; max-height:400px; overflow-y:auto; font-size:13px; line-height:1.6;">
-            <p><strong>1. Data We Collect</strong><br />Name, phone, ID, location, profession, skills, photo, ID scan, GPS location.</p>
-            <p><strong>2. What's Public</strong><br />Name, profession, skills, ratings. ID, password, and location data are NEVER public.</p>
-            <p><strong>3. Data Security</strong><br />Passwords encrypted. Data stored securely.</p>
-            <p><strong>4. Admin Access</strong><br />Only the Founder can access user ID scans, GPS logs, and activity records.</p>
-            <p><strong>5. Your Rights</strong><br />Access, correct, or delete your data anytime. Kenya Data Protection Act 2019.</p>
-            <p><strong>6. Contact</strong><br />Founder: Splasher</p>
+        <div style="background:#fff;padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.6;">
+            <p><strong>Data We Collect</strong><br>Name, phone, ID, email, location, photo, ID scan.</p>
+            <p><strong>Your Rights</strong><br>Access, correct, delete your data anytime.</p>
+            <p><strong>Protection</strong><br>Kenya Data Protection Act 2019.</p>
         </div>
-        <button class="btn outline" onclick="showScreen('profile')" style="margin-top:10px;">BACK TO PROFILE</button>
+        <button class="btn outline" onclick="showScreen('profile')">BACK</button>
     </div>
 
-    <!-- ===== GUIDE SCREEN ===== -->
+    <!-- ===== GUIDE ===== -->
     <div id="guide" class="screen">
-        <h2>📖 How G-KODE Works</h2>
-        <div style="background:#fff; padding:15px; border-radius:10px; max-height:400px; overflow-y:auto; font-size:13px; line-height:1.6;">
-            <p><strong>For Clients:</strong><br />1. Register with your details, photo, and ID.<br />2. Post a gig and optionally share your location.<br />3. A worker accepts — chat opens immediately.<br />4. Worker navigates to you using GPS directions.<br />5. Work is done. Rate each other.</p>
-            <p><strong>For Workers:</strong><br />1. Register with your profession, photo, and ID.<br />2. Browse open gigs near you.<br />3. Accept a gig — chat with the client instantly.<br />4. Tap "Navigate to Client" for GPS directions.<br />5. Do the work. Build your reputation.</p>
-            <p><strong>For Businesses:</strong><br />1. Register your business (Ksh 500).<br />2. Add products with prices (Ksh 100 first product).<br />3. Sell on the Marketplace.<br />4. 3% G-KODE fee auto-deducted.</p>
-            <p><strong>Emergency:</strong><br />Tap 🚨 anytime. Police, Fire, Ambulance on speed dial.</p>
+        <h2>📖 How It Works</h2>
+        <div style="background:#fff;padding:15px;border-radius:10px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.6;">
+            <p><strong>For Clients:</strong><br>1. Register with your details, photo, and ID.<br>2. Post a gig.<br>3. Worker accepts — chat opens.</p>
+            <p><strong>For Workers:</strong><br>1. Register with your profession and skills.<br>2. Browse open gigs.<br>3. Accept a gig — chat with client.</p>
+            <p><strong>Emergency:</strong><br>Tap 🚨 for emergency contacts.</p>
         </div>
-        <button class="btn outline" onclick="showScreen('profile')" style="margin-top:10px;">BACK TO PROFILE</button>
+        <button class="btn outline" onclick="showScreen('profile')">BACK</button>
     </div>
 
-    <!-- ===== BOTTOM NAVIGATION ===== -->
+    <!-- ===== BOTTOM NAV ===== -->
     <div id="bottomNav" class="bottom-nav hidden">
         <button onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
         <button onclick="showScreen('postGig')"><span class="icon">➕</span>Post</button>
         <button onclick="showScreen('marketplace')"><span class="icon">🛒</span>Shop</button>
-        <button onclick="showScreen('complaint')"><span class="icon">⚠️</span>Report</button>
         <button onclick="showScreen('profile')"><span class="icon">👤</span>You</button>
     </div>
 
-    <!-- ===== BACKGROUND ANIMATION ===== -->
-    <style>
-        @keyframes bgRotate {
-            0%   { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
-            20%  { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
-            25%  { background-image: url('https://images.pexels.com/photos/33610292/pexels-photo-33610292.jpeg?w=1200'); }
-            45%  { background-image: url('https://images.pexels.com/photos/33610292/pexels-photo-33610292.jpeg?w=1200'); }
-            50%  { background-image: url('https://images.pexels.com/photos/29891537/pexels-photo-29891537.jpeg?w=1200'); }
-            70%  { background-image: url('https://images.pexels.com/photos/29891537/pexels-photo-29891537.jpeg?w=1200'); }
-            75%  { background-image: url('https://images.pexels.com/photos/15483543/pexels-photo-15483543.jpeg?w=1200'); }
-            95%  { background-image: url('https://images.pexels.com/photos/15483543/pexels-photo-15483543.jpeg?w=1200'); }
-            100% { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
-        }
-    </style>
-
-    <!-- ===== LOAD THE APP ===== -->
     <script src="app.js"></script>
 </body>
 </html>

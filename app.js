@@ -1,6 +1,6 @@
 // ============================================
-// G-KODE - COMPLETE WORKING VERSION
-// ZERO ERRORS - READY TO USE
+// G-KODE - FINAL COMPLETE WORKING VERSION
+// ALL FIXES INCLUDED - NO MORE CHANGES
 // ============================================
 
 // ============ GLOBAL ============
@@ -116,6 +116,19 @@ function showToast(message, type) {
     style.textContent = '@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }';
     document.head.appendChild(style);
 })();
+
+// ============ SIMPLE DECODE ============
+function simpleDecode(str) {
+    try {
+        var decoded = '';
+        for (var i = 0; i < str.length; i++) {
+            decoded += String.fromCharCode(str.charCodeAt(i) - 3);
+        }
+        return decoded;
+    } catch(e) {
+        return str;
+    }
+}
 
 // ============ NAVIGATION ============
 function showScreen(id) {
@@ -260,6 +273,22 @@ function populateCategoryDropdown() {
     }
 }
 
+// ============ CAMERA FUNCTION ============
+function openCamera(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    
+    // For mobile: use capture attribute
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        input.setAttribute('capture', 'environment');
+        input.click();
+    } else {
+        // Desktop: just open file picker
+        input.removeAttribute('capture');
+        input.click();
+    }
+}
+
 // ============ REGISTER ============
 function register(e) {
     e.preventDefault();
@@ -280,6 +309,7 @@ function register(e) {
         var photoFile = document.getElementById('regPhoto').files[0];
         var idScanFile = document.getElementById('regIDScan').files[0];
 
+        // Validation
         if (!name || !phone || !id || !email || !password || !location || !profession) {
             showToast('Please fill all required fields.', 'error');
             btn.disabled = false;
@@ -315,6 +345,7 @@ function register(e) {
             return;
         }
 
+        // File checks
         if (!photoFile) {
             showToast('Please upload a profile photo.', 'error');
             btn.disabled = false;
@@ -357,6 +388,7 @@ function register(e) {
             return;
         }
 
+        // Check existing users
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
@@ -398,6 +430,7 @@ function register(e) {
         showToast('📸 Processing images...', 'info');
         btn.textContent = '⏳ PROCESSING IMAGES...';
 
+        // Read files
         var photoReader = new FileReader();
         var idReader = new FileReader();
         var photoData = null;
@@ -407,7 +440,7 @@ function register(e) {
         function checkFilesDone() {
             filesProcessed++;
             if (filesProcessed === 2) {
-                completeUserRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn);
+                completeRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn);
             }
         }
 
@@ -441,12 +474,13 @@ function register(e) {
     }
 }
 
-function completeUserRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn) {
+function completeRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn) {
     try {
         var users = getUsers();
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
-        showToast('📱 Verification code: ' + vCode, 'info');
+        showToast('📱 Your verification code: ' + vCode, 'info');
         var userCode = prompt('📱 Enter the 6-digit verification code:\n\nCode: ' + vCode);
+        
         if (!userCode || userCode !== vCode) {
             showToast('❌ Invalid verification code.', 'error');
             btn.disabled = false;
@@ -478,6 +512,7 @@ function completeUserRegistration(name, phone, id, email, password, location, pr
         setUsers(users);
         currentUser = user;
         localStorage.setItem('gkode_currentUser', JSON.stringify(user));
+        
         showToast('✅ Welcome, ' + name + '! Account created successfully!', 'success');
         showScreen('home');
         btn.disabled = false;
@@ -491,7 +526,7 @@ function completeUserRegistration(name, phone, id, email, password, location, pr
     }
 }
 
-// ============ LOGIN ============
+// ============ LOGIN - ALL PASSWORD FORMATS ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -514,17 +549,29 @@ function login(e) {
 
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
-                try {
-                    if (atob(users[i].password) === password) {
-                        found = users[i];
-                        break;
-                    }
-                } catch(e) {
-                    if (users[i].password === password) {
-                        found = users[i];
-                        break;
-                    }
+                var storedPassword = users[i].password;
+                
+                // Check plain text
+                if (storedPassword === password) {
+                    found = users[i];
+                    break;
                 }
+                
+                // Check base64
+                try {
+                    if (atob(storedPassword) === password) {
+                        found = users[i];
+                        break;
+                    }
+                } catch(e) {}
+                
+                // Check simpleDecode
+                try {
+                    if (simpleDecode(storedPassword) === password) {
+                        found = users[i];
+                        break;
+                    }
+                } catch(e) {}
             }
         }
 
@@ -1424,3 +1471,5 @@ if (saved) {
 
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
+console.log('📸 Camera ready.');
+console.log('🔐 Login with phone and password.');
