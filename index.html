@@ -1,30 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>G-KODE — Kenya Helping Kenya</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Google Maps API (your key) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYrHHuLii7iM9_l3KQ8fvzKj9VnVChvAg&libraries=places">
+    </script>
+    <!-- Security module (must load first) -->
+    <script src="security.js"></script>
+</head>
 <body>
 
     <!-- ===== BACKGROUND WRAPPER ===== -->
     <div id="bgWrapper" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed;animation:bgRotate 360s infinite;"></div>
     <div id="bgOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.82);z-index:-1;"></div>
 
-    <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>G-KODE — Kenya Helping Kenya</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYrHHuLii7iM9_l3KQ8fvzKj9VnVChvAg&libraries=places"></script>
-    <script src="security.js"></script>
-    <script src="app.js"></script>
-</head>
-<div id="toast-container"></div>
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="toast-container"></div>
 
     <!-- ===== EMERGENCY FLOAT ===== -->
     <button class="emergency-float" onclick="emergencyCall()" aria-label="Emergency">🚨</button>
 
     <!-- ===== WELCOME SCREEN ===== -->
     <div id="welcome" class="screen active">
-        <img src="https://i.postimg.cc/zfQY4nKc/GKODE-2.png" alt="G-KODE" class="logo" 
-             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%2280%22%3E%3Crect width=%22180%22 height=%2280%22 fill=%22%23006400%22/%3E%3Ctext x=%2290%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23FFD700%22 font-size=%2230%22 font-family=%22Arial%22 font-weight=%22bold%22%3EG-KODE%3C/text%3E%3C/svg%3E'" />
+        <img src="https://i.postimg.cc/zfQY4nKc/GKODE-2.png" alt="G-KODE" class="logo"
+        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%2280%22%3E%3Crect width=%22180%22 height=%2280%22 fill=%22%23006400%22/%3E%3Ctext x=%2290%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23FFD700%22 font-size=%2230%22 font-family=%22Arial%22 font-weight=%22bold%22%3EG-KODE%3C/text%3E%3C/svg%3E'" />
         <p class="tagline">Skill is Currency. Trust is the Bank.<br />Community is the Network.</p>
         <button class="btn green" onclick="showScreen('register')">REGISTER</button>
         <button class="btn outline" onclick="showScreen('login')">LOGIN</button>
@@ -38,51 +40,57 @@
     </div>
 
     <!-- ===== REGISTER SCREEN ===== -->
-<div id="register" class="screen">
-    <h2>Create Account</h2>
-    <form id="registerForm" onsubmit="register(event)">
-        <input type="text" id="regName" placeholder="Full Name (First & Last) *" required />
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Must match the name on your National ID</small>
-        <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
-        <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small>
-        <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
-        <div style="position:relative;">
-            <input type="password" id="regPassword" placeholder="Password (8+ chars, mix letters & numbers) *" required minlength="8" style="padding-right:50px;" />
-            <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-        </div>
-        <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 8+ characters with both letters and numbers</small>
-        <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
-        <select id="regProfession" required onchange="checkProfession()">
-            <option value="">-- Select Your Profession * --</option>
-        </select>
-        <div id="otherProfessionBox" style="display:none;">
-            <input type="text" id="regOtherProfession" placeholder="Please specify your profession *" />
-            <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
-        </div>
-        <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
+    <div id="register" class="screen">
+        <h2>Create Account</h2>
+        <form id="registerForm" onsubmit="register(event)">
+            <input type="text" id="regName" placeholder="Full Name (First & Last) *" required />
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Must match the name on your National ID</small>
 
-        <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo (Clear face photo) *</label>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="file" id="regPhoto" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
-            <button type="button" onclick="capturePhoto('regPhoto')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Camera</button>
-        </div>
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📸 Take photo or choose from gallery. Minimum 200x200 pixels.</small>
+            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
+            <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small>
 
-        <!-- ===== ID SCAN WITH CAMERA ===== -->
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="file" id="regIDScan" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
-            <button type="button" onclick="capturePhoto('regIDScan')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Scan ID</button>
-        </div>
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">🆔 Take a photo of your ID card or upload from gallery.</small>
+            <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
 
-        <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
-        <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-    </form>
-</div>
+            <div style="position:relative;">
+                <input type="password" id="regPassword" placeholder="Password (8+ chars, mix letters & numbers) *" required minlength="8" style="padding-right:50px;" />
+                <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+            </div>
+            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 8+ characters with both letters and numbers</small>
+
+            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
+
+            <select id="regProfession" required onchange="checkProfession()">
+                <option value="">-- Select Your Profession * --</option>
+            </select>
+            <div id="otherProfessionBox" style="display:none;">
+                <input type="text" id="regOtherProfession" placeholder="Please specify your profession *" />
+                <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
+            </div>
+
+            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
+
+            <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
+            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo (Clear face photo) *</label>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <input type="file" id="regPhoto" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
+                <button type="button" onclick="capturePhoto('regPhoto')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Camera</button>
+            </div>
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📸 Take photo or choose from gallery. Minimum 200x200 pixels.</small>
+
+            <!-- ===== ID SCAN WITH CAMERA ===== -->
+            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <input type="file" id="regIDScan" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
+                <button type="button" onclick="capturePhoto('regIDScan')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Scan ID</button>
+            </div>
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">🆔 Take a photo of your ID card or upload from gallery.</small>
+
+            <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
+            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
+        </form>
+    </div>
 
     <!-- ===== LOGIN SCREEN ===== -->
     <div id="login" class="screen">
@@ -146,14 +154,14 @@
     <!-- ===== HOME SCREEN ===== -->
     <div id="home" class="screen">
         <h2>📍 Gigs Near You</h2>
-        
+
         <div style="display:flex; gap:5px; margin-bottom:10px;">
             <input type="text" id="searchGigs" placeholder="🔍 Search gigs..." style="flex:1; margin-bottom:0;" oninput="loadGigs()" />
             <select id="filterSkill" onchange="loadGigs()" style="flex:1; margin-bottom:0;">
                 <option value="">All Skills</option>
             </select>
         </div>
-        
+
         <div class="tab-container">
             <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN GIGS</button>
             <button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button>
@@ -165,7 +173,7 @@
             </div>
         </div>
         <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
-        <button type="button" class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
+        <button class="btn outline" onclick="logout()">LOGOUT</button>
     </div>
 
     <!-- ===== POST GIG SCREEN ===== -->
@@ -192,27 +200,24 @@
         </form>
     </div>
 
-<!-- ===== CHAT SCREEN ===== -->
-<div id="chat" class="screen">
-    <h2>💬 Chat</h2>
-    <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
-    <div id="chatMessages" class="chat-messages"></div>
-    <input type="hidden" id="chatGigId" />
-    
-    <form id="chatForm" onsubmit="sendMessage(event)">
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="chatInput" placeholder="Type your message..." required style="flex:1;" />
-            <button type="submit" class="btn green" style="width:auto; padding:14px 20px;">SEND</button>
+    <!-- ===== CHAT SCREEN ===== -->
+    <div id="chat" class="screen">
+        <h2>💬 Chat</h2>
+        <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
+        <div id="chatMessages" class="chat-messages"></div>
+        <input type="hidden" id="chatGigId" />
+        <form id="chatForm" onsubmit="sendMessage(event)">
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="chatInput" placeholder="Type your message..." required style="flex:1;" />
+                <button type="submit" class="btn green" style="width:auto; padding:14px 20px;">SEND</button>
+            </div>
+        </form>
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button type="button" class="btn outline" onclick="shareLiveLocation()" style="flex:1; font-size:13px; padding:10px;">📍 SHARE LOCATION</button>
+            <button type="button" class="btn green" onclick="navigateToClient()" style="flex:1; font-size:13px; padding:10px;">🧭 NAVIGATE</button>
         </div>
-    </form>
-    
-    <div style="display:flex; gap:5px; margin-top:5px;">
-        <button type="button" class="btn outline" onclick="shareLiveLocation()" style="flex:1; font-size:13px; padding:10px;">📍 SHARE LOCATION</button>
-        <button type="button" class="btn green" onclick="navigateToClient()" style="flex:1; font-size:13px; padding:10px;">🧭 NAVIGATE</button>
+        <button type="button" class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
     </div>
-    
-    <button type="button" class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
-</div>
 
     <!-- ===== REVIEW SCREEN ===== -->
     <div id="review" class="screen">
@@ -276,7 +281,7 @@
             <button class="btn outline" onclick="showScreen('terms')">📄 Terms of Use</button>
             <button class="btn outline" onclick="showScreen('privacy')">🔒 Privacy Policy</button>
             <button class="btn outline" onclick="showScreen('guide')">📖 How It Works</button>
-            
+
             <!-- ===== LEGAL SECTION ===== -->
             <hr style="margin:20px 0;" />
             <h3 style="color:#006400;">⚖️ Legal</h3>
@@ -285,16 +290,16 @@
             <button class="btn outline" onclick="showLegalNotice('disclaimer')" style="font-size:12px;">⚠️ Disclaimer</button>
             <button class="btn outline" onclick="exportUserData()" style="font-size:12px;">📤 Export My Data</button>
             <button class="btn red" onclick="deleteAccount()" style="font-size:12px;">🗑️ Delete My Account</button>
-            
-          <!-- ===== ADMIN ACCESS - ONLY VISIBLE TO ADMIN ===== -->
-<div id="adminAccessBtn" style="display:none; margin-top:10px;">
-    <hr style="margin:10px 0;" />
-    <button class="btn outline" onclick="window.open('admin.html','_blank')" style="font-size:14px; background:#FFD700; color:#006400; border:2px solid #FFD700; font-weight:bold; padding:12px;">
-        🔐 Admin Panel
-    </button>
-</div>
-            
-            <button class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
+
+            <!-- ===== ADMIN ACCESS ===== -->
+            <div id="adminAccessBtn" style="display:none; margin-top:10px;">
+                <hr style="margin:10px 0;" />
+                <button class="btn outline" onclick="window.open('admin.html','_blank')" style="font-size:14px; background:#FFD700; color:#006400; border:2px solid #FFD700; font-weight:bold; padding:12px;">
+                    🔐 Admin Panel
+                </button>
+            </div>
+
+            <button type="button" class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
         </div>
     </div>
 
@@ -450,6 +455,7 @@
         }
     </style>
 
+    <!-- ===== LOAD THE APP ===== -->
     <script src="app.js"></script>
 </body>
 </html>

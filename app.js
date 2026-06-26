@@ -28,7 +28,7 @@ var C = {
 };
 
 // ============ ADMIN ============
-var A = ['0703428192', '0711991467'];
+var ADMIN_PHONES = ['0703428192', '0711991467'];
 
 // ============ EMAILJS (Lightweight) ============
 var E = {
@@ -39,6 +39,14 @@ var E = {
 };
 
 // ============ CACHE SYSTEM ============
+var _userCache = null;
+var _userCacheTime = 0;
+var _userCacheTTL = 5000; // 5 seconds cache
+
+var _gigsCache = null;
+var _gigsCacheTime = 0;
+var _gigsCacheTTL = 10000; // 10 seconds cache
+
 var Cache = {
     users: null,
     gigs: null,
@@ -98,6 +106,63 @@ function getProf() { return get('gkode_professions'); }
 function setProf(p) { set('gkode_professions', p); }
 function getCat() { return get('gkode_categories'); }
 function setCat(c) { set('gkode_categories', c); }
+
+function getUsers() {
+    if (_userCache && (Date.now() - _userCacheTime) < _userCacheTTL) {
+        return _userCache;
+    }
+    try {
+        var data = localStorage.getItem('gkode_users');
+        if (!data) {
+            _userCache = [];
+            _userCacheTime = Date.now();
+            return [];
+        }
+        var parsed = JSON.parse(data);
+        _userCache = parsed;
+        _userCacheTime = Date.now();
+        return _userCache;
+    } catch(e) {
+        _userCache = [];
+        _userCacheTime = Date.now();
+        return [];
+    }
+}
+
+function setUsers(users) {
+    localStorage.setItem('gkode_users', JSON.stringify(users));
+    _userCache = users;
+    _userCacheTime = Date.now();
+}
+
+function getGigs() {
+    if (_gigsCache && (Date.now() - _gigsCacheTime) < _gigsCacheTTL) {
+        return _gigsCache;
+    }
+    try {
+        var data = localStorage.getItem('gkode_gigs');
+        if (!data) {
+            _gigsCache = [];
+            _gigsCacheTime = Date.now();
+            return [];
+        }
+        var parsed = JSON.parse(data);
+        _gigsCache = parsed;
+        _gigsCacheTime = Date.now();
+        return _gigsCache;
+    } catch(e) {
+        _gigsCache = [];
+        _gigsCacheTime = Date.now();
+        return [];
+    }
+}
+
+function setGigs(gigs) {
+    localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
+    _gigsCache = gigs;
+    _gigsCacheTime = Date.now();
+}
+
 function getState() {
     try { return JSON.parse(localStorage.getItem('gkode_systemState') || '{}'); } catch(e) { return {}; }
 }
@@ -236,14 +301,13 @@ async function register(e) {
             return;
         }
 
-        var users = getU();
+        var users = getUsers();
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) { toast('Phone already registered.', 'warning'); showScreen('login'); btn.disabled = false; btn.textContent = 'REGISTER'; return; }
             if (users[i].id === id) { toast('ID already registered.', 'error'); btn.disabled = false; btn.textContent = 'REGISTER'; return; }
             if (users[i].email === email) { toast('Email already registered.', 'error'); btn.disabled = false; btn.textContent = 'REGISTER'; return; }
         }
 
-        // Simple verification (fast)
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
         toast('📧 Code sent to ' + email, 'success');
         
@@ -255,7 +319,6 @@ async function register(e) {
             return;
         }
 
-        // Send email (async, non-blocking)
         sendEmail(email, name, vCode);
 
         var user = {
@@ -265,10 +328,11 @@ async function register(e) {
             photo: photo ? await readFile(photo) : '',
             idScan: idScan ? await readFile(idScan) : '',
             status: 'Active', verified: true, strikes: 0, rating: 0,
+            paymentStatus: 'UNPAID',
             registeredAt: new Date().toISOString()
         };
         users.push(user);
-        setU(users);
+        setUsers(users);
         U = user;
         localStorage.setItem('gkode_currentUser', JSON.stringify(user));
         toast('✅ Welcome, ' + name + '!', 'success');
@@ -290,45 +354,92 @@ function readFile(file) {
     });
 }
 
-// ============ LOGIN (Optimized) ============
+// ============ FAST LOGIN - OPTIMIZED ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
     btn.disabled = true;
     btn.textContent = '⏳...';
-    if (LK) {
-        if (Date.now() - LT < C.lockDuration) {
-            toast('🔒 Locked. Try later.', 'warning');
+    
+    var startTime = performance.now();
+    
+    try {
+        if (LK) {
+            if (Date.now() - LT < C.lockDuration) {
+                toast('🔒 Locked. Try later.', 'warning');
+                btn.disabled = false;
+                btn.textContent = 'LOGIN';
+                return;
+            } else {
+                LK = false;
+                L = 0;
+            }
+        }
+        
+        var phone = document.getElementById('loginPhone').value.trim();
+        var password = document.getElementById('loginPassword').value.trim();
+        
+        if (!phone || !password) {
+            toast('Enter phone and password.', 'error');
             btn.disabled = false;
             btn.textContent = 'LOGIN';
             return;
-        } else { LK = false; L = 0; }
-    }
-    var phone = document.getElementById('loginPhone').value.trim();
-    var password = document.getElementById('loginPassword').value.trim();
-    if (!phone || !password) { toast('Enter phone and password.', 'error'); btn.disabled = false; btn.textContent = 'LOGIN'; return; }
-    var users = getU();
-    var found = null;
-    for (var i = 0; i < users.length; i++) {
-        if (users[i].phone === phone && atob(users[i].password) === password) {
-            found = users[i];
-            break;
         }
-    }
-    if (!found) {
-        L++;
-        if (L >= C.maxAttempts) { LK = true; LT = Date.now(); toast('🔒 Too many attempts.', 'error'); btn.disabled = false; btn.textContent = 'LOGIN'; return; }
-        toast('Wrong credentials. ' + (C.maxAttempts - L) + ' left.', 'error');
+        
+        var users = getUsers();
+        var found = null;
+        
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].phone === phone) {
+                if (atob(users[i].password) === password) {
+                    found = users[i];
+                    break;
+                }
+            }
+        }
+        
+        if (!found) {
+            L++;
+            if (L >= C.maxAttempts) {
+                LK = true;
+                LT = Date.now();
+                toast('🔒 Too many attempts. Locked 2 min.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'LOGIN';
+                return;
+            }
+            toast('Wrong credentials. ' + (C.maxAttempts - L) + ' left.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'LOGIN';
+            return;
+        }
+        
+        U = found;
+        localStorage.setItem('gkode_currentUser', JSON.stringify(found));
+        
+        var logs = getL();
+        logs.push({
+            type: 'USER_LOGIN',
+            user: found.name,
+            phone: found.phone,
+            time: new Date().toISOString()
+        });
+        setL(logs);
+        
+        var endTime = performance.now();
+        console.log('⚡ Login completed in ' + (endTime - startTime).toFixed(2) + 'ms');
+        
+        toast('Welcome back, ' + found.name + '!', 'success');
+        showScreen('home');
         btn.disabled = false;
         btn.textContent = 'LOGIN';
-        return;
+        
+    } catch (err) {
+        console.error('Login error:', err);
+        toast('Login error: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'LOGIN';
     }
-    U = found;
-    localStorage.setItem('gkode_currentUser', JSON.stringify(found));
-    toast('Welcome back, ' + found.name + '!', 'success');
-    showScreen('home');
-    btn.disabled = false;
-    btn.textContent = 'LOGIN';
 }
 
 // ============ LOGOUT ============
@@ -342,7 +453,7 @@ function logout() {
     if (nav) nav.classList.add('hidden');
 }
 
-// ============ POST GIG (Optimized) ============
+// ============ POST GIG ============
 function postGig(e) {
     e.preventDefault();
     if (!U) { toast('Login first.', 'error'); return; }
@@ -373,7 +484,7 @@ function postGig(e) {
     btn.textContent = 'POST GIG';
 }
 
-// ============ LOAD GIGS (Optimized) ============
+// ============ LOAD GIGS ============
 function loadGigs() {
     var container = document.getElementById('gigsList');
     if (!container) return;
@@ -423,7 +534,7 @@ function acceptGig(id) {
     toast('Gig not available.', 'error');
 }
 
-// ============ CHAT (Optimized) ============
+// ============ CHAT ============
 function openChat(id) {
     document.getElementById('chatGigId').value = id;
     showScreen('chat');
@@ -480,6 +591,7 @@ function loadProfile() {
     document.getElementById('profileSkills').textContent = '🛠️ ' + (U.skills || 'None');
     document.getElementById('profilePhoto').src = U.photo || 'https://via.placeholder.com/100';
     document.getElementById('profileStatus').innerHTML = '⭐ ' + (U.rating || 0);
+    checkAdminAccess();
 }
 
 // ============ EMAIL (Async) ============
@@ -523,19 +635,13 @@ function togglePayment() {
 
 function isAdmin() {
     if (!U) return false;
-    for (var i = 0; i < A.length; i++) {
-        if (U.phone === A[i]) return true;
+    for (var i = 0; i < ADMIN_PHONES.length; i++) {
+        if (U.phone === ADMIN_PHONES[i]) return true;
     }
     return false;
 }
 
-// ============ SYSTEM STATE ============
-function getSystemState() {
-    try { return JSON.parse(localStorage.getItem('gkode_systemState') || '{}'); } catch(e) { return {}; }
-}
-function setSystemState(s) { localStorage.setItem('gkode_systemState', JSON.stringify(s)); }
-
-// ============ MARKETPLACE (Lightweight) ============
+// ============ MARKETPLACE ============
 function loadMarketplace() {
     var container = document.getElementById('marketplaceList');
     if (!container) return;
@@ -576,7 +682,7 @@ function buyProduct(id) {
 // ============ ADMIN FUNCTIONS ============
 function viewAllUsers() {
     if (!isAdmin()) { toast('Admin only.', 'error'); return; }
-    var users = getU();
+    var users = getUsers();
     if (users.length === 0) { alert('No users.'); return; }
     var msg = '👥 USERS (' + users.length + ')\n';
     for (var i = 0; i < users.length; i++) {
@@ -588,7 +694,7 @@ function viewAllUsers() {
 function downloadBackup() {
     if (!isAdmin()) { toast('Admin only.', 'error'); return; }
     var data = {
-        users: getU(),
+        users: getUsers(),
         gigs: getG(),
         companies: getC(),
         products: getP(),
@@ -642,7 +748,7 @@ function emergencyCall() {
 }
 
 // ============ PROFESSION DROPDOWN ============
-var defaultProfessions = ['Plumber','Electrician','Carpenter','Painter','Mechanic','Hairdresser','Tailor','Chef','Driver','Teacher','Nurse','Accountant','Architect','Baker','Barber','Builder','Cleaner','Cook','Doctor','Engineer','Farmer','Gardener','Lawyer','Mason','Photographer','Plumber','Roofer','Security Guard','Surveyor','Tiler','Tour Guide','Translator','Vet','Welder','Writer'];
+var defaultProfessions = ['Plumber','Electrician','Carpenter','Painter','Mechanic','Hairdresser','Tailor','Chef','Driver','Teacher','Nurse','Accountant','Architect','Baker','Barber','Builder','Cleaner','Cook','Doctor','Engineer','Farmer','Gardener','Lawyer','Mason','Photographer','Roofer','Security Guard','Surveyor','Tiler','Tour Guide','Translator','Vet','Welder','Writer'];
 
 function populateProfessionDropdown() {
     var dropdown = document.getElementById('regProfession');
@@ -856,11 +962,6 @@ function resetEverything() {
     }
 }
 
-// ============ Console Info ============
-console.log('🚀 G-KODE ULTRA LIGHTWEIGHT');
-console.log('📊 Optimized for 50M users');
-console.log('🔋 Low network friendly');
-console.log('⚡ Total size: ~15KB');
 // ============================================
 // 🛡️ FRAUD DETECTION SYSTEM - ZERO MERCY
 // ============================================
@@ -869,24 +970,19 @@ console.log('⚡ Total size: ~15KB');
 function calculateFraudScore(user) {
     let score = 0;
     
-    // Strike pattern
     if (user.strikes > 0) score += user.strikes * 10;
     if (user.strikes >= 4) score += 30;
     
-    // Payment status
     if (!user.paymentStatus || user.paymentStatus === 'UNPAID') score += 20;
     
-    // Review patterns (suspicious 5-star spam)
     if (user.reviewCount > 100 && user.rating === 5) score += 20;
     
-    // Gig patterns
-    let gigs = getGigs();
-    let userGigs = gigs.filter(g => g.client === user.name || g.worker === user.name);
+    var gigs = getGigs();
+    var userGigs = gigs.filter(g => g.client === user.name || g.worker === user.name);
     if (userGigs.length > 50) score += 10;
     if (userGigs.length > 100) score += 20;
     
-    // New user, too many gigs
-    let monthsSinceRegister = (Date.now() - new Date(user.registeredAt)) / (30 * 24 * 60 * 60 * 1000);
+    var monthsSinceRegister = (Date.now() - new Date(user.registeredAt)) / (30 * 24 * 60 * 60 * 1000);
     if (monthsSinceRegister < 1 && userGigs.length > 20) score += 20;
     
     return Math.min(score, 100);
@@ -897,15 +993,14 @@ function detectFraudInRealTime() {
     let start = performance.now();
     let users = getUsers();
     let gigs = getGigs();
-    let orders = getOrders();
-    let payments = getPayments();
+    let orders = getO();
+    let payments = getPay();
     
     let suspiciousUsers = [];
     let suspiciousGigs = [];
     let suspiciousOrders = [];
     let fraudulentPayments = [];
     
-    // Scan 1: Suspicious Users
     for (let i = 0; i < users.length; i++) {
         let u = users[i];
         let fraudScore = calculateFraudScore(u);
@@ -914,21 +1009,17 @@ function detectFraudInRealTime() {
         }
     }
     
-    // Scan 2: Suspicious Gigs
     for (let i = 0; i < gigs.length; i++) {
         let g = gigs[i];
-        // Too many gigs from same client
         let userGigs = gigs.filter(x => x.client === g.client);
         if (userGigs.length > 20) {
             suspiciousGigs.push({ gig: g, reason: 'TOO_MANY_GIGS', count: userGigs.length });
         }
-        // Unusual budget
         if (g.budgetMin > 1000000 || g.budgetMax < 10) {
             suspiciousGigs.push({ gig: g, reason: 'UNUSUAL_BUDGET' });
         }
     }
     
-    // Scan 3: Suspicious Orders
     for (let i = 0; i < orders.length; i++) {
         let o = orders[i];
         if (o.quantity > 100) {
@@ -939,15 +1030,12 @@ function detectFraudInRealTime() {
         }
     }
     
-    // Scan 4: Fraudulent Payments
     for (let i = 0; i < payments.length; i++) {
         let p = payments[i];
-        // Duplicate payment codes
         let duplicates = payments.filter(x => x.code === p.code);
         if (duplicates.length > 1) {
             fraudulentPayments.push({ payment: p, reason: 'DUPLICATE_CODE' });
         }
-        // Unusual amounts
         if (p.amount > 10000 || p.amount < 100) {
             fraudulentPayments.push({ payment: p, reason: 'UNUSUAL_AMOUNT' });
         }
@@ -974,13 +1062,12 @@ function detectFraudInRealTime() {
 function autoBlockFraudsters() {
     let blocked = [];
     let users = getUsers();
-    let logs = getLogs();
+    let logs = getL();
     
     for (let i = 0; i < users.length; i++) {
         let user = users[i];
         let fraudScore = calculateFraudScore(user);
         
-        // ZERO TOLERANCE!
         if (fraudScore > 80) {
             user.status = 'PERMANENTLY_BANNED';
             user.bannedAt = new Date().toISOString();
@@ -1012,7 +1099,7 @@ function autoBlockFraudsters() {
     
     if (blocked.length > 0) {
         setUsers(users);
-        setLogs(logs);
+        setL(logs);
         console.log('🚨 AUTO-BLOCKED ' + blocked.length + ' users');
     }
     
@@ -1021,9 +1108,8 @@ function autoBlockFraudsters() {
 
 // ============ MONEY FLOW TRACKING ============
 function trackMoneyFlow() {
-    let payments = getPayments();
-    let orders = getOrders();
-    let users = getUsers();
+    let payments = getPay();
+    let orders = getO();
     
     let stats = {
         totalRevenue: 0,
@@ -1035,7 +1121,6 @@ function trackMoneyFlow() {
         anomalies: []
     };
     
-    // Calculate revenue
     for (let i = 0; i < payments.length; i++) {
         if (payments[i].verified) {
             stats.totalRevenue += payments[i].amount;
@@ -1045,17 +1130,14 @@ function trackMoneyFlow() {
         }
     }
     
-    // Calculate commissions
     for (let i = 0; i < orders.length; i++) {
         stats.commissionsCollected += orders[i].commission || 0;
     }
     
-    // Average transaction
     if (stats.completedPayments > 0) {
         stats.averageTransaction = stats.totalRevenue / stats.completedPayments;
     }
     
-    // Detect anomalies
     let amounts = payments.map(p => p.amount);
     if (amounts.length > 0) {
         let avg = amounts.reduce((a,b) => a + b, 0) / amounts.length;
@@ -1070,7 +1152,6 @@ function trackMoneyFlow() {
                     deviation: Math.abs(p.amount - avg) / stdDev
                 });
             }
-            // Unusual time (middle of night)
             let hour = new Date(p.time).getHours();
             if (hour >= 0 && hour <= 4) {
                 stats.anomalies.push({
@@ -1089,47 +1170,47 @@ function trackMoneyFlow() {
 function activateFraudDetection() {
     console.log('🛡️ Fraud Detection ACTIVATED!');
     
-    // Run every 2 minutes
     setInterval(function() {
-        let frauds = detectFraudInRealTime();
-        
-        if (frauds.suspiciousUsers > 0 || frauds.suspiciousGigs > 0 || 
-            frauds.suspiciousOrders > 0 || frauds.fraudulentPayments > 0) {
+        try {
+            let frauds = detectFraudInRealTime();
             
-            console.log('🚨 FRAUD DETECTED!', frauds);
-            
-            // Auto-block fraudsters
-            let blocked = autoBlockFraudsters();
-            if (blocked.length > 0) {
-                console.log('⛔ AUTO-BLOCKED:', blocked.length, 'users');
-                showToast('🛡️ ' + blocked.length + ' fraudsters blocked!', 'warning');
+            if (frauds.suspiciousUsers > 0 || frauds.suspiciousGigs > 0 || 
+                frauds.suspiciousOrders > 0 || frauds.fraudulentPayments > 0) {
+                
+                console.log('🚨 FRAUD DETECTED!', frauds);
+                let blocked = autoBlockFraudsters();
+                if (blocked.length > 0) {
+                    console.log('⛔ AUTO-BLOCKED:', blocked.length, 'users');
+                    toast('🛡️ ' + blocked.length + ' fraudsters blocked!', 'warning');
+                }
             }
+        } catch(e) {
+            console.error('Fraud scan error:', e);
         }
-    }, 120000); // Every 2 minutes
+    }, 120000);
     
-    // Track money flow every minute
     setInterval(function() {
-        let stats = trackMoneyFlow();
-        if (stats.anomalies.length > 0) {
-            console.log('💰 ANOMALIES DETECTED:', stats.anomalies.length);
+        try {
+            let stats = trackMoneyFlow();
+            if (stats.anomalies.length > 0) {
+                console.log('💰 ANOMALIES DETECTED:', stats.anomalies.length);
+            }
+        } catch(e) {
+            console.error('Money tracking error:', e);
         }
-    }, 60000); // Every minute
+    }, 60000);
     
     console.log('✅ Fraud Detection RUNNING!');
-    console.log('⏰ Scan interval: 2 minutes');
-    console.log('💰 Money tracking: 1 minute');
 }
 
-// ============ MANUAL FRAUD CHECK (Admin Only) ============
+// ============ MANUAL FRAUD CHECK ============
 function manualFraudCheck() {
     if (!isAdmin()) {
-        showToast('⛔ Admin only!', 'error');
+        toast('⛔ Admin only!', 'error');
         return;
     }
     
-    let start = performance.now();
     let frauds = detectFraudInRealTime();
-    let end = performance.now();
     
     let msg = '🛡️ FRAUD SCAN REPORT\n';
     msg += '='.repeat(40) + '\n';
@@ -1151,15 +1232,21 @@ function manualFraudCheck() {
     
     let blocked = autoBlockFraudsters();
     if (blocked.length > 0) {
-        showToast('⛔ ' + blocked.length + ' users blocked!', 'warning');
+        toast('⛔ ' + blocked.length + ' users blocked!', 'warning');
     }
     
     return frauds;
 }
 
-// ============ ACTIVATE ON START ============
+// ============ ACTIVATE FRAUD DETECTION ON START ============
 activateFraudDetection();
 
 console.log('🛡️ G-KODE Fraud Prevention ACTIVE!');
 console.log('💰 Money Tracking ACTIVE!');
 console.log('⛔ Auto-Blocking ACTIVE!');
+
+// ============ CONSOLE INFO ============
+console.log('🚀 G-KODE ULTRA LIGHTWEIGHT');
+console.log('📊 Optimized for 50M users');
+console.log('🔋 Low network friendly');
+console.log('⚡ Total size: ~15KB');
