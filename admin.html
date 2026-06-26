@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>G-KODE — Admin Panel</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; }
         h1 { color: #FFD700; text-align: center; margin-bottom: 5px; }
         .sub { color: #888; text-align: center; font-size: 12px; margin-bottom: 20px; }
         input { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #333; border-radius: 8px; background: #111; color: #fff; font-size: 16px; }
@@ -16,13 +16,14 @@
         .btn.red { background: #cc0000; color: #fff; }
         .btn.orange { background: #ff9800; color: #000; }
         .btn.blue { background: #2196F3; color: #fff; }
+        .btn.purple { background: #9c27b0; color: #fff; }
         .hidden { display: none; }
         .card { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
         .card h3 { color: #FFD700; margin-bottom: 5px; }
         .card p { font-size: 13px; margin-bottom: 3px; color: #ccc; }
         .log { background: #111; padding: 8px; border-left: 3px solid #FFD700; margin-bottom: 5px; font-size: 11px; color: #aaa; }
         .stats { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .stats-item { background: #1a1a1a; padding: 10px; border-radius: 5px; }
         .stats-item .number { font-size: 24px; color: #FFD700; font-weight: bold; }
         .stats-item .label { font-size: 11px; color: #888; }
@@ -32,8 +33,15 @@
         .status-badge.off { background: #cc0000; color: #fff; }
         .back { display: block; text-align: center; margin-top: 20px; color: #666; text-decoration: none; font-size: 12px; }
         .back:hover { color: #FFD700; }
-        .flex { display: flex; gap: 5px; }
-        .flex .btn { flex: 1; font-size: 13px; padding: 10px; }
+        .flex { display: flex; gap: 5px; flex-wrap: wrap; }
+        .flex .btn { flex: 1; font-size: 13px; padding: 10px; min-width: 80px; }
+        .flex .btn.full { flex: 1 1 100%; }
+        .warning-box { background: #1a1a1a; border: 1px solid #ff9800; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; color: #ff9800; text-align: center; }
+        .success-box { background: #1a1a1a; border: 1px solid #006400; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; color: #4caf50; text-align: center; }
+        #output { margin-top: 20px; max-height: 400px; overflow-y: auto; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -71,6 +79,14 @@
                     <div class="number" id="statPaid">0</div>
                     <div class="label">✅ Paid Users</div>
                 </div>
+                <div class="stats-item">
+                    <div class="number" id="statBusiness">0</div>
+                    <div class="label">🏢 Businesses</div>
+                </div>
+                <div class="stats-item">
+                    <div class="number" id="statOrders">0</div>
+                    <div class="label">📦 Orders</div>
+                </div>
             </div>
         </div>
 
@@ -85,8 +101,8 @@
         <!-- ===== ADMIN ACTIONS ===== -->
         <div class="section-title">🔧 ADMIN ACTIONS</div>
         <div class="flex">
-            <button class="btn" onclick="viewUsers()">👥 View Users</button>
-            <button class="btn" onclick="viewGigs()">📋 View Gigs</button>
+            <button class="btn" onclick="viewUsers()">👥 Users</button>
+            <button class="btn" onclick="viewGigs()">📋 Gigs</button>
             <button class="btn" onclick="viewCompanies()">🏢 Businesses</button>
         </div>
         <div class="flex">
@@ -100,7 +116,7 @@
         <div class="flex">
             <button class="btn blue" onclick="systemHealthCheck()">🏥 Health</button>
             <button class="btn orange" onclick="emergencyRecovery()">🚨 Recovery</button>
-            <button class="btn blue" onclick="detectFraud()">🛡️ Fraud Scan</button>
+            <button class="btn blue" onclick="detectFraud()">🛡️ Fraud</button>
         </div>
         <div class="flex">
             <button class="btn blue" onclick="legalComplianceCheck()">⚖️ Legal</button>
@@ -113,28 +129,37 @@
         <button class="btn red" onclick="clearAll()">🔥 RESET ALL DATA</button>
 
         <!-- ===== OUTPUT ===== -->
-        <div id="output" style="margin-top:20px; max-height:400px; overflow-y:auto;"></div>
+        <div id="output"></div>
 
         <!-- ===== LOGOUT ===== -->
-        <button class="btn" onclick="location.reload()" style="background:#333; margin-top:20px;">🚪 Logout</button>
+        <button class="btn" onclick="logoutAdmin()" style="background:#333; margin-top:20px;">🚪 Logout</button>
         <a href="index.html" class="back">← Back to G-KODE</a>
     </div>
 
     <script>
+        // ============================================
+        // ADMIN AUTHENTICATION
+        // ============================================
         var ADMIN_KEY = 'MAYA';
-
-        // ============================================
-        // AUTHENTICATION
-        // ============================================
+        
         function adminLogin() {
-            if (document.getElementById('adminPass').value === ADMIN_KEY) {
+            var pass = document.getElementById('adminPass').value;
+            if (pass === ADMIN_KEY) {
                 document.getElementById('loginBox').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
                 loadStats();
                 updatePaymentStatus();
+                showToast('✅ Welcome Admin!', 'success');
             } else {
                 alert('❌ Access denied.');
             }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginBox').classList.remove('hidden');
+            document.getElementById('adminPass').value = '';
+            showToast('✅ Logged out.', 'info');
         }
 
         // ============================================
@@ -158,24 +183,50 @@
         function setSystemState(s) { localStorage.setItem('gkode_systemState', JSON.stringify(s)); }
 
         // ============================================
+        // TOAST
+        // ============================================
+        function showToast(msg, type) {
+            type = type || 'info';
+            var container = document.getElementById('toast-container') || (function() {
+                var c = document.createElement('div');
+                c.id = 'toast-container';
+                c.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;';
+                document.body.appendChild(c);
+                return c;
+            })();
+            var t = document.createElement('div');
+            var colors = { success: '#006400', error: '#cc0000', info: '#2196F3', warning: '#ff9800' };
+            t.style.cssText = 'padding:15px 20px;border-radius:10px;color:#fff;margin-bottom:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);animation:slideDown 0.4s ease;background:' + (colors[type] || '#333') + ';pointer-events:auto;';
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; setTimeout(function() { if (t.parentNode) t.remove(); }, 500); }, 3000);
+        }
+
+        // ============================================
         // LOAD STATS
         // ============================================
         function loadStats() {
             var users = getUsers();
             var gigs = getGigs();
+            var companies = getCompanies();
+            var orders = getOrders();
             var payments = getPayments();
+            
             var totalRevenue = 0;
             var paidUsers = 0;
             for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus === 'PAID') paidUsers++;
+                if (users[i].paymentStatus === 'PAID' || users[i].paymentStatus === 'FREE_MODE') paidUsers++;
             }
             for (var i = 0; i < payments.length; i++) {
                 if (payments[i].verified) totalRevenue += payments[i].amount;
             }
+            
             document.getElementById('statUsers').textContent = users.length;
             document.getElementById('statGigs').textContent = gigs.length;
             document.getElementById('statRevenue').textContent = 'Ksh ' + totalRevenue.toLocaleString();
             document.getElementById('statPaid').textContent = paidUsers;
+            document.getElementById('statBusiness').textContent = companies.length;
+            document.getElementById('statOrders').textContent = orders.length;
             updatePaymentStatus();
         }
 
@@ -211,14 +262,10 @@
             state.paymentToggledAt = new Date().toISOString();
             setSystemState(state);
             updatePaymentStatus();
-            alert('✅ Payment system: ' + (state.paymentEnabled ? 'ON' : 'OFF'));
+            showToast('✅ Payment: ' + (state.paymentEnabled ? 'ON' : 'OFF'), 'success');
             
             var logs = getLogs();
-            logs.push({
-                type: 'PAYMENT_TOGGLED',
-                status: state.paymentEnabled ? 'ON' : 'OFF',
-                time: new Date().toISOString()
-            });
+            logs.push({ type: 'PAYMENT_TOGGLED', status: state.paymentEnabled ? 'ON' : 'OFF', time: new Date().toISOString() });
             setLogs(logs);
             loadStats();
         }
@@ -232,11 +279,13 @@
             if (users.length === 0) { document.getElementById('output').innerHTML = h + '<p>No users.</p>'; return; }
             for (var i = 0; i < users.length; i++) {
                 var u = users[i];
-                h += '<div class="card"><h3>' + u.name + '</h3>';
-                h += '<p>📞 ' + u.phone + ' | 🆔 ' + u.id + '</p>';
-                h += '<p>📍 ' + u.location + ' | 👔 ' + u.profession + '</p>';
-                h += '<p>💳 ' + (u.paymentStatus === 'PAID' ? '✅ Paid' : '❌ Unpaid') + '</p>';
+                h += '<div class="card"><h3>' + (u.name || 'Unknown') + '</h3>';
+                h += '<p>📞 ' + (u.phone || 'N/A') + ' | 🆔 ' + (u.id || 'N/A') + '</p>';
+                h += '<p>📍 ' + (u.location || 'N/A') + ' | 👔 ' + (u.profession || 'N/A') + '</p>';
+                h += '<p>📧 ' + (u.email || 'N/A') + '</p>';
+                h += '<p>💳 ' + (u.paymentStatus === 'PAID' ? '✅ Paid' : u.paymentStatus === 'FREE_MODE' ? '🔓 Free' : '❌ Unpaid') + '</p>';
                 h += '<p>⭐ ' + (u.rating || 0) + ' | ⚠️ ' + (u.strikes || 0) + ' strikes</p>';
+                h += '<p>📅 Joined: ' + new Date(u.registeredAt).toLocaleDateString() + '</p>';
                 h += '</div>';
             }
             document.getElementById('output').innerHTML = h;
@@ -248,11 +297,12 @@
             if (gigs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No gigs.</p>'; return; }
             for (var i = 0; i < gigs.length; i++) {
                 var g = gigs[i];
-                h += '<div class="card"><h3>' + g.title + '</h3>';
-                h += '<p>Status: ' + g.status + ' | Client: ' + g.client + '</p>';
-                h += '<p>Skill: ' + g.skill + ' | 📍 ' + g.location + '</p>';
-                h += '<p>💰 Ksh ' + g.budgetMin + ' - ' + g.budgetMax + '</p>';
+                h += '<div class="card"><h3>' + (g.title || 'Untitled') + '</h3>';
+                h += '<p>Status: ' + (g.status || 'Unknown') + ' | Client: ' + (g.client || 'N/A') + '</p>';
+                h += '<p>Skill: ' + (g.skill || 'N/A') + ' | 📍 ' + (g.location || 'N/A') + '</p>';
+                h += '<p>💰 Ksh ' + (g.budgetMin || 0) + ' - ' + (g.budgetMax || 0) + '</p>';
                 if (g.worker) h += '<p>👷 Worker: ' + g.worker + '</p>';
+                h += '<p>📅 Posted: ' + new Date(g.createdAt).toLocaleDateString() + '</p>';
                 h += '</div>';
             }
             document.getElementById('output').innerHTML = h;
@@ -264,10 +314,12 @@
             if (companies.length === 0) { document.getElementById('output').innerHTML = h + '<p>No businesses.</p>'; return; }
             for (var i = 0; i < companies.length; i++) {
                 var c = companies[i];
-                h += '<div class="card"><h3>' + c.name + '</h3>';
-                h += '<p>Type: ' + c.type + ' | 📍 ' + c.location + '</p>';
-                h += '<p>📞 ' + c.phone + '</p>';
+                h += '<div class="card"><h3>' + (c.name || 'Unnamed') + '</h3>';
+                h += '<p>Type: ' + (c.type || 'N/A') + ' | 📍 ' + (c.location || 'N/A') + '</p>';
+                h += '<p>📞 ' + (c.phone || 'N/A') + '</p>';
+                h += '<p>📜 Reg No: ' + (c.regNo || 'N/A') + '</p>';
                 h += '<p>💰 Sales: Ksh ' + (c.totalSales || 0).toLocaleString() + '</p>';
+                h += '<p>💳 Commission: Ksh ' + (c.totalCommission || 0).toLocaleString() + '</p>';
                 h += '</div>';
             }
             document.getElementById('output').innerHTML = h;
@@ -277,10 +329,12 @@
             var logs = getLogs();
             var h = '<h3>📜 Activity Logs (' + logs.length + ')</h3>';
             if (logs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No logs.</p>'; return; }
-            for (var i = logs.length - 1; i >= Math.max(0, logs.length - 50); i--) {
+            var count = 0;
+            for (var i = logs.length - 1; i >= 0 && count < 50; i--, count++) {
                 var l = logs[i];
-                h += '<div class="log"><b>' + l.type + '</b> | ' + (l.user || l.userName || 'System') + ' | ' + new Date(l.time || l.timestamp).toLocaleString() + '</div>';
+                h += '<div class="log"><b>' + (l.type || 'Unknown') + '</b> | ' + (l.user || l.userName || l.phone || 'System') + ' | ' + new Date(l.time || l.timestamp).toLocaleString() + '</div>';
             }
+            if (logs.length > 50) h += '<p style="color:#888;font-size:11px;text-align:center;">... showing last 50 of ' + logs.length + '</p>';
             document.getElementById('output').innerHTML = h;
         }
 
@@ -293,17 +347,19 @@
             
             var paidUsers = 0;
             for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus === 'PAID') paidUsers++;
+                if (users[i].paymentStatus === 'PAID' || users[i].paymentStatus === 'FREE_MODE') paidUsers++;
             }
             
             var totalRevenue = 0;
             var userFees = 0;
             var businessFees = 0;
+            var listingFees = 0;
             for (var i = 0; i < payments.length; i++) {
                 if (payments[i].verified) {
                     totalRevenue += payments[i].amount;
                     if (payments[i].type === 'user_fee') userFees += payments[i].amount;
                     else if (payments[i].type === 'business_fee') businessFees += payments[i].amount;
+                    else if (payments[i].type === 'listing_fee') listingFees += payments[i].amount;
                 }
             }
             
@@ -315,16 +371,14 @@
             }
             
             var h = '<h3>📊 FINANCIAL REPORT</h3>';
-            h += '<div class="card"><h3>👥 Users</h3>';
-            h += '<p>Total: ' + users.length + ' | Paid: ' + paidUsers + '</p></div>';
-            h += '<div class="card"><h3>📋 Gigs</h3>';
-            h += '<p>Total: ' + gigs.length + '</p></div>';
-            h += '<div class="card"><h3>🏢 Businesses</h3>';
-            h += '<p>Total: ' + companies.length + '</p></div>';
+            h += '<div class="card"><h3>👥 Users</h3><p>Total: ' + users.length + ' | Paid: ' + paidUsers + '</p></div>';
+            h += '<div class="card"><h3>📋 Gigs</h3><p>Total: ' + gigs.length + '</p></div>';
+            h += '<div class="card"><h3>🏢 Businesses</h3><p>Total: ' + companies.length + '</p></div>';
             h += '<div class="card"><h3>💰 Revenue</h3>';
             h += '<p>Total: Ksh ' + totalRevenue.toLocaleString() + '</p>';
             h += '<p>User Fees: Ksh ' + userFees.toLocaleString() + '</p>';
             h += '<p>Business Fees: Ksh ' + businessFees.toLocaleString() + '</p>';
+            h += '<p>Listing Fees: Ksh ' + listingFees.toLocaleString() + '</p>';
             h += '<p>Commission (3%): Ksh ' + totalCommission.toLocaleString() + '</p>';
             h += '<p>Sales: Ksh ' + totalSales.toLocaleString() + '</p></div>';
             document.getElementById('output').innerHTML = h;
@@ -354,7 +408,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            alert('✅ Backup downloaded!');
+            showToast('✅ Backup downloaded!', 'success');
         }
 
         function viewAllBackups() {
@@ -375,11 +429,17 @@
             var users = getUsers();
             var gigs = getGigs();
             var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
+            var payments = getPayments();
+            var totalRevenue = 0;
+            for (var i = 0; i < payments.length; i++) {
+                if (payments[i].verified) totalRevenue += payments[i].amount;
+            }
             var msg = '🏥 SYSTEM HEALTH\n\n';
             msg += '👥 Users: ' + users.length + '\n';
             msg += '📋 Gigs: ' + gigs.length + '\n';
             msg += '📂 Backups: ' + backups.length + '\n';
-            msg += '💾 Storage Used: ' + Math.round(JSON.stringify(localStorage).length / 1024) + ' KB\n';
+            msg += '💰 Revenue: Ksh ' + totalRevenue.toLocaleString() + '\n';
+            msg += '💾 Storage: ' + Math.round(JSON.stringify(localStorage).length / 1024) + ' KB\n';
             msg += '✅ System is healthy.';
             alert(msg);
         }
@@ -387,10 +447,7 @@
         function emergencyRecovery() {
             if (!confirm('🚨 EMERGENCY RECOVERY\n\nThis will restore from latest backup. Continue?')) return;
             var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            if (backups.length === 0) {
-                alert('❌ No backups found.');
-                return;
-            }
+            if (backups.length === 0) { alert('❌ No backups found.'); return; }
             var latest = backups[backups.length - 1];
             if (!confirm('Restore from backup dated: ' + new Date(latest.timestamp).toLocaleString())) return;
             
@@ -414,7 +471,7 @@
                 if (users[i].strikes >= 4) {
                     warnings.push('⚠️ ' + users[i].name + ' has ' + users[i].strikes + ' strikes');
                 }
-                if (users[i].paymentStatus !== 'PAID' && users[i].status === 'Active') {
+                if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE' && users[i].status === 'Active') {
                     warnings.push('⚠️ ' + users[i].name + ' is active but unpaid');
                 }
             }
@@ -453,7 +510,7 @@
                 agreementsAccepted: 0
             };
             for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus !== 'PAID') log.unpaidUsers++;
+                if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE') log.unpaidUsers++;
                 if (users[i].userAgreementAccepted) log.agreementsAccepted++;
             }
             var msg = '📋 DAILY LEGAL LOG - ' + today + '\n\n';
@@ -464,11 +521,7 @@
             alert(msg);
             
             var logs = getLogs();
-            logs.push({
-                type: 'DAILY_LEGAL_LOG',
-                data: log,
-                time: new Date().toISOString()
-            });
+            logs.push({ type: 'DAILY_LEGAL_LOG', data: log, time: new Date().toISOString() });
             setLogs(logs);
         }
 
@@ -493,6 +546,13 @@
                 loadStats();
             }
         }, 30000);
+
+        // ============================================
+        // ADD TOAST STYLES
+        // ============================================
+        var style = document.createElement('style');
+        style.textContent = '@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }';
+        document.head.appendChild(style);
 
         console.log('🚀 Admin panel loaded successfully!');
     </script>
