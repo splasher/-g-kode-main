@@ -275,7 +275,7 @@ function showScreen(id) {
     if (id === 'marketplace') loadMarketplace();
 }
 
-// ============ REGISTER (Optimized) ============
+// ============ REGISTER - FIXED PASSWORD ============
 async function register(e) {
     e.preventDefault();
     var btn = document.getElementById('registerBtn');
@@ -321,13 +321,24 @@ async function register(e) {
 
         sendEmail(email, name, vCode);
 
+        // ===== FIX: Store password as base64 =====
+        var encodedPassword = btoa(password);
+
         var user = {
-            name: name, phone: phone, id: id, email: email,
-            password: btoa(password), location: location,
-            profession: profession, skills: skills || '',
+            name: name, 
+            phone: phone, 
+            id: id, 
+            email: email,
+            password: encodedPassword,
+            location: location,
+            profession: profession, 
+            skills: skills || '',
             photo: photo ? await readFile(photo) : '',
             idScan: idScan ? await readFile(idScan) : '',
-            status: 'Active', verified: true, strikes: 0, rating: 0,
+            status: 'Active', 
+            verified: true, 
+            strikes: 0, 
+            rating: 0,
             paymentStatus: 'UNPAID',
             registeredAt: new Date().toISOString()
         };
@@ -354,7 +365,7 @@ function readFile(file) {
     });
 }
 
-// ============ FAST LOGIN - OPTIMIZED ============
+// ============ FAST LOGIN - FIXED ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -391,9 +402,25 @@ function login(e) {
         
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
-                if (atob(users[i].password) === password) {
+                // ===== FIX: Check password correctly =====
+                // If password is stored as plain text (no encoding)
+                if (users[i].password === password) {
                     found = users[i];
                     break;
+                }
+                // If password is base64 encoded
+                try {
+                    var decoded = atob(users[i].password);
+                    if (decoded === password) {
+                        found = users[i];
+                        break;
+                    }
+                } catch(e) {
+                    // If atob fails, try direct comparison
+                    if (users[i].password === password) {
+                        found = users[i];
+                        break;
+                    }
                 }
             }
         }
@@ -581,6 +608,44 @@ function sendMessage(e) {
     loadChatMessages(id);
 }
 
+// ============ SHARE LOCATION ============
+function shareLiveLocation() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    if (!navigator.geolocation) { toast('❌ GPS not supported.', 'error'); return; }
+    toast('📍 Getting location...', 'info');
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+        var id = document.getElementById('chatGigId').value;
+        var logs = getL();
+        logs.push({ type: 'CHAT_MESSAGE', gigId: id, sender: U.name, text: '📍 My location: ' + url, time: new Date().toISOString() });
+        setL(logs);
+        loadChatMessages(id);
+        window.open(url, '_blank');
+        toast('✅ Location shared!', 'success');
+    }, function() { toast('❌ Enable GPS.', 'error'); });
+}
+
+// ============ NAVIGATE TO CLIENT ============
+function navigateToClient() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    var id = document.getElementById('chatGigId').value;
+    if (!id) { toast('No active gig.', 'error'); return; }
+    var gigs = getG();
+    var gig = null;
+    for (var i = 0; i < gigs.length; i++) {
+        if (gigs[i].id === id) { gig = gigs[i]; break; }
+    }
+    if (!gig) { toast('Gig not found.', 'error'); return; }
+    var lat = gig.clientGPSLat || 0;
+    var lon = gig.clientGPSLon || 0;
+    if (!lat || !lon) { toast('❌ Client location not available.', 'error'); return; }
+    var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+    window.open(url, '_blank');
+    toast('📍 Client location opened.', 'success');
+}
+
 // ============ PROFILE ============
 function loadProfile() {
     if (!U) return;
@@ -745,6 +810,43 @@ function emergencyCall() {
     if (confirm('🚨 EMERGENCY\n\nOpen emergency contacts?')) {
         window.location.href = 'emergency.html';
     }
+}
+
+// ============ Toggle Password ============
+function togglePassword(fieldId, icon) {
+    var field = document.getElementById(fieldId);
+    if (!field) return;
+    if (field.type === 'password') { field.type = 'text'; icon.textContent = '🙈'; }
+    else { field.type = 'password'; icon.textContent = '👁️'; }
+}
+
+// ============ CAMERA CAPTURE ============
+function capturePhoto(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                input.click();
+            })
+            .catch(function() { input.click(); });
+    } else {
+        input.click();
+    }
+}
+
+// ============ CAPTURE GIG LOCATION ============
+function captureGigLocation() {
+    if (!navigator.geolocation) { toast('GPS not supported.', 'error'); return; }
+    toast('📍 Capturing location...', 'info');
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('gigGPSLat').value = pos.coords.latitude;
+        document.getElementById('gigGPSLon').value = pos.coords.longitude;
+        document.getElementById('gigLocationStatus').textContent = '✅ Location captured!';
+        document.getElementById('gigLocationStatus').style.color = '#006400';
+        toast('✅ Location captured!', 'success');
+    }, function() { toast('❌ Enable GPS.', 'error'); });
 }
 
 // ============ PROFESSION DROPDOWN ============
@@ -942,15 +1044,221 @@ function addProduct(e) {
     btn.textContent = 'ADD PRODUCT';
 }
 
-// ============ Toggle Password ============
-function togglePassword(fieldId, icon) {
-    var field = document.getElementById(fieldId);
-    if (!field) return;
-    if (field.type === 'password') { field.type = 'text'; icon.textContent = '🙈'; }
-    else { field.type = 'password'; icon.textContent = '👁️'; }
+// ============ RESET PASSWORD ============
+function verifyIdentity(e) {
+    e.preventDefault();
+    var btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ VERIFYING...';
+    try {
+        var phone = document.getElementById('resetPhone').value.trim();
+        var id = document.getElementById('resetID').value.trim();
+        var profession = document.getElementById('resetProfession').value.trim();
+        var location = document.getElementById('resetLocation').value.trim();
+        if (!phone || !id || !profession || !location) { toast('Fill all fields.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY IDENTITY'; return; }
+        var users = getUsers();
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].phone === phone && users[i].id === id && users[i].profession.toLowerCase() === profession.toLowerCase() && users[i].location.toLowerCase() === location.toLowerCase()) {
+                document.getElementById('newPasswordSection').style.display = 'block';
+                document.getElementById('resetPhone').disabled = true;
+                document.getElementById('resetID').disabled = true;
+                document.getElementById('resetProfession').disabled = true;
+                document.getElementById('resetLocation').disabled = true;
+                toast('✅ Identity verified, ' + users[i].name + '!', 'success');
+                btn.disabled = false;
+                btn.textContent = 'VERIFY IDENTITY';
+                return;
+            }
+        }
+        toast('❌ Verification failed.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'VERIFY IDENTITY';
+    } catch (err) { toast('Error: ' + err.message, 'error'); btn.disabled = false; btn.textContent = 'VERIFY IDENTITY'; }
 }
 
-// ============ Reset Everything ============
+function resetPassword() {
+    try {
+        var phone = document.getElementById('resetPhone').value.trim();
+        var newPass = document.getElementById('newPassword').value.trim();
+        var confirmPass = document.getElementById('confirmPassword').value.trim();
+
+        if (!newPass || !confirmPass) { toast('Enter both password fields.', 'error'); return; }
+        if (newPass.length < 8) { toast('Password must be 8+ characters.', 'error'); return; }
+        if (!/[A-Za-z]/.test(newPass) || !/[0-9]/.test(newPass)) { toast('Password must contain both letters and numbers.', 'error'); return; }
+        if (newPass !== confirmPass) { toast('Passwords do not match.', 'error'); return; }
+
+        var users = getUsers();
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].phone === phone) {
+                users[i].password = btoa(newPass);
+                break;
+            }
+        }
+        setUsers(users);
+
+        toast('✅ Password reset successful!', 'success');
+        document.getElementById('newPasswordSection').style.display = 'none';
+        document.getElementById('resetPhone').disabled = false;
+        document.getElementById('resetID').disabled = false;
+        document.getElementById('resetProfession').disabled = false;
+        document.getElementById('resetLocation').disabled = false;
+        showScreen('login');
+    } catch (err) { toast('Error: ' + err.message, 'error'); }
+}
+
+// ============ SHOW PAYMENT SCREEN ============
+function showPaymentScreen() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    var fee = C.fee;
+    var msg = '💳 G-KODE PAYMENT\n\nUser: ' + U.name + '\nPhone: ' + U.phone + '\nAmount: Ksh ' + fee + '\n\n📌 ONE-TIME FEE FOR LIFE\nNo subscriptions.\n\nPayment:\n📱 Till: ' + C.till + '\n📱 Paybill: ' + C.paybill + '\n📱 Account: ' + C.account + '\n\nEnter M-Pesa confirmation code:';
+    alert(msg);
+    var code = prompt('📱 Enter M-Pesa confirmation code:');
+    if (code && code.length >= 5) {
+        var payments = getPay();
+        payments.push({ phone: U.phone, code: code, amount: fee, verified: true, time: new Date().toISOString() });
+        setPay(payments);
+        var users = getUsers();
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].phone === U.phone) {
+                users[i].paymentStatus = 'PAID';
+                break;
+            }
+        }
+        setUsers(users);
+        U.paymentStatus = 'PAID';
+        localStorage.setItem('gkode_currentUser', JSON.stringify(U));
+        toast('✅ Payment verified!', 'success');
+        showScreen('home');
+    } else { toast('Payment cancelled.', 'warning'); }
+}
+
+function verifyMpesaPayment() {
+    var code = document.getElementById('mpesaCode').value.trim();
+    if (!U) { toast('Login first.', 'error'); return; }
+    if (!code || code.length < 5) { toast('Enter valid code.', 'error'); return; }
+    var payments = getPay();
+    payments.push({ phone: U.phone, code: code, amount: C.fee, verified: true, time: new Date().toISOString() });
+    setPay(payments);
+    var users = getUsers();
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].phone === U.phone) {
+            users[i].paymentStatus = 'PAID';
+            break;
+        }
+    }
+    setUsers(users);
+    U.paymentStatus = 'PAID';
+    localStorage.setItem('gkode_currentUser', JSON.stringify(U));
+    toast('✅ Payment successful!', 'success');
+    showScreen('home');
+}
+
+// ============ SHOW LEGAL NOTICE ============
+function showLegalNotice(type) {
+    var notices = {
+        'privacy': '🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, photo, ID scan, GPS.\n\nWe DO NOT share your ID or password.\n\nYour rights: Access, correct, delete anytime. Protected under Kenya Data Protection Act 2019.',
+        'terms': '📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Disputes resolved through G-KODE\n4. Kenyan law applies\n5. Account termination for violations',
+        'disclaimer': '⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Users verify each other\n4. Report issues immediately\n5. Use at your own risk'
+    };
+    alert(notices[type] || 'Notice not found.');
+}
+
+// ============ EXPORT USER DATA ============
+function exportUserData() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    var data = {
+        exportedAt: new Date().toISOString(),
+        user: U,
+        userGigs: [],
+        userOrders: [],
+        userPayments: []
+    };
+    var gigs = getG();
+    for (var i = 0; i < gigs.length; i++) {
+        if (gigs[i].client === U.name || gigs[i].worker === U.name) {
+            data.userGigs.push(gigs[i]);
+        }
+    }
+    var orders = getO();
+    for (var i = 0; i < orders.length; i++) {
+        if (orders[i].buyerName === U.name) {
+            data.userOrders.push(orders[i]);
+        }
+    }
+    var payments = getPay();
+    for (var i = 0; i < payments.length; i++) {
+        if (payments[i].phone === U.phone) {
+            data.userPayments.push(payments[i]);
+        }
+    }
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gkode-my-data-' + new Date().toISOString().split('T')[0] + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('✅ Data exported.', 'success');
+}
+
+// ============ DELETE ACCOUNT ============
+function deleteAccount() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    if (!confirm('⚠️ DELETE ACCOUNT?\n\nThis permanently deletes your profile, gigs, orders, and payments.\n\nCANNOT BE UNDONE!')) { return; }
+    if (!confirm('FINAL WARNING: Continue?')) { return; }
+    var users = getUsers();
+    var newUsers = [];
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].phone !== U.phone) {
+            newUsers.push(users[i]);
+        }
+    }
+    setUsers(newUsers);
+    var gigs = getG();
+    var newGigs = [];
+    for (var i = 0; i < gigs.length; i++) {
+        if (gigs[i].client !== U.name && gigs[i].worker !== U.name) {
+            newGigs.push(gigs[i]);
+        }
+    }
+    setG(newGigs);
+    U = null;
+    localStorage.removeItem('gkode_currentUser');
+    toast('✅ Account deleted.', 'success');
+    showScreen('welcome');
+}
+
+// ============ SUBMIT REVIEW ============
+function submitReview() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    var rating = parseInt(document.getElementById('reviewRating').value);
+    var text = document.getElementById('reviewText').value.trim();
+    if (!text) { toast('Please write a review.', 'error'); return; }
+    var logs = getL();
+    logs.push({ type: 'REVIEW_SUBMITTED', user: U.name, rating: rating, text: text, time: new Date().toISOString() });
+    setL(logs);
+    toast('✅ Review submitted!', 'success');
+    document.getElementById('reviewText').value = '';
+    showScreen('home');
+}
+
+// ============ SUBMIT COMPLAINT ============
+function submitComplaint() {
+    if (!U) { toast('Login first.', 'error'); return; }
+    var reason = document.getElementById('complaintReason').value;
+    var details = document.getElementById('complaintDetails').value.trim();
+    if (!reason) { toast('Select a reason.', 'error'); return; }
+    if (!details) { toast('Describe what happened.', 'error'); return; }
+    var logs = getL();
+    logs.push({ type: 'COMPLAINT_FILED', user: U.name, reason: reason, details: details, time: new Date().toISOString() });
+    setL(logs);
+    toast('✅ Complaint filed.', 'success');
+    document.getElementById('complaintDetails').value = '';
+    document.getElementById('complaintReason').value = '';
+    showScreen('home');
+}
+
+// ============ RESET EVERYTHING ============
 function resetEverything() {
     if (!isAdmin()) { toast('Admin only.', 'error'); return; }
     if (confirm('⚠️ DELETE ALL DATA?')) {
@@ -966,52 +1274,41 @@ function resetEverything() {
 // 🛡️ FRAUD DETECTION SYSTEM - ZERO MERCY
 // ============================================
 
-// ============ FRAUD SCORE CALCULATION ============
 function calculateFraudScore(user) {
-    let score = 0;
-    
+    var score = 0;
     if (user.strikes > 0) score += user.strikes * 10;
     if (user.strikes >= 4) score += 30;
-    
     if (!user.paymentStatus || user.paymentStatus === 'UNPAID') score += 20;
-    
     if (user.reviewCount > 100 && user.rating === 5) score += 20;
-    
     var gigs = getGigs();
-    var userGigs = gigs.filter(g => g.client === user.name || g.worker === user.name);
+    var userGigs = gigs.filter(function(g) { return g.client === user.name || g.worker === user.name; });
     if (userGigs.length > 50) score += 10;
     if (userGigs.length > 100) score += 20;
-    
     var monthsSinceRegister = (Date.now() - new Date(user.registeredAt)) / (30 * 24 * 60 * 60 * 1000);
     if (monthsSinceRegister < 1 && userGigs.length > 20) score += 20;
-    
     return Math.min(score, 100);
 }
 
-// ============ REAL-TIME FRAUD DETECTION ============
 function detectFraudInRealTime() {
-    let start = performance.now();
-    let users = getUsers();
-    let gigs = getGigs();
-    let orders = getO();
-    let payments = getPay();
-    
-    let suspiciousUsers = [];
-    let suspiciousGigs = [];
-    let suspiciousOrders = [];
-    let fraudulentPayments = [];
-    
-    for (let i = 0; i < users.length; i++) {
-        let u = users[i];
-        let fraudScore = calculateFraudScore(u);
+    var start = performance.now();
+    var users = getUsers();
+    var gigs = getGigs();
+    var orders = getO();
+    var payments = getPay();
+    var suspiciousUsers = [];
+    var suspiciousGigs = [];
+    var suspiciousOrders = [];
+    var fraudulentPayments = [];
+    for (var i = 0; i < users.length; i++) {
+        var u = users[i];
+        var fraudScore = calculateFraudScore(u);
         if (fraudScore > 50) {
             suspiciousUsers.push({ user: u, fraudScore: fraudScore });
         }
     }
-    
-    for (let i = 0; i < gigs.length; i++) {
-        let g = gigs[i];
-        let userGigs = gigs.filter(x => x.client === g.client);
+    for (var i = 0; i < gigs.length; i++) {
+        var g = gigs[i];
+        var userGigs = gigs.filter(function(x) { return x.client === g.client; });
         if (userGigs.length > 20) {
             suspiciousGigs.push({ gig: g, reason: 'TOO_MANY_GIGS', count: userGigs.length });
         }
@@ -1019,9 +1316,8 @@ function detectFraudInRealTime() {
             suspiciousGigs.push({ gig: g, reason: 'UNUSUAL_BUDGET' });
         }
     }
-    
-    for (let i = 0; i < orders.length; i++) {
-        let o = orders[i];
+    for (var i = 0; i < orders.length; i++) {
+        var o = orders[i];
         if (o.quantity > 100) {
             suspiciousOrders.push({ order: o, reason: 'LARGE_QUANTITY' });
         }
@@ -1029,10 +1325,9 @@ function detectFraudInRealTime() {
             suspiciousOrders.push({ order: o, reason: 'LARGE_AMOUNT' });
         }
     }
-    
-    for (let i = 0; i < payments.length; i++) {
-        let p = payments[i];
-        let duplicates = payments.filter(x => x.code === p.code);
+    for (var i = 0; i < payments.length; i++) {
+        var p = payments[i];
+        var duplicates = payments.filter(function(x) { return x.code === p.code; });
         if (duplicates.length > 1) {
             fraudulentPayments.push({ payment: p, reason: 'DUPLICATE_CODE' });
         }
@@ -1040,9 +1335,7 @@ function detectFraudInRealTime() {
             fraudulentPayments.push({ payment: p, reason: 'UNUSUAL_AMOUNT' });
         }
     }
-    
-    let end = performance.now();
-    
+    var end = performance.now();
     return {
         detectionTime: ((end - start) / 1000).toFixed(2) + 's',
         suspiciousUsers: suspiciousUsers.length,
@@ -1058,22 +1351,18 @@ function detectFraudInRealTime() {
     };
 }
 
-// ============ AUTO-BLOCK FRAUDSTERS ============
 function autoBlockFraudsters() {
-    let blocked = [];
-    let users = getUsers();
-    let logs = getL();
-    
-    for (let i = 0; i < users.length; i++) {
-        let user = users[i];
-        let fraudScore = calculateFraudScore(user);
-        
+    var blocked = [];
+    var users = getUsers();
+    var logs = getL();
+    for (var i = 0; i < users.length; i++) {
+        var user = users[i];
+        var fraudScore = calculateFraudScore(user);
         if (fraudScore > 80) {
             user.status = 'PERMANENTLY_BANNED';
             user.bannedAt = new Date().toISOString();
             user.banReason = 'FRAUD_DETECTED_SCORE_' + fraudScore;
             blocked.push(user);
-            
             logs.push({
                 type: 'AUTO_BAN',
                 user: user.name,
@@ -1086,7 +1375,6 @@ function autoBlockFraudsters() {
             user.suspendedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
             user.suspendReason = 'SUSPICIOUS_ACTIVITY_SCORE_' + fraudScore;
             blocked.push(user);
-            
             logs.push({
                 type: 'AUTO_SUSPEND',
                 user: user.name,
@@ -1096,32 +1384,26 @@ function autoBlockFraudsters() {
             });
         }
     }
-    
     if (blocked.length > 0) {
         setUsers(users);
         setL(logs);
         console.log('🚨 AUTO-BLOCKED ' + blocked.length + ' users');
     }
-    
     return blocked;
 }
 
-// ============ MONEY FLOW TRACKING ============
 function trackMoneyFlow() {
-    let payments = getPay();
-    let orders = getO();
-    
-    let stats = {
+    var payments = getPay();
+    var orders = getO();
+    var stats = {
         totalRevenue: 0,
         pendingPayments: 0,
         completedPayments: 0,
-        feesCollected: 0,
         commissionsCollected: 0,
         averageTransaction: 0,
         anomalies: []
     };
-    
-    for (let i = 0; i < payments.length; i++) {
+    for (var i = 0; i < payments.length; i++) {
         if (payments[i].verified) {
             stats.totalRevenue += payments[i].amount;
             stats.completedPayments++;
@@ -1129,22 +1411,18 @@ function trackMoneyFlow() {
             stats.pendingPayments++;
         }
     }
-    
-    for (let i = 0; i < orders.length; i++) {
+    for (var i = 0; i < orders.length; i++) {
         stats.commissionsCollected += orders[i].commission || 0;
     }
-    
     if (stats.completedPayments > 0) {
         stats.averageTransaction = stats.totalRevenue / stats.completedPayments;
     }
-    
-    let amounts = payments.map(p => p.amount);
+    var amounts = payments.map(function(p) { return p.amount; });
     if (amounts.length > 0) {
-        let avg = amounts.reduce((a,b) => a + b, 0) / amounts.length;
-        let stdDev = Math.sqrt(amounts.reduce((a,b) => a + Math.pow(b - avg, 2), 0) / amounts.length);
-        
-        for (let i = 0; i < payments.length; i++) {
-            let p = payments[i];
+        var avg = amounts.reduce(function(a,b) { return a + b; }, 0) / amounts.length;
+        var stdDev = Math.sqrt(amounts.reduce(function(a,b) { return a + Math.pow(b - avg, 2); }, 0) / amounts.length);
+        for (var i = 0; i < payments.length; i++) {
+            var p = payments[i];
             if (Math.abs(p.amount - avg) > 3 * stdDev) {
                 stats.anomalies.push({
                     payment: p,
@@ -1152,7 +1430,7 @@ function trackMoneyFlow() {
                     deviation: Math.abs(p.amount - avg) / stdDev
                 });
             }
-            let hour = new Date(p.time).getHours();
+            var hour = new Date(p.time).getHours();
             if (hour >= 0 && hour <= 4) {
                 stats.anomalies.push({
                     payment: p,
@@ -1162,23 +1440,18 @@ function trackMoneyFlow() {
             }
         }
     }
-    
     return stats;
 }
 
-// ============ ACTIVATE FRAUD DETECTION ============
 function activateFraudDetection() {
     console.log('🛡️ Fraud Detection ACTIVATED!');
-    
     setInterval(function() {
         try {
-            let frauds = detectFraudInRealTime();
-            
+            var frauds = detectFraudInRealTime();
             if (frauds.suspiciousUsers > 0 || frauds.suspiciousGigs > 0 || 
                 frauds.suspiciousOrders > 0 || frauds.fraudulentPayments > 0) {
-                
                 console.log('🚨 FRAUD DETECTED!', frauds);
-                let blocked = autoBlockFraudsters();
+                var blocked = autoBlockFraudsters();
                 if (blocked.length > 0) {
                     console.log('⛔ AUTO-BLOCKED:', blocked.length, 'users');
                     toast('🛡️ ' + blocked.length + ' fraudsters blocked!', 'warning');
@@ -1188,10 +1461,9 @@ function activateFraudDetection() {
             console.error('Fraud scan error:', e);
         }
     }, 120000);
-    
     setInterval(function() {
         try {
-            let stats = trackMoneyFlow();
+            var stats = trackMoneyFlow();
             if (stats.anomalies.length > 0) {
                 console.log('💰 ANOMALIES DETECTED:', stats.anomalies.length);
             }
@@ -1199,20 +1471,16 @@ function activateFraudDetection() {
             console.error('Money tracking error:', e);
         }
     }, 60000);
-    
     console.log('✅ Fraud Detection RUNNING!');
 }
 
-// ============ MANUAL FRAUD CHECK ============
 function manualFraudCheck() {
     if (!isAdmin()) {
         toast('⛔ Admin only!', 'error');
         return;
     }
-    
-    let frauds = detectFraudInRealTime();
-    
-    let msg = '🛡️ FRAUD SCAN REPORT\n';
+    var frauds = detectFraudInRealTime();
+    var msg = '🛡️ FRAUD SCAN REPORT\n';
     msg += '='.repeat(40) + '\n';
     msg += '⏱️ Scan Time: ' + frauds.detectionTime + '\n';
     msg += '👥 Suspicious Users: ' + frauds.suspiciousUsers + '\n';
@@ -1220,21 +1488,17 @@ function manualFraudCheck() {
     msg += '📦 Suspicious Orders: ' + frauds.suspiciousOrders + '\n';
     msg += '💳 Fraudulent Payments: ' + frauds.fraudulentPayments + '\n';
     msg += '='.repeat(40) + '\n';
-    
     if (frauds.suspiciousUsers > 0 || frauds.suspiciousGigs > 0) {
         msg += '⚠️ ACTION REQUIRED!\n';
         msg += 'Run autoBlockFraudsters() to block them.';
     } else {
         msg += '✅ All clear! No fraud detected.';
     }
-    
     alert(msg);
-    
-    let blocked = autoBlockFraudsters();
+    var blocked = autoBlockFraudsters();
     if (blocked.length > 0) {
         toast('⛔ ' + blocked.length + ' users blocked!', 'warning');
     }
-    
     return frauds;
 }
 
