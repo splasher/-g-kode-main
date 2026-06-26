@@ -110,42 +110,136 @@ function togglePassword(fieldId, icon) {
 }
 
 // ============ PROFESSIONS ============
-var defaultProfessions = ['Accountant','Architect','Baker','Barber','Barista','Boda Boda Rider','Builder','Butcher','Carpenter','Caterer','CCTV Installer','Chef','Childminder/Nanny','Cleaner','Cook','Courier','Data Entry Clerk','Delivery Person','Dentist','DJ','Doctor','Driver','Electrician','Elderly Caregiver','Engineer','Event Planner','Farmer','Fitness Trainer','Gardener','Graphic Designer','Hairdresser','House Help','IT Technician','Journalist','Lab Technician','Landscaper','Laundry Worker','Lawyer','Makeup Artist','Mason','Mechanic','Music Teacher','Nurse','Painter','Peer Counselor','Pharmacist','Phone Repair Technician','Photographer','Physiotherapist','Plumber','Roofer','Security Guard','Surveyor','Tailor','Teacher/Tutor','Tiler','Tour Guide','Translator','Vet','Videographer','Waiter/Waitress','Web Designer','Welder','Writer'];
+var defaultProfessions = [
+    'Accountant', 'Architect', 'Baker', 'Barber', 'Barista', 
+    'Boda Boda Rider', 'Builder', 'Butcher', 'Carpenter', 'Caterer', 
+    'CCTV Installer', 'Chef', 'Childminder / Nanny', 'Cleaner', 'Cook', 
+    'Courier', 'Data Entry Clerk', 'Delivery Person', 'Dentist', 'DJ', 
+    'Doctor', 'Driver', 'Electrician', 'Elderly Caregiver', 'Engineer', 
+    'Event Planner', 'Farmer', 'Fitness Trainer', 'Gardener', 'Graphic Designer', 
+    'Hairdresser', 'House Help', 'IT Technician', 'Journalist', 'Lab Technician', 
+    'Landscaper', 'Laundry Worker', 'Lawyer', 'Makeup Artist', 'Mason', 
+    'Mechanic', 'Music Teacher', 'Nurse', 'Painter', 'Peer Counselor', 
+    'Pharmacist', 'Phone Repair Technician', 'Photographer', 'Physiotherapist', 'Plumber', 
+    'Roofer', 'Security Guard', 'Surveyor', 'Tailor', 'Teacher / Tutor', 
+    'Tiler', 'Tour Guide', 'Translator', 'Vet', 'Videographer', 
+    'Waiter / Waitress', 'Web Designer', 'Welder', 'Writer'
+];
 
+// ============ GET ALL PROFESSIONS (NO DUPLICATES) ============
 function getAllProfessions() {
     var saved = getProfessions();
     var all = defaultProfessions.slice();
-    for (var i = 0; i < saved.length; i++) { if (all.indexOf(saved[i]) === -1) { all.push(saved[i]); } }
-    all.sort(); return all;
+    
+    // Add saved professions without duplicates
+    for (var i = 0; i < saved.length; i++) {
+        var exists = false;
+        for (var j = 0; j < all.length; j++) {
+            if (all[j].toLowerCase() === saved[i].toLowerCase()) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            all.push(saved[i]);
+        }
+    }
+    
+    all.sort();
+    return all;
 }
 
+// ============ POPULATE DROPDOWN (NO DUPLICATES) ============
 function populateProfessionDropdown() {
     var dropdown = document.getElementById('regProfession');
     if (!dropdown) return;
-    while (dropdown.options.length > 1) { dropdown.remove(1); }
+    
+    // Clear all options except the first one
+    while (dropdown.options.length > 1) {
+        dropdown.remove(1);
+    }
+    
     var all = getAllProfessions();
-    for (var i = 0; i < all.length; i++) { var opt = document.createElement('option'); opt.value = all[i]; opt.textContent = all[i]; dropdown.appendChild(opt); }
-    var otherOpt = document.createElement('option'); otherOpt.value = 'Other'; otherOpt.textContent = 'Other (Add New)'; dropdown.appendChild(otherOpt);
+    var addedNames = {};
+    
+    for (var i = 0; i < all.length; i++) {
+        // Skip if already added
+        if (addedNames[all[i].toLowerCase()]) continue;
+        addedNames[all[i].toLowerCase()] = true;
+        
+        var opt = document.createElement('option');
+        opt.value = all[i];
+        opt.textContent = all[i];
+        dropdown.appendChild(opt);
+    }
+    
+    var otherOpt = document.createElement('option');
+    otherOpt.value = 'Other';
+    otherOpt.textContent = '➕ Other (Add New Profession)';
+    dropdown.appendChild(otherOpt);
 }
-populateProfessionDropdown();
 
+// ============ CHECK IF OTHER PROFESSION ============
 function checkProfession() {
     var profession = document.getElementById('regProfession').value;
-    document.getElementById('otherProfessionBox').style.display = profession === 'Other' ? 'block' : 'none';
+    var otherBox = document.getElementById('otherProfessionBox');
+    if (profession === 'Other') {
+        otherBox.style.display = 'block';
+        document.getElementById('regOtherProfession').focus();
+    } else {
+        otherBox.style.display = 'none';
+    }
 }
 
+// ============ SAVE NEW PROFESSION (FIXED) ============
 function saveNewProfession(professionName) {
-    var words = professionName.split(' ');
+    if (!professionName || professionName.trim().length < 3) {
+        showToast('Please enter a valid profession name (minimum 3 characters).', 'error');
+        return null;
+    }
+    
+    // Format the profession name (Capitalize each word)
+    var words = professionName.trim().split(' ');
     var formatted = '';
-    for (var i = 0; i < words.length; i++) { if (words[i].length > 0) { formatted += words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase() + ' '; } }
+    for (var i = 0; i < words.length; i++) {
+        if (words[i].length > 0) {
+            formatted += words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase() + ' ';
+        }
+    }
     formatted = formatted.trim();
-    if (!formatted || formatted.length < 3) return null;
+    
+    // Check if profession already exists (case insensitive)
     var all = getAllProfessions();
-    for (var i = 0; i < all.length; i++) { if (all[i].toLowerCase() === formatted.toLowerCase()) { return all[i]; } }
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].toLowerCase() === formatted.toLowerCase()) {
+            showToast('✅ Profession "' + all[i] + '" already exists.', 'info');
+            return all[i];
+        }
+    }
+    
+    // Save new profession
     var saved = getProfessions();
-    if (saved.indexOf(formatted) === -1) { saved.push(formatted); setProfessions(saved); populateProfessionDropdown(); }
+    saved.push(formatted);
+    setProfessions(saved);
+    
+    // Refresh dropdown
+    populateProfessionDropdown();
+    
+    // Select the newly added profession
+    var dropdown = document.getElementById('regProfession');
+    for (var i = 0; i < dropdown.options.length; i++) {
+        if (dropdown.options[i].value === formatted) {
+            dropdown.selectedIndex = i;
+            break;
+        }
+    }
+    
+    showToast('✅ New profession "' + formatted + '" saved!', 'success');
     return formatted;
 }
+
+// ============ INIT PROFESSION DROPDOWN ============
+populateProfessionDropdown();
 
 // ============ VERIFICATION ============
 function generateVerificationCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
@@ -1331,3 +1425,27 @@ console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
 console.log('💳 Payment System: ' + (isPaymentRequired() ? '🔒 ON' : '🔓 OFF'));
 console.log('📧 EmailJS: Configured and ready!');
+// ============ CAMERA CAPTURE ============
+function capturePhoto(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    
+    // Check if camera is supported
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Try to use camera directly
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                // Stop the stream immediately - we just want to check if camera exists
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                // Trigger file input with capture attribute
+                input.click();
+            })
+            .catch(function(err) {
+                // Camera not available, just open file picker
+                input.click();
+            });
+    } else {
+        // Fallback: open file picker
+        input.click();
+    }
+}

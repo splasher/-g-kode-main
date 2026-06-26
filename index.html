@@ -37,46 +37,51 @@
     </div>
 
     <!-- ===== REGISTER SCREEN ===== -->
-    <div id="register" class="screen">
-        <h2>Create Account</h2>
-        <form id="registerForm" onsubmit="register(event)">
-            <input type="text" id="regName" placeholder="Full Name (First & Last) *" required />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Must match the name on your National ID</small>
-            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
-            <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
-<small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small>
+<div id="register" class="screen">
+    <h2>Create Account</h2>
+    <form id="registerForm" onsubmit="register(event)">
+        <input type="text" id="regName" placeholder="Full Name (First & Last) *" required />
+        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Must match the name on your National ID</small>
+        <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
+        <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
+        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small>
+        <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
+        <div style="position:relative;">
+            <input type="password" id="regPassword" placeholder="Password (8+ chars, mix letters & numbers) *" required minlength="8" style="padding-right:50px;" />
+            <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+        </div>
+        <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 8+ characters with both letters and numbers</small>
+        <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
+        <select id="regProfession" required onchange="checkProfession()">
+            <option value="">-- Select Your Profession * --</option>
+        </select>
+        <div id="otherProfessionBox" style="display:none;">
+            <input type="text" id="regOtherProfession" placeholder="Please specify your profession *" />
+            <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
+        </div>
+        <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
+        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
 
-            <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
-            <div style="position:relative;">
-                <input type="password" id="regPassword" placeholder="Password (8+ chars, mix letters & numbers) *" required minlength="8" style="padding-right:50px;" />
-                <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-            </div>
-            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 8+ characters with both letters and numbers</small>
-            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
-            <select id="regProfession" required onchange="checkProfession()">
-                <option value="">-- Select Your Profession * --</option>
-            </select>
-            <div id="otherProfessionBox" style="display:none;">
-                <input type="text" id="regOtherProfession" placeholder="Please specify your profession *" />
-                <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
-                <input type="email" id="regEmail" placeholder="Email Address * (For verification)" required />
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📧 We'll send your verification code here</small> 
-            </div>
-            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
+        <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
+        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo (Clear face photo) *</label>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="file" id="regPhoto" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
+            <button type="button" onclick="capturePhoto('regPhoto')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Camera</button>
+        </div>
+        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📸 Take photo or choose from gallery. Minimum 200x200 pixels.</small>
 
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo (Clear face photo) *</label>
-            <input type="file" id="regPhoto" accept="image/*" required style="padding:10px;" />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">📸 Must be a clear photo of your face. Minimum 200x200 pixels.</small>
+        <!-- ===== ID SCAN WITH CAMERA ===== -->
+        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="file" id="regIDScan" accept="image/*" capture="environment" style="flex:1; padding:10px;" />
+            <button type="button" onclick="capturePhoto('regIDScan')" style="background:#006400; color:#FFD700; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">📸 Scan ID</button>
+        </div>
+        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">🆔 Take a photo of your ID card or upload from gallery.</small>
 
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
-            <input type="file" id="regIDScan" accept="image/*" required style="padding:10px;" />
-            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">🆔 Upload a clear scan of your National ID card.</small>
-
-            <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
-            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-        </form>
-    </div>
+        <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
+        <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
+    </form>
+</div>
 
     <!-- ===== LOGIN SCREEN ===== -->
     <div id="login" class="screen">
