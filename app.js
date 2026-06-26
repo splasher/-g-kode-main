@@ -1,7 +1,47 @@
 // ============================================
 // G-KODE - COMPLETE APP
 // ============================================
+// ============================================
+// SECURITY OVERRIDE - ZERO MERCY
+// ============================================
 
+// Override getData and setData to use encryption
+var originalGetData = getData;
+var originalSetData = setData;
+
+getData = function(key) {
+    var data = localStorage.getItem(key);
+    if (!data) return [];
+    try {
+        var decrypted = secureDecrypt(data);
+        if (Array.isArray(decrypted)) {
+            return decrypted;
+        }
+        if (typeof decrypted === 'object' && decrypted !== null) {
+            return decrypted;
+        }
+        return originalGetData(key);
+    } catch(e) {
+        return originalGetData(key);
+    }
+};
+
+setData = function(key, data) {
+    try {
+        var encrypted = secureEncrypt(data);
+        localStorage.setItem(key, encrypted);
+    } catch(e) {
+        originalSetData(key, data);
+    }
+};
+
+// Override showToast to be more aggressive
+var originalShowToast = showToast;
+showToast = function(message, type) {
+    // Log all toasts for security
+    console.log('🔔 Toast:', type, message);
+    originalShowToast(message, type);
+};
 // ============ GLOBAL ============
 var currentUser = null;
 var currentTab = 'open';
