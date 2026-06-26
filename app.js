@@ -681,36 +681,48 @@ function login(e) {
 function logout() {
     console.log('🚪 Logging out...');
     
-    // Clear chat interval if exists
-    if (chatInterval) {
-        clearInterval(chatInterval);
-        chatInterval = null;
+    try {
+        // Clear chat interval
+        if (window.chatInterval) {
+            clearInterval(window.chatInterval);
+            window.chatInterval = null;
+        }
+        
+        // Clear current user
+        window.currentUser = null;
+        
+        // Remove from localStorage
+        localStorage.removeItem('gkode_currentUser');
+        localStorage.removeItem('gkode_session');
+        localStorage.removeItem('gkode_csrf');
+        
+        // Hide bottom navigation
+        var nav = document.getElementById('bottomNav');
+        if (nav) {
+            nav.classList.add('hidden');
+        }
+        
+        // Hide admin button if visible
+        var adminBtn = document.getElementById('adminAccessBtn');
+        if (adminBtn) {
+            adminBtn.style.display = 'none';
+        }
+        
+        // Show toast message
+        showToast('✅ Logged out successfully.', 'info');
+        
+        // Navigate to welcome screen
+        showScreen('welcome');
+        
+        console.log('✅ Logout complete');
+    } catch (err) {
+        console.error('Logout error:', err);
+        // Force logout even if error
+        window.currentUser = null;
+        localStorage.removeItem('gkode_currentUser');
+        showScreen('welcome');
     }
-    
-    // Clear current user
-    currentUser = null;
-    
-    // Remove from localStorage
-    localStorage.removeItem('gkode_currentUser');
-    localStorage.removeItem('gkode_session');
-    
-    // Show toast message
-    showToast('✅ Logged out successfully.', 'info');
-    
-    // Navigate to welcome screen
-    showScreen('welcome');
-    
-    // Hide bottom navigation
-    var nav = document.getElementById('bottomNav');
-    if (nav) nav.classList.add('hidden');
-    
-    // Hide admin button if visible
-    var adminBtn = document.getElementById('adminAccessBtn');
-    if (adminBtn) adminBtn.style.display = 'none';
-    
-    console.log('✅ Logout complete');
 }
-
 // ============ PASSWORD RESET ============
 function verifyIdentity(e) {
     e.preventDefault();
