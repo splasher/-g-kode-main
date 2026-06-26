@@ -679,20 +679,36 @@ function login(e) {
 
 // ============ LOGOUT ============
 function logout() {
-    if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
-    currentUser = null;
-    localStorage.removeItem('gkode_currentUser');
-    showToast('Logged out.', 'info');
-    showScreen('welcome');
-}
-
-function startFresh() {
-    if (confirm('Start fresh with a new account on this device?')) {
-        currentUser = null;
-        localStorage.removeItem('gkode_currentUser');
-        showScreen('register');
-        showToast('Ready to create a new account.', 'info');
+    console.log('🚪 Logging out...');
+    
+    // Clear chat interval if exists
+    if (chatInterval) {
+        clearInterval(chatInterval);
+        chatInterval = null;
     }
+    
+    // Clear current user
+    currentUser = null;
+    
+    // Remove from localStorage
+    localStorage.removeItem('gkode_currentUser');
+    localStorage.removeItem('gkode_session');
+    
+    // Show toast message
+    showToast('✅ Logged out successfully.', 'info');
+    
+    // Navigate to welcome screen
+    showScreen('welcome');
+    
+    // Hide bottom navigation
+    var nav = document.getElementById('bottomNav');
+    if (nav) nav.classList.add('hidden');
+    
+    // Hide admin button if visible
+    var adminBtn = document.getElementById('adminAccessBtn');
+    if (adminBtn) adminBtn.style.display = 'none';
+    
+    console.log('✅ Logout complete');
 }
 
 // ============ PASSWORD RESET ============

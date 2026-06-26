@@ -285,13 +285,13 @@
             <button class="btn outline" onclick="exportUserData()" style="font-size:12px;">📤 Export My Data</button>
             <button class="btn red" onclick="deleteAccount()" style="font-size:12px;">🗑️ Delete My Account</button>
             
-            <!-- ===== ADMIN ACCESS - ONLY VISIBLE TO ADMINS ===== -->
-            <div id="adminAccessBtn" style="display:none; margin-top:10px;">
-                <hr style="margin:10px 0;" />
-                <button class="btn outline" onclick="window.open('admin.html','_blank')" style="font-size:12px; background:#FFD700; color:#006400; border:2px solid #FFD700; font-weight:bold;">
-                    🔐 Admin Panel
-                </button>
-            </div>
+          <!-- ===== ADMIN ACCESS - ONLY VISIBLE TO ADMIN ===== -->
+<div id="adminAccessBtn" style="display:none; margin-top:10px;">
+    <hr style="margin:10px 0;" />
+    <button class="btn outline" onclick="window.open('admin.html','_blank')" style="font-size:14px; background:#FFD700; color:#006400; border:2px solid #FFD700; font-weight:bold; padding:12px;">
+        🔐 Admin Panel
+    </button>
+</div>
             
             <button class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
         </div>
