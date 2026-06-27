@@ -1,5 +1,6 @@
 // ============================================
-// G-KODE APP - COMPLETE FIXED VERSION
+// G-KODE - COMPLETE WORKING VERSION
+// ALL FEATURES FIXED - NO MORE CHANGES
 // ============================================
 
 // ============ GLOBAL ============
@@ -13,8 +14,6 @@ var loginLockTime = null;
 var ADMIN_PHONES = ['0703428192', '0711991467'];
 
 // ============ EMAILJS ============
-
-// Your EmailJS Config
 var EMAILJS_CONFIG = {
     serviceID: 'service_hw35xfu',
     publicKey: 'vc371wcNfQy56zlH8',
@@ -22,166 +21,6 @@ var EMAILJS_CONFIG = {
     resetTemplateID: 'template_0787ox7'
 };
 
-// ============ LOAD EMAILJS ============
-function loadEmailJS(callback) {
-    // Check if already loaded
-    if (typeof emailjs !== 'undefined') {
-        console.log('✅ EmailJS already loaded');
-        callback();
-        return;
-    }
-    
-    console.log('📧 Loading EmailJS...');
-    
-    var script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-    
-    script.onload = function() {
-        console.log('✅ EmailJS loaded successfully');
-        emailjs.init(EMAILJS_CONFIG.publicKey);
-        callback();
-    };
-    
-    script.onerror = function() {
-        console.log('❌ EmailJS failed to load');
-        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
-        callback();
-    };
-    
-    // Timeout fallback
-    setTimeout(function() {
-        if (typeof emailjs === 'undefined') {
-            console.log('⚠️ EmailJS load timeout');
-            showToast('⚠️ Email service timeout. Using on-screen code.', 'warning');
-            callback();
-        }
-    }, 10000);
-}
-
-// ============ SEND OTP EMAIL ============
-function sendOTPEmail(userEmail, userName, code) {
-    console.log('📧 Sending OTP to:', userEmail);
-    
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('📱 Your code: ' + code, 'info');
-            return;
-        }
-        
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            code: code,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        
-        console.log('📧 Sending OTP with params:', templateParams);
-        
-        emailjs.send(
-            EMAILJS_CONFIG.serviceID,
-            EMAILJS_CONFIG.otpTemplateID,
-            templateParams
-        )
-        .then(function(response) {
-            console.log('✅ OTP email sent!', response.status, response.text);
-            showToast('📧 Verification code sent to your email!', 'success');
-        })
-        .catch(function(error) {
-            console.log('❌ OTP email failed:', error);
-            showToast('📱 Your code: ' + code, 'info');
-        });
-    });
-}
-
-// ============ SEND PASSWORD RESET EMAIL ============
-function sendPasswordResetEmail(userEmail, userName, resetCode) {
-    console.log('📧 Sending password reset to:', userEmail);
-    
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('⚠️ Email unavailable. Please contact support.', 'error');
-            return;
-        }
-        
-        // Create reset link
-        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
-        
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            reset_link: resetLink,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        
-        console.log('📧 Sending reset with params:', templateParams);
-        
-        emailjs.send(
-            EMAILJS_CONFIG.serviceID,
-            EMAILJS_CONFIG.resetTemplateID,
-            templateParams
-        )
-        .then(function(response) {
-            console.log('✅ Password reset email sent!', response.status, response.text);
-            showToast('📧 Password reset link sent to your email!', 'success');
-        })
-        .catch(function(error) {
-            console.log('❌ Reset email failed:', error);
-            showToast('⚠️ Please contact support for password reset', 'error');
-        });
-    });
-}
-
-// ============ SEND PASSWORD RESET - TRIGGER ============
-function sendPasswordReset() {
-    var email = document.getElementById('resetEmail').value.trim();
-    
-    console.log('🔑 Reset password requested for:', email);
-    
-    if (!email) {
-        showToast('Please enter your email address.', 'error');
-        return;
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showToast('Please enter a valid email address.', 'error');
-        return;
-    }
-    
-    var users = getUsers();
-    console.log('👥 Checking', users.length, 'users for email:', email);
-    
-    var found = null;
-    for (var i = 0; i < users.length; i++) {
-        if (users[i].email === email) {
-            found = users[i];
-            break;
-        }
-    }
-    
-    if (!found) {
-        console.log('❌ No user found with email:', email);
-        showToast('No account found with that email.', 'error');
-        return;
-    }
-    
-    console.log('✅ User found:', found.name);
-    
-    var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🔑 Reset code generated:', resetCode);
-    
-    sendPasswordResetEmail(email, found.name, resetCode);
-    
-    // Store reset code for verification
-    localStorage.setItem('gkode_reset_code', resetCode);
-    localStorage.setItem('gkode_reset_email', email);
-    
-    showToast('📧 Password reset link sent to your email!', 'success');
-    console.log('✅ Password reset process complete');
-}
 // ============ DATA ============
 function getUsers() {
     try {
@@ -190,11 +29,7 @@ function getUsers() {
         return [];
     }
 }
-
-function setUsers(users) {
-    localStorage.setItem('gkode_users', JSON.stringify(users));
-}
-
+function setUsers(users) { localStorage.setItem('gkode_users', JSON.stringify(users)); }
 function getGigs() {
     try {
         return JSON.parse(localStorage.getItem('gkode_gigs') || '[]');
@@ -202,11 +37,7 @@ function getGigs() {
         return [];
     }
 }
-
-function setGigs(gigs) {
-    localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
-}
-
+function setGigs(gigs) { localStorage.setItem('gkode_gigs', JSON.stringify(gigs)); }
 function getCompanies() {
     try {
         return JSON.parse(localStorage.getItem('gkode_companies') || '[]');
@@ -214,11 +45,7 @@ function getCompanies() {
         return [];
     }
 }
-
-function setCompanies(companies) {
-    localStorage.setItem('gkode_companies', JSON.stringify(companies));
-}
-
+function setCompanies(companies) { localStorage.setItem('gkode_companies', JSON.stringify(companies)); }
 function getProducts() {
     try {
         return JSON.parse(localStorage.getItem('gkode_products') || '[]');
@@ -226,11 +53,7 @@ function getProducts() {
         return [];
     }
 }
-
-function setProducts(products) {
-    localStorage.setItem('gkode_products', JSON.stringify(products));
-}
-
+function setProducts(products) { localStorage.setItem('gkode_products', JSON.stringify(products)); }
 function getProfessions() {
     try {
         return JSON.parse(localStorage.getItem('gkode_professions') || '[]');
@@ -238,11 +61,7 @@ function getProfessions() {
         return [];
     }
 }
-
-function setProfessions(professions) {
-    localStorage.setItem('gkode_professions', JSON.stringify(professions));
-}
-
+function setProfessions(professions) { localStorage.setItem('gkode_professions', JSON.stringify(professions)); }
 function getCategories() {
     try {
         return JSON.parse(localStorage.getItem('gkode_categories') || '[]');
@@ -250,10 +69,7 @@ function getCategories() {
         return [];
     }
 }
-
-function setCategories(categories) {
-    localStorage.setItem('gkode_categories', JSON.stringify(categories));
-}
+function setCategories(categories) { localStorage.setItem('gkode_categories', JSON.stringify(categories)); }
 
 // ============ TOAST ============
 function showToast(message, type) {
@@ -572,8 +388,6 @@ async function register(e) {
 function completeRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn) {
     try {
         var users = getUsers();
-
-        // Generate OTP and send via email
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
         sendOTPEmail(email, name, vCode);
         var userCode = prompt('📱 Enter the 6-digit verification code sent to your email:\n\n(Check your spam folder if not received)');
@@ -585,13 +399,12 @@ function completeRegistration(name, phone, id, email, password, location, profes
             return;
         }
 
-        // ===== STORE PASSWORD IN PLAIN TEXT =====
         var user = {
             name: name,
             phone: phone,
             id: id,
             email: email,
-            password: password, // Plain text for now
+            password: password,
             location: location,
             profession: profession,
             skills: skills || '',
@@ -623,7 +436,7 @@ function completeRegistration(name, phone, id, email, password, location, profes
     }
 }
 
-// ============ LOGIN - FINAL FIX ============
+// ============ LOGIN ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -647,30 +460,14 @@ function login(e) {
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
                 var stored = users[i].password;
-                
-                // ===== CHECK ALL FORMATS =====
-                // 1. Plain text
+                // Check plain text
                 if (stored === password) {
                     found = users[i];
                     break;
                 }
-                // 2. base64
+                // Check base64
                 try {
                     if (atob(stored) === password) {
-                        found = users[i];
-                        break;
-                    }
-                } catch(e) {}
-                // 3. If stored is base64 of entered
-                try {
-                    if (stored === btoa(password)) {
-                        found = users[i];
-                        break;
-                    }
-                } catch(e) {}
-                // 4. If entered is base64 of stored
-                try {
-                    if (password === btoa(stored)) {
                         found = users[i];
                         break;
                     }
@@ -684,21 +481,6 @@ function login(e) {
             btn.textContent = 'LOGIN';
             return;
         }
-
-        // If found, but password format is base64, convert to plain for consistency
-        try {
-            if (found.password !== password && atob(found.password) === password) {
-                found.password = password;
-                // Update in storage
-                for (var i = 0; i < users.length; i++) {
-                    if (users[i].phone === found.phone) {
-                        users[i].password = password;
-                        break;
-                    }
-                }
-                setUsers(users);
-            }
-        } catch(e) {}
 
         currentUser = found;
         localStorage.setItem('gkode_currentUser', JSON.stringify(found));
@@ -795,16 +577,20 @@ function sendPasswordResetEmail(userEmail, userName, resetCode) {
     });
 }
 
+// ============ PASSWORD RESET ============
 function sendPasswordReset() {
     var email = document.getElementById('resetEmail').value.trim();
+
     if (!email) {
         showToast('Please enter your email address.', 'error');
         return;
     }
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showToast('Please enter a valid email address.', 'error');
         return;
     }
+
     var users = getUsers();
     var found = null;
     for (var i = 0; i < users.length; i++) {
@@ -813,12 +599,18 @@ function sendPasswordReset() {
             break;
         }
     }
+
     if (!found) {
         showToast('No account found with that email.', 'error');
         return;
     }
+
     var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     sendPasswordResetEmail(email, found.name, resetCode);
+
+    localStorage.setItem('gkode_reset_code', resetCode);
+    localStorage.setItem('gkode_reset_email', email);
+
     showToast('📧 Password reset link sent to your email!', 'success');
 }
 
@@ -1540,4 +1332,3 @@ if (saved) {
 
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
-console.log('✅ Login supports: Plain text, base64, and mixed formats.');
