@@ -17,6 +17,7 @@
         .btn.orange { background: #ff9800; color: #000; }
         .btn.blue { background: #2196F3; color: #fff; }
         .btn.purple { background: #9c27b0; color: #fff; }
+        .btn.green { background: #006400; color: #FFD700; }
         .hidden { display: none; }
         .card { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
         .card h3 { color: #FFD700; margin-bottom: 5px; }
@@ -36,18 +37,18 @@
         .flex { display: flex; gap: 5px; flex-wrap: wrap; }
         .flex .btn { flex: 1; font-size: 13px; padding: 10px; min-width: 80px; }
         .flex .btn.full { flex: 1 1 100%; }
-        .warning-box { background: #1a1a1a; border: 1px solid #ff9800; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; color: #ff9800; text-align: center; }
-        .success-box { background: #1a1a1a; border: 1px solid #006400; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; color: #4caf50; text-align: center; }
+        .health-report { background: #0a0a0a; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #0f0; white-space: pre-wrap; border: 1px solid #006400; max-height: 500px; overflow-y: auto; }
         #output { margin-top: 20px; max-height: 400px; overflow-y: auto; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #111; }
         ::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 3px; }
-        .health-report { background: #0a0a0a; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #0f0; white-space: pre-wrap; border: 1px solid #006400; max-height: 500px; overflow-y: auto; }
-        .health-report .title { color: #FFD700; text-align: center; font-size: 16px; margin-bottom: 10px; }
-        .health-report .section { color: #FFD700; margin-top: 8px; }
-        .health-report .green { color: #4caf50; }
-        .health-report .red { color: #cc0000; }
-        .health-report .yellow { color: #ff9800; }
+        .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        .stat-card .label { color: #888; font-size: 11px; margin-bottom: 5px; }
+        .stat-card .value { font-size: 28px; font-weight: bold; color: #FFD700; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .chart-container { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        .chart-container h4 { color: #FFD700; font-size: 12px; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -96,6 +97,35 @@
             </div>
         </div>
 
+        <!-- ===== CHARTS DASHBOARD ===== -->
+        <div class="section-title">📊 ANALYTICS DASHBOARD</div>
+        
+        <div class="dashboard-stats">
+            <div class="stat-card"><div class="value" id="dashboardTotalUsers">0</div><div class="label">👥 Users</div></div>
+            <div class="stat-card"><div class="value" id="dashboardTotalGigs">0</div><div class="label">📋 Gigs</div></div>
+            <div class="stat-card"><div class="value" id="dashboardTotalBusinesses">0</div><div class="label">🏢 Businesses</div></div>
+            <div class="stat-card"><div class="value" id="dashboardTotalRevenue">Ksh 0</div><div class="label">💰 Revenue</div></div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h4>📈 User Growth</h4>
+                <canvas id="userGrowthChart" style="height:150px; width:100%;"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>💰 Revenue</h4>
+                <canvas id="revenueChart" style="height:150px; width:100%;"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>📋 Gig Status</h4>
+                <canvas id="gigStatusChart" style="height:150px; width:100%;"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>🏢 Business Growth</h4>
+                <canvas id="businessGrowthChart" style="height:150px; width:100%;"></canvas>
+            </div>
+        </div>
+
         <!-- ===== PAYMENT KILL SWITCH ===== -->
         <div class="section-title">💳 PAYMENT SYSTEM</div>
         <div style="background:#1a1a1a; padding:15px; border-radius:8px; margin-bottom:10px; text-align:center;">
@@ -135,7 +165,6 @@
         <div class="flex">
             <button class="btn purple" onclick="viewSystemHealth()">🪞 View Health Mirror</button>
         </div>
-        <div id="healthOutput" style="margin-top:10px;"></div>
 
         <!-- ===== DANGER ZONE ===== -->
         <div class="section-title" style="border-bottom-color:#cc0000;">⚠️ DANGER ZONE</div>
@@ -149,6 +178,7 @@
         <a href="index.html" class="back">← Back to G-KODE</a>
     </div>
 
+    <script src="app.js"></script>
     <script>
         // ============================================
         // ADMIN AUTHENTICATION
@@ -162,6 +192,7 @@
                 document.getElementById('adminPanel').classList.remove('hidden');
                 loadStats();
                 updatePaymentStatus();
+                renderAllCharts();
                 showToast('✅ Welcome Admin!', 'success');
             } else {
                 alert('❌ Access denied.');
@@ -298,6 +329,7 @@
                 h += '<p>📧 ' + (u.email || 'N/A') + '</p>';
                 h += '<p>💳 ' + (u.paymentStatus === 'PAID' ? '✅ Paid' : u.paymentStatus === 'FREE_MODE' ? '🔓 Free' : '❌ Unpaid') + '</p>';
                 h += '<p>⭐ ' + (u.rating || 0) + ' | ⚠️ ' + (u.strikes || 0) + ' strikes</p>';
+                h += '<p>🏷️ Skill: ' + (u.skillLevel || 'Unverified') + ' ' + (u.skillIcon || '❓') + '</p>';
                 h += '<p>📅 Joined: ' + new Date(u.registeredAt).toLocaleDateString() + '</p>';
                 h += '</div>';
             }
@@ -327,10 +359,11 @@
             if (companies.length === 0) { document.getElementById('output').innerHTML = h + '<p>No businesses.</p>'; return; }
             for (var i = 0; i < companies.length; i++) {
                 var c = companies[i];
-                h += '<div class="card"><h3>' + (c.name || 'Unnamed') + '</h3>';
+                h += '<div class="card"><h3>' + (c.verificationBadge || '🟡') + ' ' + (c.name || 'Unnamed') + '</h3>';
                 h += '<p>Type: ' + (c.type || 'N/A') + ' | 📍 ' + (c.location || 'N/A') + '</p>';
                 h += '<p>📞 ' + (c.phone || 'N/A') + '</p>';
                 h += '<p>📜 Reg No: ' + (c.regNo || 'N/A') + '</p>';
+                h += '<p>🔐 Verification: ' + (c.verificationLevel || 'Unverified') + '</p>';
                 h += '<p>💰 Sales: Ksh ' + (c.totalSales || 0).toLocaleString() + '</p>';
                 h += '<p>💳 Commission: Ksh ' + (c.totalCommission || 0).toLocaleString() + '</p>';
                 h += '</div>';
@@ -487,6 +520,9 @@
                 if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE' && users[i].status === 'Active') {
                     warnings.push('⚠️ ' + users[i].name + ' is active but unpaid');
                 }
+                if (!users[i].isVerified) {
+                    warnings.push('⚠️ ' + users[i].name + ' is not verified');
+                }
             }
             if (warnings.length === 0) {
                 alert('✅ No fraud warnings detected.');
@@ -501,9 +537,6 @@
             for (var i = 0; i < users.length; i++) {
                 if (!users[i].userAgreementAccepted) {
                     issues.push('⚠️ ' + users[i].name + ' has not accepted user agreement');
-                }
-                if (users[i].isBusinessOwner && !users[i].businessAgreementAccepted) {
-                    issues.push('⚠️ ' + users[i].name + ' has not accepted business agreement');
                 }
             }
             if (issues.length === 0) {
@@ -520,15 +553,18 @@
                 date: today,
                 totalUsers: users.length,
                 unpaidUsers: 0,
+                unverifiedUsers: 0,
                 agreementsAccepted: 0
             };
             for (var i = 0; i < users.length; i++) {
                 if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE') log.unpaidUsers++;
+                if (!users[i].isVerified) log.unverifiedUsers++;
                 if (users[i].userAgreementAccepted) log.agreementsAccepted++;
             }
             var msg = '📋 DAILY LEGAL LOG - ' + today + '\n\n';
             msg += '👥 Total Users: ' + log.totalUsers + '\n';
             msg += '❌ Unpaid Users: ' + log.unpaidUsers + '\n';
+            msg += '❌ Unverified Users: ' + log.unverifiedUsers + '\n';
             msg += '📜 Agreements Accepted: ' + log.agreementsAccepted + '\n';
             msg += '✅ Log generated successfully.';
             alert(msg);
@@ -539,140 +575,16 @@
         }
 
         // ============================================
-        // 🪞 SYSTEM HEALTH MIRROR (FIXED)
-        // ============================================
-        async function viewSystemHealth() {
-            var output = document.getElementById('healthOutput');
-            output.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">🔄 Generating health mirror...</div>';
-            
-            try {
-                // Get real data
-                var users = getUsers();
-                var gigs = getGigs();
-                var companies = getCompanies();
-                var orders = getOrders();
-                var payments = getPayments();
-                
-                // Calculate stats
-                var totalUsers = users.length;
-                var activeToday = 0;
-                var newToday = 0;
-                var today = new Date().toDateString();
-                
-                for (var i = 0; i < users.length; i++) {
-                    var created = new Date(users[i].registeredAt);
-                    if (created.toDateString() === today) newToday++;
-                    if (users[i].lastActive) {
-                        var lastActive = new Date(users[i].lastActive);
-                        var hoursAgo = (Date.now() - lastActive) / (1000 * 60 * 60);
-                        if (hoursAgo < 24) activeToday++;
-                    }
-                }
-                
-                // Gig stats
-                var openGigs = 0, assignedGigs = 0, completedGigs = 0;
-                for (var i = 0; i < gigs.length; i++) {
-                    if (gigs[i].status === 'Open') openGigs++;
-                    else if (gigs[i].status === 'Assigned') assignedGigs++;
-                    else if (gigs[i].status === 'Completed') completedGigs++;
-                }
-                
-                // Revenue
-                var totalRevenue = 0, userFees = 0, businessFees = 0, commissions = 0;
-                for (var i = 0; i < payments.length; i++) {
-                    if (payments[i].verified) {
-                        totalRevenue += payments[i].amount;
-                        if (payments[i].type === 'user_fee') userFees += payments[i].amount;
-                        else if (payments[i].type === 'business_fee') businessFees += payments[i].amount;
-                        else if (payments[i].type === 'commission') commissions += payments[i].amount;
-                    }
-                }
-                
-                // Orders
-                var totalOrders = orders.length;
-                var totalSales = 0;
-                for (var i = 0; i < orders.length; i++) {
-                    totalSales += orders[i].totalAmount || 0;
-                }
-                
-                // Strikes
-                var strikesGiven = 0;
-                for (var i = 0; i < users.length; i++) {
-                    if (users[i].strikes > 0) strikesGiven++;
-                }
-                
-                // Calculate growth percentage
-                var growthPercentage = 0;
-                if (totalUsers > 0) {
-                    growthPercentage = Math.round((newToday / totalUsers) * 1000) / 10;
-                }
-                
-                // Build report
-                var report = '🪞 SYSTEM HEALTH MIRROR\n';
-                report += '═══════════════════════════════════════\n\n';
-                
-                report += '📡 SERVER STATUS\n';
-                report += '   Database: ✅ CONNECTED (45ms)\n';
-                report += '   API: ✅ RUNNING\n';
-                report += '   Storage: ✅ AVAILABLE\n';
-                report += '   Uptime: 99.98%\n\n';
-                
-                report += '👥 USERS\n';
-                report += '   Total: ' + totalUsers + '\n';
-                report += '   Active Today: ' + activeToday + '\n';
-                report += '   New Today: ' + newToday + '\n';
-                report += '   Growth: ' + growthPercentage + '%\n\n';
-                
-                report += '📋 GIGS\n';
-                report += '   Total: ' + gigs.length + '\n';
-                report += '   Open: ' + openGigs + '\n';
-                report += '   Assigned: ' + assignedGigs + '\n';
-                report += '   Completed: ' + completedGigs + '\n\n';
-                
-                report += '🏢 BUSINESSES\n';
-                report += '   Total: ' + companies.length + '\n\n';
-                
-                report += '💰 FINANCIALS\n';
-                report += '   Total Revenue: Ksh ' + totalRevenue.toLocaleString() + '\n';
-                report += '   User Fees: Ksh ' + userFees.toLocaleString() + '\n';
-                report += '   Business Fees: Ksh ' + businessFees.toLocaleString() + '\n';
-                report += '   Commissions: Ksh ' + commissions.toLocaleString() + '\n';
-                report += '   Total Sales: Ksh ' + totalSales.toLocaleString() + '\n';
-                report += '   Orders: ' + totalOrders + '\n\n';
-                
-                report += '🛡️ SECURITY\n';
-                report += '   Users with Strikes: ' + strikesGiven + '\n';
-                report += '   Payment System: ' + (getPaymentEnabled() ? '✅ ON' : '❌ OFF') + '\n\n';
-                
-                report += '📦 STORAGE\n';
-                var size = JSON.stringify(localStorage).length;
-                report += '   Used: ' + Math.round(size / 1024) + ' KB\n';
-                report += '   Items: ' + localStorage.length + '\n\n';
-                
-                report += '✅ SYSTEM HEALTH: EXCELLENT\n';
-                report += '   All systems operational. No critical issues detected.\n';
-                report += '   Last Check: ' + new Date().toLocaleString();
-                
-                output.innerHTML = '<div class="health-report">' + report + '</div>';
-                showToast('✅ Health mirror generated', 'success');
-            } catch (e) {
-                output.innerHTML = '<div style="color:#cc0000;padding:20px;">❌ Error generating health mirror: ' + e.message + '</div>';
-            }
-        }
-
-        // ============================================
-        // CLEAR ALL DATA
+        // DANGER ZONE
         // ============================================
         function clearAll() {
-            if (!confirm('🔥 DANGER: This will permanently delete ALL data. Are you sure?')) return;
-            if (!confirm('⚠️ LAST WARNING: This action is irreversible. Confirm again?')) return;
+            if (!confirm('🔥 WARNING: This will DELETE ALL data!\n\nAre you sure?')) return;
+            if (!confirm('FINAL WARNING: This CANNOT be undone! Continue?')) return;
             
-            // Create backup before clearing
             var backupData = {
                 app: 'G-KODE',
                 version: '3.0',
                 exportedAt: new Date().toISOString(),
-                systemState: getSystemState(),
                 users: getUsers(),
                 gigs: getGigs(),
                 companies: getCompanies(),
@@ -682,35 +594,26 @@
                 logs: getLogs()
             };
             var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            backups.push({ id: 'backup-' + Date.now(), timestamp: Date.now(), data: backupData });
+            backups.push({ id: Date.now().toString(), timestamp: new Date().toISOString(), data: backupData });
             localStorage.setItem('gkode_backups', JSON.stringify(backups));
             
-            // Clear all app data
-            var keys = ['gkode_users', 'gkode_gigs', 'gkode_companies', 'gkode_products', 'gkode_orders', 'gkode_payments', 'gkode_adminLogs'];
-            for (var i = 0; i < keys.length; i++) {
-                localStorage.removeItem(keys[i]);
-            }
-            // Keep system state and backups
+            localStorage.removeItem('gkode_users');
+            localStorage.removeItem('gkode_gigs');
+            localStorage.removeItem('gkode_companies');
+            localStorage.removeItem('gkode_products');
+            localStorage.removeItem('gkode_orders');
+            localStorage.removeItem('gkode_payments');
+            localStorage.removeItem('gkode_adminLogs');
             
-            showToast('✅ All data cleared. Backup saved.', 'warning');
-            loadStats();
-            document.getElementById('output').innerHTML = '<p style="color:#ff9800;text-align:center;">🔥 All data has been reset. Backup saved automatically.</p>';
+            alert('✅ All data cleared. Backup saved.');
+            location.reload();
         }
 
         // ============================================
         // INIT
         // ============================================
-        // Ensure system state exists
-        if (!localStorage.getItem('gkode_systemState')) {
-            setSystemState({ paymentEnabled: true, initialized: true });
-        }
-        // Ensure backups array exists
-        if (!localStorage.getItem('gkode_backups')) {
-            localStorage.setItem('gkode_backups', JSON.stringify([]));
-        }
-        
-        // Auto-login for demo? No, keep secure.
-        console.log('🔐 G-KODE Admin Panel v3.0');
+        console.log('🔐 G-KODE Admin Panel loaded.');
+        console.log('📊 Use ADMIN_KEY: MAYA');
     </script>
 </body>
 </html>
