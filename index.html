@@ -55,24 +55,22 @@
             <input type="text" id="regSkills" placeholder="Additional skills (optional)">
 
             <!-- ===== PROFILE PHOTO ===== -->
-            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
-            <div style="display:flex;gap:5px;margin-bottom:10px;">
-                <input type="file" id="regPhoto" accept="image/*" capture="environment" style="flex:1;padding:10px;">
-                <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸 Camera</button>
-            </div>
+<label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
+<div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;">
+    <input type="file" id="regPhoto" accept="image/*" style="flex:2;padding:10px;min-width:150px;">
+    <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;min-width:80px;">📸 Camera</button>
+    <button type="button" onclick="document.getElementById('regPhoto').click()" style="background:#2196F3;color:#fff;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;min-width:80px;">📁 Gallery</button>
+</div>
+<small style="color:#666;display:block;margin-top:-5px;margin-bottom:10px;">Tap Camera to take photo, or Gallery to choose existing</small>
 
-            <!-- ===== ID SCAN ===== -->
-            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
-            <div style="display:flex;gap:5px;margin-bottom:10px;">
-                <input type="file" id="regIDScan" accept="image/*" capture="environment" style="flex:1;padding:10px;">
-                <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸 Scan ID</button>
-            </div>
-
-            <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
-            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-        </form>
-    </div>
-
+<!-- ===== ID SCAN ===== -->
+<label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
+<div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;">
+    <input type="file" id="regIDScan" accept="image/*" style="flex:2;padding:10px;min-width:150px;">
+    <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;min-width:80px;">📸 Scan ID</button>
+    <button type="button" onclick="document.getElementById('regIDScan').click()" style="background:#2196F3;color:#fff;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;flex:1;min-width:80px;">📁 Gallery</button>
+</div>
+<small style="color:#666;display:block;margin-top:-5px;margin-bottom:10px;">Tap Scan ID to take photo, or Gallery to choose existing</small>  
     <!-- ===== LOGIN ===== -->
     <div id="login" class="screen">
         <h2>Login</h2>

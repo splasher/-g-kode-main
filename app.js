@@ -276,19 +276,47 @@ function populateCategoryDropdown() {
 // ============ CAMERA FUNCTION ============
 function openCamera(inputId) {
     var input = document.getElementById(inputId);
-    if (!input) return;
-    
-    // For mobile: use capture attribute
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        input.setAttribute('capture', 'environment');
-        input.click();
+    if (!input) {
+        showToast('Error: Input not found.', 'error');
+        return;
+    }
+
+    // Check if camera is supported on this device
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Check if it's a mobile device
+        var isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // For mobile: Try to open camera directly
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            })
+            .then(function(stream) {
+                // Stop the stream - we just want to check if camera exists
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                
+                // Now trigger the file input with capture attribute
+                input.setAttribute('capture', 'environment');
+                input.click();
+            })
+            .catch(function(err) {
+                console.log('Camera access denied or not available:', err);
+                // Fallback: just open file picker
+                input.removeAttribute('capture');
+                input.click();
+                showToast('📁 Opening file picker instead', 'info');
+            });
+        } else {
+            // Desktop: just open file picker
+            input.removeAttribute('capture');
+            input.click();
+        }
     } else {
-        // Desktop: just open file picker
+        // No camera support: open file picker
         input.removeAttribute('capture');
         input.click();
     }
 }
-
 // ============ REGISTER ============
 function register(e) {
     e.preventDefault();
