@@ -40,60 +40,89 @@
         </p>
     </div>
 
-    <!-- ===== REGISTER ===== -->
-    <div id="register" class="screen">
-        <h2>Create Account</h2>
-        <form id="registerForm" onsubmit="register(event)">
-            <input type="text" id="regName" placeholder="Full Name *" required />
-            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
-            <input type="email" id="regEmail" placeholder="Email Address *" required />
-            <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
-            <div style="position:relative;">
-                <input type="password" id="regPassword" placeholder="Password (8+ chars) *" required minlength="8" style="padding-right:50px;" />
-                <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-            </div>
-            <input type="text" id="regLocation" placeholder="Location *" required />
-            <select id="regProfession" required onchange="checkProfession()">
-                <option value="">-- Select Profession * --</option>
-            </select>
-            <div id="otherProfessionBox" style="display:none;">
-                <input type="text" id="regOtherProfession" placeholder="Specify profession *" />
-            </div>
-            <input type="text" id="regSkills" placeholder="Additional skills (optional)" />
+    <!-- ===== REGISTER SCREEN ===== -->
+<div id="register" class="screen">
+    <h2>Create Account</h2>
+    <form id="registerForm" onsubmit="register(event)">
+        
+        <!-- Name -->
+        <label for="regName" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Full Name *</label>
+        <input type="text" id="regName" placeholder="Full Name *" required />
+        
+        <!-- Phone -->
+        <label for="regPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Phone Number *</label>
+        <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
+        
+        <!-- Email -->
+        <label for="regEmail" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Email Address *</label>
+        <input type="email" id="regEmail" placeholder="Email Address *" required />
+        
+        <!-- ID -->
+        <label for="regID" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Number *</label>
+        <input type="text" id="regID" placeholder="National ID Number (7-8 digits) *" required />
+        
+        <!-- Password -->
+        <label for="regPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Password *</label>
+        <div style="position:relative;">
+            <input type="password" id="regPassword" placeholder="Password (8+ chars) *" required minlength="8" style="padding-right:50px;" />
+            <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+        </div>
+        
+        <!-- Location -->
+        <label for="regLocation" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Location *</label>
+        <input type="text" id="regLocation" placeholder="Location *" required />
+        
+        <!-- Profession -->
+        <label for="regProfession" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profession *</label>
+        <select id="regProfession" required onchange="checkProfession()">
+            <option value="">-- Select Profession * --</option>
+        </select>
+        <div id="otherProfessionBox" style="display:none;">
+            <label for="regOtherProfession" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Specify Profession *</label>
+            <input type="text" id="regOtherProfession" placeholder="Specify profession *" />
+        </div>
+        
+        <!-- Skills -->
+        <label for="regSkills" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Additional Skills (optional)</label>
+        <input type="text" id="regSkills" placeholder="Additional skills (optional)" />
 
-            <!-- PROFILE PHOTO -->
-            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
-            <div style="display:flex;gap:5px;margin-bottom:10px;">
-                <input type="file" id="regPhoto" accept="image/*" style="flex:1;padding:10px;" />
-                <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸</button>
-            </div>
+        <!-- Profile Photo -->
+        <label for="regPhoto" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
+            <input type="file" id="regPhoto" accept="image/*" style="flex:1;padding:10px;" />
+            <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸</button>
+        </div>
 
-            <!-- ID SCAN -->
-            <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
-            <div style="display:flex;gap:5px;margin-bottom:10px;">
-                <input type="file" id="regIDScan" accept="image/*" style="flex:1;padding:10px;" />
-                <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸</button>
-            </div>
+        <!-- ID Scan -->
+        <label for="regIDScan" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
+            <input type="file" id="regIDScan" accept="image/*" style="flex:1;padding:10px;" />
+            <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;">📸</button>
+        </div>
 
-            <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
-            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-        </form>
-    </div>
+        <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
+        <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
+    </form>
+</div>
 
-    <!-- ===== LOGIN ===== -->
-    <div id="login" class="screen">
-        <h2>Login</h2>
-        <form id="loginForm" onsubmit="login(event)">
-            <input type="tel" id="loginPhone" placeholder="Phone Number" required />
-            <div style="position:relative;">
-                <input type="password" id="loginPassword" placeholder="Password" required style="padding-right:50px;" />
-                <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-            </div>
-            <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:14px; margin-bottom:10px;">Forgot Password?</button>
-            <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
-            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
-        </form>
-    </div>
+    <!-- ===== LOGIN SCREEN ===== -->
+<div id="login" class="screen">
+    <h2>Login</h2>
+    <form id="loginForm" onsubmit="login(event)">
+        <label for="loginPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Phone Number *</label>
+        <input type="tel" id="loginPhone" placeholder="Phone Number" required />
+        
+        <label for="loginPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Password *</label>
+        <div style="position:relative;">
+            <input type="password" id="loginPassword" placeholder="Password" required style="padding-right:50px;" />
+            <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+        </div>
+        
+        <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:14px; margin-bottom:10px;">Forgot Password?</button>
+        <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
+        <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
+    </form>
+</div>
 
     <!-- ===== RESET PASSWORD ===== -->
     <div id="resetPassword" class="screen">
