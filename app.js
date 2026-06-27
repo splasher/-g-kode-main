@@ -1,5 +1,5 @@
 // ============================================
-// G-KODE APP - COMPLETE WORKING VERSION
+// G-KODE APP - COMPLETE FIXED VERSION
 // ============================================
 
 // ============ GLOBAL ============
@@ -461,7 +461,7 @@ function completeRegistration(name, phone, id, email, password, location, profes
     }
 }
 
-// ============ LOGIN ============
+// ============ LOGIN - FINAL FIX ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -484,14 +484,31 @@ function login(e) {
 
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
-                // Check plain text
-                if (users[i].password === password) {
+                var stored = users[i].password;
+                
+                // ===== CHECK ALL FORMATS =====
+                // 1. Plain text
+                if (stored === password) {
                     found = users[i];
                     break;
                 }
-                // Check base64
+                // 2. base64
                 try {
-                    if (atob(users[i].password) === password) {
+                    if (atob(stored) === password) {
+                        found = users[i];
+                        break;
+                    }
+                } catch(e) {}
+                // 3. If stored is base64 of entered
+                try {
+                    if (stored === btoa(password)) {
+                        found = users[i];
+                        break;
+                    }
+                } catch(e) {}
+                // 4. If entered is base64 of stored
+                try {
+                    if (password === btoa(stored)) {
                         found = users[i];
                         break;
                     }
@@ -505,6 +522,21 @@ function login(e) {
             btn.textContent = 'LOGIN';
             return;
         }
+
+        // If found, but password format is base64, convert to plain for consistency
+        try {
+            if (found.password !== password && atob(found.password) === password) {
+                found.password = password;
+                // Update in storage
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].phone === found.phone) {
+                        users[i].password = password;
+                        break;
+                    }
+                }
+                setUsers(users);
+            }
+        } catch(e) {}
 
         currentUser = found;
         localStorage.setItem('gkode_currentUser', JSON.stringify(found));
@@ -1346,3 +1378,4 @@ if (saved) {
 
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
+console.log('✅ Login supports: Plain text, base64, and mixed formats.');
