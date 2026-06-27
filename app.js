@@ -141,7 +141,28 @@ function showScreen(id) {
         nav.classList.add('hidden');
     }
 
-    if (id === 'home') loadGigs();
+function showScreen(id) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+        screens[i].classList.remove('active');
+    }
+    var s = document.getElementById(id);
+    if (s) s.classList.add('active');
+
+    var nav = document.getElementById('bottomNav');
+    var allowed = ['home', 'postGig', 'profile', 'chat', 'marketplace', 'companyRegister', 'companyDashboard', 'addProduct'];
+    if (currentUser && allowed.indexOf(id) !== -1) {
+        nav.classList.remove('hidden');
+    } else {
+        nav.classList.add('hidden');
+    }
+
+    // ✅ CHANGED: Use loadNearbyGigs() instead of loadGigs()
+    if (id === 'home') loadNearbyGigs();  // ← This is the NEW one
+    if (id === 'profile') loadProfile();
+    if (id === 'marketplace') loadMarketplace();
+    if (id === 'companyDashboard') loadCompanyDashboard();
+}
     if (id === 'profile') loadProfile();
     if (id === 'marketplace') loadMarketplace();
     if (id === 'companyDashboard') loadCompanyDashboard();
@@ -2168,3 +2189,403 @@ console.log('🚀 G-KODE v3.0 loaded successfully!');
 console.log('📊 Features: Registration, Gigs, Chat, Marketplace, Business, Charts, Verification');
 console.log('🔐 Admin Key: MAYA');
 console.log('📱 Test your app now!');
+// ============================================
+// 📍 COMPLETE PROXIMITY SYSTEM
+// ============================================
+
+// ============ CALCULATE DISTANCE (Haversine Formula) ============
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    // Convert to radians
+    var R = 6371; // Earth's radius in km
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    var distance = R * c;
+    return distance;
+}
+
+// ============ GET WORKER LOCATION ============
+function getWorkerLocation() {
+    return new Promise(function(resolve, reject) {
+        if (!navigator.geolocation) {
+            reject(new Error('GPS not supported'));
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                resolve({
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy
+                });
+            },
+            function(err) {
+                reject(new Error('Could not get location: ' + err.message));
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+}
+
+// ============ STORE WORKER LOCATION ============
+async function updateWorkerLocation() {
+    if (!currentUser) {
+        showToast('Please login first.', 'error');
+        return;
+    }
+    
+    showToast('📍 Getting your location...', 'info');
+    
+    try {
+        var location = await getWorkerLocation();
+        
+        // Save to user data
+        var users = getUsersSync();
+        for (var i = 0; i < users.length; i++) {
+            if (users[i].phone === currentUser.phone) {
+                users[i].currentLat = location.lat;
+                users[i].currentLon = location.lon;
+                users[i].locationUpdated = new Date().toISOString();
+                break;
+            }
+        }
+        setUsers(users);
+        
+        // Update currentUser
+        currentUser.currentLat = location.lat;
+        currentUser.currentLon = location.lon;
+        currentUser.locationUpdated = new Date().toISOString();
+        localStorage.setItem('gkode_currentUser', JSON.stringify(currentUser));
+        
+        showToast('✅ Location updated! (' + location.accuracy + 'm accuracy)', 'success');
+        return location;
+        
+    } catch (err) {
+        showToast('❌ ' + err.message, 'error');
+        return null;
+    }
+}
+
+// ============ FIND NEARBY GIGS ============
+function findNearbyGigs(workerLat, workerLon, maxDistance) {
+    maxDistance = maxDistance || 10; // Default 10km
+    
+    var gigs = getGigsSync();
+    var nearby = [];
+    
+    for (var i = 0; i < gigs.length; i++) {
+        var gig = gigs[i];
+        
+        // Skip if gig has no location data
+        if (!gig.gpsLat || !gig.gpsLon) continue;
+        
+        // Skip if gig is already taken
+        if (gig.status !== 'Open') continue;
+        
+        // Calculate distance
+        var distance = calculateDistance(
+            workerLat, workerLon,
+            parseFloat(gig.gpsLat), parseFloat(gig.gpsLon)
+        );
+        
+        if (distance <= maxDistance) {
+            nearby.push({
+                gig: gig,
+                distance: distance,
+                distanceText: formatDistance(distance)
+            });
+        }
+    }
+    
+    // Sort by distance (nearest first)
+    nearby.sort(function(a, b) { return a.distance - b.distance; });
+    
+    return nearby;
+}
+
+// ============ FORMAT DISTANCE ============
+function formatDistance(km) {
+    if (km < 1) {
+        return Math.round(km * 1000) + 'm away';
+    } else if (km < 10) {
+        return km.toFixed(1) + 'km away';
+    } else {
+        return Math.round(km) + 'km away';
+    }
+}
+
+// ============ GET TRAVEL TIME ESTIMATE ============
+function estimateTravelTime(distanceKm, mode) {
+    mode = mode || 'walking'; // 'walking' or 'driving'
+    
+    var speeds = {
+        walking: 5, // km/h
+        driving: 30, // km/h (Nairobi traffic)
+        matatu: 25 // km/h
+    };
+    
+    var speed = speeds[mode] || speeds.walking;
+    var hours = distanceKm / speed;
+    var minutes = Math.round(hours * 60);
+    
+    if (minutes < 1) return '< 1 min';
+    if (minutes < 60) return minutes + ' min';
+    var hrs = Math.floor(minutes / 60);
+    var mins = minutes % 60;
+    return hrs + 'h ' + mins + 'm';
+}
+
+// ============ DISPLAY NEARBY GIGS ============
+function loadNearbyGigs() {
+    var container = document.getElementById('gigsList');
+    if (!container) return;
+    
+    // Check if worker has location
+    if (!currentUser || !currentUser.currentLat || !currentUser.currentLon) {
+        container.innerHTML = 
+            '<div style="padding:20px;text-align:center;">' +
+            '<p>📍 Share your location to see nearby gigs</p>' +
+            '<button class="btn" onclick="updateWorkerLocation(); loadNearbyGigs();" style="margin-top:10px;">📍 Share My Location</button>' +
+            '</div>';
+        return;
+    }
+    
+    var nearby = findNearbyGigs(
+        currentUser.currentLat,
+        currentUser.currentLon,
+        15 // 15km radius
+    );
+    
+    if (nearby.length === 0) {
+        container.innerHTML = 
+            '<div style="padding:40px 0;text-align:center;color:#666;">' +
+            '<p>📍 No gigs within 15km of your location</p>' +
+            '<p style="font-size:12px;margin-top:5px;">Try expanding your search radius or update your location</p>' +
+            '</div>';
+        return;
+    }
+    
+    var h = '<div style="margin-bottom:10px;font-size:12px;color:#888;">';
+    h += '📍 Showing ' + nearby.length + ' gigs within 15km';
+    h += ' | 🎯 You are at ' + currentUser.location || 'your location';
+    h += '</div>';
+    
+    for (var i = 0; i < nearby.length; i++) {
+        var item = nearby[i];
+        var g = item.gig;
+        var distance = item.distanceText;
+        var travelTime = estimateTravelTime(item.distance, 'matatu');
+        
+        h += '<div class="gig-card" style="border-left: 3px solid ' + (item.distance < 2 ? '#006400' : item.distance < 5 ? '#FFD700' : '#ff9800') + ';">';
+        h += '<div class="gig-title">' + g.title + '</div>';
+        h += '<span class="badge badge-open">🟢 OPEN</span>';
+        h += '<div class="gig-meta">👤 ' + g.client + ' | 🛠️ ' + g.skill + '</div>';
+        h += '<div class="gig-meta">📍 ' + g.location + '</div>';
+        h += '<div class="gig-meta" style="color:#FFD700;">📏 ' + distance + ' | 🚌 ' + travelTime + '</div>';
+        h += '<div class="gig-budget">💰 Ksh ' + g.budgetMin + ' - ' + g.budgetMax + '</div>';
+        h += '<div class="gig-actions">';
+        h += '<button class="btn-accept" onclick="acceptGig(\'' + g.id + '\')">✅ ACCEPT</button>';
+        h += ' <button class="btn-accept" style="background:#2196F3;" onclick="showGigOnMap(\'' + g.id + '\')">🗺️ Map</button>';
+        h += '</div>';
+        h += '</div>';
+    }
+    
+    container.innerHTML = h;
+}
+
+// ============ SHOW GIG ON MAP ============
+function showGigOnMap(gigId) {
+    var gigs = getGigsSync();
+    var gig = null;
+    for (var i = 0; i < gigs.length; i++) {
+        if (gigs[i].id === gigId) {
+            gig = gigs[i];
+            break;
+        }
+    }
+    
+    if (!gig || !gig.gpsLat || !gig.gpsLon) {
+        showToast('📍 No location data for this gig.', 'error');
+        return;
+    }
+    
+    var lat = gig.gpsLat;
+    var lon = gig.gpsLon;
+    var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+    
+    // If we have worker location, show both
+    if (currentUser && currentUser.currentLat && currentUser.currentLon) {
+        var workerLat = currentUser.currentLat;
+        var workerLon = currentUser.currentLon;
+        var distance = calculateDistance(workerLat, workerLon, lat, lon);
+        url = 'https://www.google.com/maps/dir/' + workerLat + ',' + workerLon + '/' + lat + ',' + lon;
+        
+        var msg = '📍 GIG LOCATION\n\n';
+        msg += '📏 Distance: ' + formatDistance(distance) + '\n';
+        msg += '🚌 Travel: ' + estimateTravelTime(distance, 'matatu') + '\n\n';
+        msg += 'Open Google Maps for directions?';
+        
+        if (confirm(msg)) {
+            window.open(url, '_blank');
+        }
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
+// ============ UPDATE NEARBY GIGS REGULARLY ============
+function startProximityUpdates() {
+    // Update location every 5 minutes
+    setInterval(function() {
+        if (currentUser && currentUser.currentLat) {
+            updateWorkerLocation();
+        }
+    }, 300000); // 5 minutes
+    
+    // Refresh gigs every 30 seconds
+    setInterval(function() {
+        if (document.getElementById('home').classList.contains('active')) {
+            loadNearbyGigs();
+        }
+    }, 30000); // 30 seconds
+}
+
+// ============ ADD PROXIMITY FILTER ============
+function setProximityFilter(radius) {
+    localStorage.setItem('gkode_proximity_radius', radius);
+    showToast('📏 Radius set to ' + radius + 'km', 'success');
+    loadNearbyGigs();
+}
+
+// ============ SHOW PROXIMITY SETTINGS ============
+function showProximitySettings() {
+    var currentRadius = localStorage.getItem('gkode_proximity_radius') || '10';
+    var options = ['2', '5', '10', '15', '25', '50'];
+    var msg = '📍 PROXIMITY SETTINGS\n\n';
+    msg += 'Current radius: ' + currentRadius + 'km\n\n';
+    msg += 'Select a radius:\n';
+    for (var i = 0; i < options.length; i++) {
+        msg += (i+1) + '. ' + options[i] + 'km\n';
+    }
+    msg += '\nEnter the number of your choice:';
+    
+    var choice = prompt(msg);
+    if (!choice) return;
+    var index = parseInt(choice) - 1;
+    if (index >= 0 && index < options.length) {
+        setProximityFilter(parseInt(options[index]));
+    }
+}
+
+// ============ ENHANCED GIG POSTING WITH LOCATION ============
+// Enhanced version of captureGigLocation
+function captureEnhancedGigLocation() {
+    if (!navigator.geolocation) {
+        showToast('GPS not supported.', 'error');
+        return;
+    }
+    
+    showToast('📍 Capturing precise location...', 'info');
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            var lat = pos.coords.latitude;
+            var lon = pos.coords.longitude;
+            var accuracy = pos.coords.accuracy;
+            
+            document.getElementById('gigGPSLat').value = lat;
+            document.getElementById('gigGPSLon').value = lon;
+            
+            // Get address from coordinates (reverse geocoding)
+            getAddressFromCoords(lat, lon, function(address) {
+                document.getElementById('gigLocation').value = address;
+                document.getElementById('gigLocationStatus').textContent = '✅ Location captured! (' + accuracy + 'm accuracy)';
+                document.getElementById('gigLocationStatus').style.color = '#006400';
+                showToast('✅ Location captured!', 'success');
+            });
+        },
+        function(err) {
+            showToast('❌ Could not get location. Please enable GPS.', 'error');
+        }, 
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+// ============ REVERSE GEOCODING ============
+function getAddressFromCoords(lat, lon, callback) {
+    var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=18&addressdetails=1';
+    
+    fetch(url)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data && data.display_name) {
+                var parts = data.display_name.split(',');
+                var address = parts.slice(0, 3).join(',').trim();
+                callback(address);
+            } else {
+                callback(lat + ', ' + lon);
+            }
+        })
+        .catch(function() {
+            callback(lat + ', ' + lon);
+        });
+}
+
+// ============ WORKER PROXIMITY PROFILE ============
+function showWorkerProximityProfile() {
+    if (!currentUser) {
+        showToast('Please login first.', 'error');
+        return;
+    }
+    
+    var msg = '📍 YOUR PROXIMITY PROFILE\n\n';
+    msg += '👤 ' + currentUser.name + '\n';
+    msg += '📞 ' + currentUser.phone + '\n\n';
+    
+    if (currentUser.currentLat && currentUser.currentLon) {
+        msg += '📍 Location: ' + (currentUser.location || 'Unknown') + '\n';
+        msg += '📏 Coordinates: ' + currentUser.currentLat.toFixed(4) + ', ' + currentUser.currentLon.toFixed(4) + '\n';
+        msg += '🕐 Updated: ' + new Date(currentUser.locationUpdated).toLocaleString() + '\n\n';
+        
+        // Find nearby gigs
+        var nearby = findNearbyGigs(currentUser.currentLat, currentUser.currentLon, 10);
+        msg += '📋 Nearby Gigs: ' + nearby.length + ' within 10km\n';
+        
+        // Find nearby workers
+        var nearbyWorkers = findNearbyWorkers(currentUser.currentLat, currentUser.currentLon, 5);
+        msg += '👷 Nearby Workers: ' + nearbyWorkers.length + ' within 5km';
+    } else {
+        msg += '📍 Location: NOT SHARED\n';
+        msg += '💡 Click "Share Location" to enable proximity features';
+    }
+    
+    alert(msg);
+}
+
+// ============ FIND NEARBY WORKERS ============
+function findNearbyWorkers(lat, lon, maxDistance) {
+    maxDistance = maxDistance || 5;
+    var users = getUsersSync();
+    var nearby = [];
+    
+    for (var i = 0; i < users.length; i++) {
+        var user = users[i];
+        if (!user.currentLat || !user.currentLon) continue;
+        if (user.phone === currentUser.phone) continue;
+        
+        var distance = calculateDistance(lat, lon, user.currentLat, user.currentLon);
+        if (distance <= maxDistance) {
+            nearby.push({
+                user: user,
+                distance: distance,
+                distanceText: formatDistance(distance)
+            });
+        }
+    }
+    
+    nearby.sort(function(a, b) { return a.distance - b.distance; });
+    return nearby;
+}
