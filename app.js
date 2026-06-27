@@ -389,8 +389,18 @@ function completeRegistration(name, phone, id, email, password, location, profes
     try {
         var users = getUsers();
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // ===== SHOW CODE CLEARLY FIRST =====
+        var msg = '📱 YOUR VERIFICATION CODE\n\n' +
+                  'Code: ' + vCode + '\n\n' +
+                  'We also sent this to your email: ' + email + '\n\n' +
+                  'Enter this code in the app to complete registration.';
+        
+        alert(msg);
+        
         sendOTPEmail(email, name, vCode);
-        var userCode = prompt('📱 Enter the 6-digit verification code sent to your email:\n\n(Check your spam folder if not received)');
+        
+        var userCode = prompt('📱 Enter the 6-digit verification code:\n\n(Check the alert box or your email)');
 
         if (!userCode || userCode !== vCode) {
             showToast('❌ Invalid verification code.', 'error');
@@ -434,6 +444,36 @@ function completeRegistration(name, phone, id, email, password, location, profes
         btn.textContent = 'REGISTER';
         console.error('Completion error:', err);
     }
+}
+
+// ============ SEND OTP EMAIL - FIXED ============
+function sendOTPEmail(userEmail, userName, code) {
+    console.log('📧 Sending OTP to:', userEmail);
+    
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('📱 Your code: ' + code, 'info');
+            return;
+        }
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            code: code,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.otpTemplateID, templateParams)
+            .then(function(response) {
+                console.log('✅ OTP email sent!', response.status);
+                showToast('📧 Verification code sent to your email!', 'success');
+            })
+            .catch(function(error) {
+                console.log('❌ OTP email failed:', error);
+                showToast('📱 Your code: ' + code, 'info');
+            });
+    });
 }
 
 // ============ LOGIN ============
@@ -535,32 +575,7 @@ function loadEmailJS(callback) {
     };
 }
 
-function sendOTPEmail(userEmail, userName, code) {
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('📱 Your code: ' + code, 'info');
-            return;
-        }
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            code: code,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.otpTemplateID, templateParams)
-            .then(function(response) {
-                console.log('✅ OTP email sent!', response.status);
-                showToast('📧 Verification code sent to your email!', 'success');
-            })
-            .catch(function(error) {
-                console.log('❌ OTP email failed:', error);
-                showToast('📱 Your code: ' + code, 'info');
-            });
-    });
-}
-
-// ============ PASSWORD RESET - WORKING (No Email Required) ============
+// ============ PASSWORD RESET - WORKING ============
 function sendPasswordReset() {
     var email = document.getElementById('resetEmail').value.trim();
 
@@ -588,10 +603,8 @@ function sendPasswordReset() {
         return;
     }
 
-    // Generate reset code
     var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // ===== SHOW CODE ON SCREEN =====
     var msg = '🔑 PASSWORD RESET CODE\n\n' +
               'User: ' + found.name + '\n' +
               'Phone: ' + found.phone + '\n\n' +
@@ -605,14 +618,12 @@ function sendPasswordReset() {
         return;
     }
 
-    // ===== SET NEW PASSWORD =====
     var newPassword = prompt('📝 Enter your new password (minimum 8 characters):');
     if (!newPassword || newPassword.length < 8) {
         showToast('Password must be at least 8 characters.', 'error');
         return;
     }
 
-    // Update user password
     for (var i = 0; i < users.length; i++) {
         if (users[i].email === email) {
             users[i].password = newPassword;
