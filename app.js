@@ -45,18 +45,6 @@ function setGigs(gigs) {
     localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
 }
 
-function getProducts() {
-    try {
-        return JSON.parse(localStorage.getItem('gkode_products') || '[]');
-    } catch (e) {
-        return [];
-    }
-}
-
-function setProducts(products) {
-    localStorage.setItem('gkode_products', JSON.stringify(products));
-}
-
 function getCompanies() {
     try {
         return JSON.parse(localStorage.getItem('gkode_companies') || '[]');
@@ -67,6 +55,18 @@ function getCompanies() {
 
 function setCompanies(companies) {
     localStorage.setItem('gkode_companies', JSON.stringify(companies));
+}
+
+function getProducts() {
+    try {
+        return JSON.parse(localStorage.getItem('gkode_products') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function setProducts(products) {
+    localStorage.setItem('gkode_products', JSON.stringify(products));
 }
 
 function getProfessions() {
@@ -134,7 +134,7 @@ function showScreen(id) {
     if (s) s.classList.add('active');
 
     var nav = document.getElementById('bottomNav');
-    var allowed = ['home', 'postGig', 'profile', 'chat', 'marketplace'];
+    var allowed = ['home', 'postGig', 'profile', 'chat', 'marketplace', 'companyRegister', 'companyDashboard', 'addProduct'];
     if (currentUser && allowed.indexOf(id) !== -1) {
         nav.classList.remove('hidden');
     } else {
@@ -144,6 +144,7 @@ function showScreen(id) {
     if (id === 'home') loadGigs();
     if (id === 'profile') loadProfile();
     if (id === 'marketplace') loadMarketplace();
+    if (id === 'companyDashboard') loadCompanyDashboard();
 }
 
 function togglePassword(fieldId, icon) {
@@ -409,9 +410,12 @@ async function register(e) {
 function completeRegistration(name, phone, id, email, password, location, profession, skills, photoData, idData, btn) {
     try {
         var users = getUsers();
+
+        // Generate OTP and send via email
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
         sendOTPEmail(email, name, vCode);
-        var userCode = prompt('📱 Enter the 6-digit verification code sent to your email:');
+        var userCode = prompt('📱 Enter the 6-digit verification code sent to your email:\n\n(Check your spam folder if not received)');
+
         if (!userCode || userCode !== vCode) {
             showToast('❌ Invalid verification code.', 'error');
             btn.disabled = false;
@@ -419,12 +423,13 @@ function completeRegistration(name, phone, id, email, password, location, profes
             return;
         }
 
+        // ===== STORE PASSWORD IN PLAIN TEXT =====
         var user = {
             name: name,
             phone: phone,
             id: id,
             email: email,
-            password: btoa(password),
+            password: password, // Plain text for now
             location: location,
             profession: profession,
             skills: skills || '',
@@ -479,17 +484,18 @@ function login(e) {
 
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
+                // Check plain text
+                if (users[i].password === password) {
+                    found = users[i];
+                    break;
+                }
+                // Check base64
                 try {
                     if (atob(users[i].password) === password) {
                         found = users[i];
                         break;
                     }
-                } catch (e) {
-                    if (users[i].password === password) {
-                        found = users[i];
-                        break;
-                    }
-                }
+                } catch(e) {}
             }
         }
 
@@ -619,8 +625,6 @@ function sendPasswordReset() {
     }
     var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     sendPasswordResetEmail(email, found.name, resetCode);
-    localStorage.setItem('gkode_reset_code', resetCode);
-    localStorage.setItem('gkode_reset_email', email);
     showToast('📧 Password reset link sent to your email!', 'success');
 }
 
@@ -696,6 +700,26 @@ function postGig(e) {
         btn.textContent = 'POST GIG';
         console.error('Post gig error:', err);
     }
+}
+
+function captureGigLocation() {
+    if (!navigator.geolocation) {
+        showToast('GPS not supported.', 'error');
+        return;
+    }
+    showToast('📍 Capturing location...', 'info');
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            document.getElementById('gigGPSLat').value = pos.coords.latitude;
+            document.getElementById('gigGPSLon').value = pos.coords.longitude;
+            document.getElementById('gigLocationStatus').textContent = '✅ Location captured!';
+            document.getElementById('gigLocationStatus').style.color = '#006400';
+            showToast('✅ Location captured!', 'success');
+        },
+        function() {
+            showToast('❌ Enable GPS.', 'error');
+        }
+    );
 }
 
 function switchTab(tab) {
@@ -888,6 +912,7 @@ function loadProfile() {
     document.getElementById('profilePhone').textContent = '📞 ' + currentUser.phone;
     document.getElementById('profileLocation').textContent = '📍 ' + currentUser.location;
     document.getElementById('profileProfession').textContent = '👔 ' + currentUser.profession;
+    document.getElementById('profileSkills').textContent = '🛠️ ' + (currentUser.skills || 'None');
 
     if (currentUser.photo) {
         document.getElementById('profilePhoto').src = currentUser.photo;
@@ -1016,6 +1041,8 @@ function registerCompany(e) {
         var regNo = document.getElementById('compRegNo').value.trim();
         var location = document.getElementById('compLocation').value.trim();
         var phone = document.getElementById('compPhone').value.trim();
+        var email = document.getElementById('compEmail').value.trim();
+        var desc = document.getElementById('compDesc').value.trim();
 
         if (!name || !type || !regNo || !location || !phone) {
             showToast('Fill all required fields.', 'error');
@@ -1041,6 +1068,8 @@ function registerCompany(e) {
             regNo: regNo,
             location: location,
             phone: phone,
+            email: email,
+            desc: desc,
             owner: currentUser.name,
             ownerPhone: currentUser.phone,
             registeredAt: new Date().toISOString(),
