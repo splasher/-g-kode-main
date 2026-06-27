@@ -1,6 +1,6 @@
 // ============================================
 // G-KODE - COMPLETE WORKING VERSION
-// ALL FEATURES FIXED - NO MORE CHANGES
+// ALL FIXES INCLUDED
 // ============================================
 
 // ============ GLOBAL ============
@@ -455,6 +455,15 @@ function login(e) {
         }
 
         var users = getUsers();
+
+        if (users.length === 0) {
+            showToast('No users registered. Please register first.', 'warning');
+            showScreen('register');
+            btn.disabled = false;
+            btn.textContent = 'LOGIN';
+            return;
+        }
+
         var found = null;
 
         for (var i = 0; i < users.length; i++) {
@@ -551,33 +560,7 @@ function sendOTPEmail(userEmail, userName, code) {
     });
 }
 
-function sendPasswordResetEmail(userEmail, userName, resetCode) {
-    loadEmailJS(function() {
-        if (typeof emailjs === 'undefined') {
-            showToast('⚠️ Email unavailable. Please contact support.', 'error');
-            return;
-        }
-        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
-        var templateParams = {
-            to_email: userEmail,
-            to_name: userName || 'User',
-            reset_link: resetLink,
-            app_name: 'G-KODE',
-            year: new Date().getFullYear()
-        };
-        emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.resetTemplateID, templateParams)
-            .then(function(response) {
-                console.log('✅ Password reset email sent!', response.status);
-                showToast('📧 Password reset link sent to your email!', 'success');
-            })
-            .catch(function(error) {
-                console.log('❌ Reset email failed:', error);
-                showToast('⚠️ Please contact support for password reset', 'error');
-            });
-    });
-}
-
-// ============ PASSWORD RESET ============
+// ============ PASSWORD RESET - WORKING (No Email Required) ============
 function sendPasswordReset() {
     var email = document.getElementById('resetEmail').value.trim();
 
@@ -605,13 +588,41 @@ function sendPasswordReset() {
         return;
     }
 
+    // Generate reset code
     var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    sendPasswordResetEmail(email, found.name, resetCode);
 
-    localStorage.setItem('gkode_reset_code', resetCode);
-    localStorage.setItem('gkode_reset_email', email);
+    // ===== SHOW CODE ON SCREEN =====
+    var msg = '🔑 PASSWORD RESET CODE\n\n' +
+              'User: ' + found.name + '\n' +
+              'Phone: ' + found.phone + '\n\n' +
+              'Your reset code is: ' + resetCode + '\n\n' +
+              'Enter this code to reset your password.';
 
-    showToast('📧 Password reset link sent to your email!', 'success');
+    var userCode = prompt(msg);
+
+    if (!userCode || userCode !== resetCode) {
+        showToast('❌ Invalid reset code.', 'error');
+        return;
+    }
+
+    // ===== SET NEW PASSWORD =====
+    var newPassword = prompt('📝 Enter your new password (minimum 8 characters):');
+    if (!newPassword || newPassword.length < 8) {
+        showToast('Password must be at least 8 characters.', 'error');
+        return;
+    }
+
+    // Update user password
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].email === email) {
+            users[i].password = newPassword;
+            break;
+        }
+    }
+    setUsers(users);
+
+    showToast('✅ Password reset successful! Login with your new password.', 'success');
+    showScreen('login');
 }
 
 // ============ GIGS ============
