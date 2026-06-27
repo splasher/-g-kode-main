@@ -1,6 +1,5 @@
 // ============================================
-// G-KODE - FINAL COMPLETE WORKING VERSION
-// ALL FIXES INCLUDED - NO MORE CHANGES
+// G-KODE APP - COMPLETE WORKING VERSION
 // ============================================
 
 // ============ GLOBAL ============
@@ -13,11 +12,19 @@ var loginLockTime = null;
 // ============ ADMIN ============
 var ADMIN_PHONES = ['0703428192', '0711991467'];
 
-// ============ DATA STORAGE ============
+// ============ EMAILJS ============
+var EMAILJS_CONFIG = {
+    serviceID: 'service_hw35xfu',
+    publicKey: 'vc371wcNfQy56zlH8',
+    otpTemplateID: 'template_qycsjak',
+    resetTemplateID: 'template_0787ox7'
+};
+
+// ============ DATA ============
 function getUsers() {
     try {
         return JSON.parse(localStorage.getItem('gkode_users') || '[]');
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -29,7 +36,7 @@ function setUsers(users) {
 function getGigs() {
     try {
         return JSON.parse(localStorage.getItem('gkode_gigs') || '[]');
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -38,22 +45,10 @@ function setGigs(gigs) {
     localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
 }
 
-function getCompanies() {
-    try {
-        return JSON.parse(localStorage.getItem('gkode_companies') || '[]');
-    } catch(e) {
-        return [];
-    }
-}
-
-function setCompanies(companies) {
-    localStorage.setItem('gkode_companies', JSON.stringify(companies));
-}
-
 function getProducts() {
     try {
         return JSON.parse(localStorage.getItem('gkode_products') || '[]');
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -62,10 +57,22 @@ function setProducts(products) {
     localStorage.setItem('gkode_products', JSON.stringify(products));
 }
 
+function getCompanies() {
+    try {
+        return JSON.parse(localStorage.getItem('gkode_companies') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function setCompanies(companies) {
+    localStorage.setItem('gkode_companies', JSON.stringify(companies));
+}
+
 function getProfessions() {
     try {
         return JSON.parse(localStorage.getItem('gkode_professions') || '[]');
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -77,7 +84,7 @@ function setProfessions(professions) {
 function getCategories() {
     try {
         return JSON.parse(localStorage.getItem('gkode_categories') || '[]');
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -117,19 +124,6 @@ function showToast(message, type) {
     document.head.appendChild(style);
 })();
 
-// ============ SIMPLE DECODE ============
-function simpleDecode(str) {
-    try {
-        var decoded = '';
-        for (var i = 0; i < str.length; i++) {
-            decoded += String.fromCharCode(str.charCodeAt(i) - 3);
-        }
-        return decoded;
-    } catch(e) {
-        return str;
-    }
-}
-
 // ============ NAVIGATION ============
 function showScreen(id) {
     var screens = document.querySelectorAll('.screen');
@@ -140,7 +134,7 @@ function showScreen(id) {
     if (s) s.classList.add('active');
 
     var nav = document.getElementById('bottomNav');
-    var allowed = ['home', 'postGig', 'profile', 'chat', 'review', 'complaint', 'terms', 'privacy', 'guide', 'payment', 'companyRegister', 'companyDashboard', 'addProduct', 'marketplace'];
+    var allowed = ['home', 'postGig', 'profile', 'chat', 'marketplace'];
     if (currentUser && allowed.indexOf(id) !== -1) {
         nav.classList.remove('hidden');
     } else {
@@ -150,10 +144,8 @@ function showScreen(id) {
     if (id === 'home') loadGigs();
     if (id === 'profile') loadProfile();
     if (id === 'marketplace') loadMarketplace();
-    if (id === 'companyDashboard') loadCompanyDashboard();
 }
 
-// ============ TOGGLE PASSWORD ============
 function togglePassword(fieldId, icon) {
     var field = document.getElementById(fieldId);
     if (!field) return;
@@ -273,52 +265,24 @@ function populateCategoryDropdown() {
     }
 }
 
-// ============ CAMERA FUNCTION ============
+// ============ CAMERA ============
 function openCamera(inputId) {
     var input = document.getElementById(inputId);
     if (!input) {
         showToast('Error: Input not found.', 'error');
         return;
     }
-
-    // Check if camera is supported on this device
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Check if it's a mobile device
-        var isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            // For mobile: Try to open camera directly
-            navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
-            })
-            .then(function(stream) {
-                // Stop the stream - we just want to check if camera exists
-                stream.getTracks().forEach(function(track) { track.stop(); });
-                
-                // Now trigger the file input with capture attribute
-                input.setAttribute('capture', 'environment');
-                input.click();
-            })
-            .catch(function(err) {
-                console.log('Camera access denied or not available:', err);
-                // Fallback: just open file picker
-                input.removeAttribute('capture');
-                input.click();
-                showToast('📁 Opening file picker instead', 'info');
-            });
-        } else {
-            // Desktop: just open file picker
-            input.removeAttribute('capture');
-            input.click();
-        }
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        input.setAttribute('capture', 'environment');
+        input.click();
     } else {
-        // No camera support: open file picker
         input.removeAttribute('capture');
         input.click();
     }
 }
+
 // ============ REGISTER ============
-function register(e) {
+async function register(e) {
     e.preventDefault();
     var btn = document.getElementById('registerBtn');
     btn.disabled = true;
@@ -337,7 +301,6 @@ function register(e) {
         var photoFile = document.getElementById('regPhoto').files[0];
         var idScanFile = document.getElementById('regIDScan').files[0];
 
-        // Validation
         if (!name || !phone || !id || !email || !password || !location || !profession) {
             showToast('Please fill all required fields.', 'error');
             btn.disabled = false;
@@ -345,78 +308,35 @@ function register(e) {
             return;
         }
 
-        if (!/^0[0-9]{9}$/.test(phone) && !/^\+254[0-9]{9}$/.test(phone)) {
-            showToast('Invalid phone number. Use 07XX XXX XXX format.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        if (!/^[0-9]{7,8}$/.test(id)) {
-            showToast('Invalid National ID. Must be 7-8 digits.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        if (password.length < 8) {
-            showToast('Password must be 8+ characters.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-            showToast('Password must contain both letters and numbers.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        // File checks
         if (!photoFile) {
-            showToast('Please upload a profile photo.', 'error');
+            showToast('Please take or select a profile photo.', 'error');
             btn.disabled = false;
             btn.textContent = 'REGISTER';
             return;
         }
 
         if (!idScanFile) {
-            showToast('Please upload your ID scan.', 'error');
+            showToast('Please take or select an ID scan.', 'error');
             btn.disabled = false;
             btn.textContent = 'REGISTER';
             return;
         }
 
-        if (!photoFile.type.startsWith('image/')) {
-            showToast('Profile photo must be an image.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
+        if (profession === 'Other') {
+            if (!otherProfession) {
+                showToast('Please specify your profession.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'REGISTER';
+                return;
+            }
+            profession = saveNewProfession(otherProfession);
+            if (!profession) {
+                btn.disabled = false;
+                btn.textContent = 'REGISTER';
+                return;
+            }
         }
 
-        if (!idScanFile.type.startsWith('image/')) {
-            showToast('ID scan must be an image.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        if (photoFile.size > 5 * 1024 * 1024) {
-            showToast('Photo too large. Max 5MB.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        if (idScanFile.size > 5 * 1024 * 1024) {
-            showToast('ID scan too large. Max 5MB.', 'error');
-            btn.disabled = false;
-            btn.textContent = 'REGISTER';
-            return;
-        }
-
-        // Check existing users
         var users = getUsers();
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
@@ -440,25 +360,9 @@ function register(e) {
             }
         }
 
-        if (profession === 'Other') {
-            if (!otherProfession) {
-                showToast('Please specify your profession.', 'error');
-                btn.disabled = false;
-                btn.textContent = 'REGISTER';
-                return;
-            }
-            profession = saveNewProfession(otherProfession);
-            if (!profession) {
-                btn.disabled = false;
-                btn.textContent = 'REGISTER';
-                return;
-            }
-        }
-
         showToast('📸 Processing images...', 'info');
         btn.textContent = '⏳ PROCESSING IMAGES...';
 
-        // Read files
         var photoReader = new FileReader();
         var idReader = new FileReader();
         var photoData = null;
@@ -506,9 +410,8 @@ function completeRegistration(name, phone, id, email, password, location, profes
     try {
         var users = getUsers();
         var vCode = Math.floor(100000 + Math.random() * 900000).toString();
-        showToast('📱 Your verification code: ' + vCode, 'info');
-        var userCode = prompt('📱 Enter the 6-digit verification code:\n\nCode: ' + vCode);
-        
+        sendOTPEmail(email, name, vCode);
+        var userCode = prompt('📱 Enter the 6-digit verification code sent to your email:');
         if (!userCode || userCode !== vCode) {
             showToast('❌ Invalid verification code.', 'error');
             btn.disabled = false;
@@ -532,7 +435,6 @@ function completeRegistration(name, phone, id, email, password, location, profes
             strikes: 0,
             rating: 0,
             reviewCount: 0,
-            paymentStatus: 'UNPAID',
             registeredAt: new Date().toISOString()
         };
 
@@ -540,7 +442,7 @@ function completeRegistration(name, phone, id, email, password, location, profes
         setUsers(users);
         currentUser = user;
         localStorage.setItem('gkode_currentUser', JSON.stringify(user));
-        
+
         showToast('✅ Welcome, ' + name + '! Account created successfully!', 'success');
         showScreen('home');
         btn.disabled = false;
@@ -554,7 +456,7 @@ function completeRegistration(name, phone, id, email, password, location, profes
     }
 }
 
-// ============ LOGIN - ALL PASSWORD FORMATS ============
+// ============ LOGIN ============
 function login(e) {
     e.preventDefault();
     var btn = document.getElementById('loginBtn');
@@ -577,29 +479,17 @@ function login(e) {
 
         for (var i = 0; i < users.length; i++) {
             if (users[i].phone === phone) {
-                var storedPassword = users[i].password;
-                
-                // Check plain text
-                if (storedPassword === password) {
-                    found = users[i];
-                    break;
+                try {
+                    if (atob(users[i].password) === password) {
+                        found = users[i];
+                        break;
+                    }
+                } catch (e) {
+                    if (users[i].password === password) {
+                        found = users[i];
+                        break;
+                    }
                 }
-                
-                // Check base64
-                try {
-                    if (atob(storedPassword) === password) {
-                        found = users[i];
-                        break;
-                    }
-                } catch(e) {}
-                
-                // Check simpleDecode
-                try {
-                    if (simpleDecode(storedPassword) === password) {
-                        found = users[i];
-                        break;
-                    }
-                } catch(e) {}
             }
         }
 
@@ -635,16 +525,106 @@ function logout() {
     if (nav) nav.classList.add('hidden');
 }
 
-function startFresh() {
-    if (confirm('Start fresh with a new account on this device?')) {
-        currentUser = null;
-        localStorage.removeItem('gkode_currentUser');
-        showScreen('register');
-        showToast('Ready to create a new account.', 'info');
+// ============ EMAILJS ============
+function loadEmailJS(callback) {
+    if (typeof emailjs !== 'undefined') {
+        callback();
+        return;
     }
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    document.head.appendChild(script);
+    script.onload = function() {
+        emailjs.init(EMAILJS_CONFIG.publicKey);
+        callback();
+    };
+    script.onerror = function() {
+        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
+        callback();
+    };
 }
 
-// ============ POST GIG ============
+function sendOTPEmail(userEmail, userName, code) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('📱 Your code: ' + code, 'info');
+            return;
+        }
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            code: code,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.otpTemplateID, templateParams)
+            .then(function(response) {
+                console.log('✅ OTP email sent!', response.status);
+                showToast('📧 Verification code sent to your email!', 'success');
+            })
+            .catch(function(error) {
+                console.log('❌ OTP email failed:', error);
+                showToast('📱 Your code: ' + code, 'info');
+            });
+    });
+}
+
+function sendPasswordResetEmail(userEmail, userName, resetCode) {
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('⚠️ Email unavailable. Please contact support.', 'error');
+            return;
+        }
+        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            reset_link: resetLink,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.resetTemplateID, templateParams)
+            .then(function(response) {
+                console.log('✅ Password reset email sent!', response.status);
+                showToast('📧 Password reset link sent to your email!', 'success');
+            })
+            .catch(function(error) {
+                console.log('❌ Reset email failed:', error);
+                showToast('⚠️ Please contact support for password reset', 'error');
+            });
+    });
+}
+
+function sendPasswordReset() {
+    var email = document.getElementById('resetEmail').value.trim();
+    if (!email) {
+        showToast('Please enter your email address.', 'error');
+        return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('Please enter a valid email address.', 'error');
+        return;
+    }
+    var users = getUsers();
+    var found = null;
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].email === email) {
+            found = users[i];
+            break;
+        }
+    }
+    if (!found) {
+        showToast('No account found with that email.', 'error');
+        return;
+    }
+    var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    sendPasswordResetEmail(email, found.name, resetCode);
+    localStorage.setItem('gkode_reset_code', resetCode);
+    localStorage.setItem('gkode_reset_email', email);
+    showToast('📧 Password reset link sent to your email!', 'success');
+}
+
+// ============ GIGS ============
 function postGig(e) {
     e.preventDefault();
     if (!currentUser) {
@@ -718,27 +698,6 @@ function postGig(e) {
     }
 }
 
-function captureGigLocation() {
-    if (!navigator.geolocation) {
-        showToast('GPS not supported.', 'error');
-        return;
-    }
-    showToast('📍 Capturing location...', 'info');
-    navigator.geolocation.getCurrentPosition(
-        function(pos) {
-            document.getElementById('gigGPSLat').value = pos.coords.latitude;
-            document.getElementById('gigGPSLon').value = pos.coords.longitude;
-            document.getElementById('gigLocationStatus').textContent = '✅ Location captured!';
-            document.getElementById('gigLocationStatus').style.color = '#006400';
-            showToast('✅ Location captured!', 'success');
-        },
-        function() {
-            showToast('❌ Enable GPS.', 'error');
-        }
-    );
-}
-
-// ============ LOAD GIGS ============
 function switchTab(tab) {
     currentTab = tab;
     var openBtn = document.getElementById('tabOpen');
@@ -779,32 +738,22 @@ function loadGigs() {
         var g = filtered[i];
         var open = g.status === 'Open';
         var budgetText = 'Ksh ' + g.budgetMin + ' - ' + g.budgetMax;
-        var urgencyClass = g.urgency === 'Emergency' ? 'emergency' : (g.urgency === 'Urgent' ? 'urgent' : '');
 
-        h += '<div class="gig-card ' + urgencyClass + '">';
+        h += '<div class="gig-card">';
         h += '<div class="gig-title">' + g.title + '</div>';
         h += '<span class="badge ' + (open ? 'badge-open' : 'badge-taken') + '">' + (open ? '🟢 OPEN' : '🔴 TAKEN') + '</span>';
-        if (g.urgency !== 'Normal') {
-            h += '<span class="badge ' + (g.urgency === 'Emergency' ? 'badge-emergency' : 'badge-urgent') + '">' + g.urgency + '</span>';
-        }
         h += '<div class="gig-meta">👤 ' + g.client + ' | 🛠️ ' + g.skill + '</div>';
         h += '<div class="gig-meta">📍 ' + g.location + '</div>';
         h += '<div class="gig-budget">💰 ' + budgetText + '</div>';
-        h += '<div class="gig-meta">' + g.desc + '</div>';
-
         if (open) {
-            h += '<div class="gig-actions">';
-            h += '<button class="btn-accept" onclick="acceptGig(\'' + g.id + '\')">✅ ACCEPT GIG</button>';
-            h += '</div>';
+            h += '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' + g.id + '\')">✅ ACCEPT</button></div>';
         }
-
         h += '</div>';
     }
 
     container.innerHTML = h;
 }
 
-// ============ ACCEPT GIG ============
 function acceptGig(id) {
     if (!currentUser) {
         showToast('Please login first.', 'error');
@@ -836,7 +785,7 @@ function acceptGig(id) {
     }
 
     setGigs(gigs);
-    showToast('✅ Gig accepted! You can now chat with the client.', 'success');
+    showToast('✅ Gig accepted!', 'success');
     loadGigs();
 }
 
@@ -852,9 +801,9 @@ function loadChatMessages(id) {
     if (!container) return;
 
     var logs = JSON.parse(localStorage.getItem('gkode_chat_' + id) || '[]');
-    
+
     if (logs.length === 0) {
-        container.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">No messages yet. Say hello!</div>';
+        container.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">No messages yet.</div>';
         return;
     }
 
@@ -905,13 +854,13 @@ function shareLiveLocation() {
     }
 
     showToast('📍 Getting your location...', 'info');
-    
+
     navigator.geolocation.getCurrentPosition(
         function(pos) {
             var lat = pos.coords.latitude;
             var lon = pos.coords.longitude;
-            var url = 'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lon + '&zoom=15';
-            
+            var url = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+
             var id = document.getElementById('chatGigId').value;
             var logs = JSON.parse(localStorage.getItem('gkode_chat_' + id) || '[]');
             logs.push({
@@ -920,43 +869,15 @@ function shareLiveLocation() {
                 time: new Date().toISOString()
             });
             localStorage.setItem('gkode_chat_' + id, JSON.stringify(logs));
-            
+
             window.open(url, '_blank');
             loadChatMessages(id);
             showToast('✅ Location shared!', 'success');
         },
         function(err) {
             showToast('❌ Could not get location. Please enable GPS.', 'error');
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
+        }, { enableHighAccuracy: true, timeout: 10000 }
     );
-}
-
-// ============ NAVIGATE TO CLIENT ============
-function navigateToClient() {
-    if (!currentUser) {
-        showToast('Please login first.', 'error');
-        return;
-    }
-
-    var id = document.getElementById('chatGigId').value;
-    var gigs = getGigs();
-    var gig = null;
-
-    for (var i = 0; i < gigs.length; i++) {
-        if (gigs[i].id === id) {
-            gig = gigs[i];
-            break;
-        }
-    }
-
-    if (!gig) {
-        showToast('Gig not found.', 'error');
-        return;
-    }
-
-    showToast('📍 Opening client location...', 'info');
-    window.open('https://www.openstreetmap.org/search?query=' + encodeURIComponent(gig.location), '_blank');
 }
 
 // ============ PROFILE ============
@@ -967,8 +888,7 @@ function loadProfile() {
     document.getElementById('profilePhone').textContent = '📞 ' + currentUser.phone;
     document.getElementById('profileLocation').textContent = '📍 ' + currentUser.location;
     document.getElementById('profileProfession').textContent = '👔 ' + currentUser.profession;
-    document.getElementById('profileSkills').textContent = '🛠️ ' + (currentUser.skills || 'None');
-    
+
     if (currentUser.photo) {
         document.getElementById('profilePhoto').src = currentUser.photo;
     }
@@ -1048,7 +968,7 @@ function loadMarketplace() {
         h += '<p>🏢 ' + p.companyName + ' | ' + p.category + '</p>';
         h += '<p>💰 Ksh ' + p.price + '/' + p.unit + '</p>';
         h += '<p>📦 Stock: ' + p.stock + '</p>';
-        h += '<button onclick="buyProduct(\'' + p.id + '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY NOW</button>';
+        h += '<button onclick="buyProduct(\'' + p.id + '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
         h += '</div>';
     }
     container.innerHTML = h;
@@ -1066,11 +986,11 @@ function buyProduct(id) {
             if (products[i].stock > 0) {
                 products[i].stock--;
                 setProducts(products);
-                showToast('✅ Purchased successfully!', 'success');
+                showToast('✅ Purchased!', 'success');
                 loadMarketplace();
                 return;
             } else {
-                showToast('❌ Product out of stock.', 'error');
+                showToast('❌ Out of stock.', 'error');
                 return;
             }
         }
@@ -1096,8 +1016,6 @@ function registerCompany(e) {
         var regNo = document.getElementById('compRegNo').value.trim();
         var location = document.getElementById('compLocation').value.trim();
         var phone = document.getElementById('compPhone').value.trim();
-        var email = document.getElementById('compEmail').value.trim();
-        var desc = document.getElementById('compDesc').value.trim();
 
         if (!name || !type || !regNo || !location || !phone) {
             showToast('Fill all required fields.', 'error');
@@ -1123,8 +1041,6 @@ function registerCompany(e) {
             regNo: regNo,
             location: location,
             phone: phone,
-            email: email,
-            desc: desc,
             owner: currentUser.name,
             ownerPhone: currentUser.phone,
             registeredAt: new Date().toISOString(),
@@ -1163,7 +1079,7 @@ function loadCompanyDashboard() {
         return;
     }
 
-    document.getElementById('compInfo').innerHTML = 
+    document.getElementById('compInfo').innerHTML =
         '<h3>' + myComp.name + '</h3>' +
         '<p>🏢 ' + myComp.type + ' | 📍 ' + myComp.location + '</p>' +
         '<p>📞 ' + myComp.phone + '</p>' +
@@ -1196,7 +1112,7 @@ function showCompTab(tab) {
 
     if (tab === 'products') {
         if (myProducts.length === 0) {
-            content.innerHTML = '<p>No products yet. Add your first product!</p>';
+            content.innerHTML = '<p>No products yet.</p>';
         } else {
             var h = '';
             for (var i = 0; i < myProducts.length; i++) {
@@ -1271,7 +1187,7 @@ function addProduct(e) {
         });
         setProducts(products);
 
-        showToast('✅ ' + name + ' added successfully!', 'success');
+        showToast('✅ ' + name + ' added!', 'success');
         showScreen('companyDashboard');
         loadCompanyDashboard();
         btn.disabled = false;
@@ -1298,52 +1214,6 @@ function deleteProduct(id) {
     loadCompanyDashboard();
 }
 
-// ============ REVIEWS ============
-function submitReview() {
-    if (!currentUser) {
-        showToast('Please login first.', 'error');
-        return;
-    }
-
-    var rating = parseInt(document.getElementById('reviewRating').value);
-    var text = document.getElementById('reviewText').value.trim();
-
-    if (!text) {
-        showToast('Please write a review.', 'error');
-        return;
-    }
-
-    showToast('✅ Review submitted! Thank you.', 'success');
-    document.getElementById('reviewText').value = '';
-    showScreen('home');
-}
-
-// ============ COMPLAINTS ============
-function submitComplaint() {
-    if (!currentUser) {
-        showToast('Please login first.', 'error');
-        return;
-    }
-
-    var reason = document.getElementById('complaintReason').value;
-    var details = document.getElementById('complaintDetails').value.trim();
-
-    if (!reason) {
-        showToast('Please select a reason.', 'error');
-        return;
-    }
-
-    if (!details) {
-        showToast('Please describe what happened.', 'error');
-        return;
-    }
-
-    showToast('✅ Complaint filed. We will review it.', 'success');
-    document.getElementById('complaintDetails').value = '';
-    document.getElementById('complaintReason').value = '';
-    showScreen('home');
-}
-
 // ============ EMERGENCY ============
 function emergencyCall() {
     if (confirm('🚨 EMERGENCY\n\nTap OK to open emergency contacts.')) {
@@ -1351,27 +1221,12 @@ function emergencyCall() {
     }
 }
 
-// ============ RESET ============
-function resetEverything() {
-    if (!isAdmin()) {
-        showToast('⛔ Admin only!', 'error');
-        return;
-    }
-    if (confirm('⚠️ DELETE ALL DATA?')) {
-        if (confirm('FINAL WARNING: This cannot be undone!')) {
-            localStorage.clear();
-            showToast('✅ All data cleared. Reloading...', 'success');
-            setTimeout(function() { location.reload(); }, 1000);
-        }
-    }
-}
-
 // ============ LEGAL ============
 function showLegalNotice(type) {
     var notices = {
-        'privacy': '🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, photo, ID scan.\n\nWe DO NOT share your ID or password.\n\nYour rights: Access, correct, delete anytime. Protected under Kenya Data Protection Act 2019.',
-        'terms': '📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Kenyan law applies\n4. Account termination for violations',
-        'disclaimer': '⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Users verify each other\n4. Use at your own risk'
+        'privacy': '🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, photo, ID scan.\n\nYour rights: Access, correct, delete anytime.',
+        'terms': '📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Kenyan law applies',
+        'disclaimer': '⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Use at your own risk'
     };
     alert(notices[type] || 'Notice not found.');
 }
@@ -1381,7 +1236,6 @@ function exportUserData() {
         showToast('Please login first.', 'error');
         return;
     }
-    
     var data = {
         exportedAt: new Date().toISOString(),
         user: currentUser,
@@ -1389,14 +1243,12 @@ function exportUserData() {
         userOrders: [],
         userPayments: []
     };
-    
     var gigs = getGigs();
     for (var i = 0; i < gigs.length; i++) {
         if (gigs[i].client === currentUser.name || gigs[i].worker === currentUser.name) {
             data.userGigs.push(gigs[i]);
         }
     }
-    
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1412,15 +1264,12 @@ function deleteAccount() {
         showToast('Please login first.', 'error');
         return;
     }
-    
-    if (!confirm('⚠️ ACCOUNT DELETION\n\nThis will permanently delete your profile, gigs, and data.\n\nThis CANNOT be undone!')) {
+    if (!confirm('⚠️ ACCOUNT DELETION\n\nThis CANNOT be undone!')) {
         return;
     }
-    
     if (!confirm('FINAL WARNING: Continue?')) {
         return;
     }
-    
     var users = getUsers();
     var newUsers = [];
     for (var i = 0; i < users.length; i++) {
@@ -1429,7 +1278,6 @@ function deleteAccount() {
         }
     }
     setUsers(newUsers);
-    
     var gigs = getGigs();
     var newGigs = [];
     for (var i = 0; i < gigs.length; i++) {
@@ -1438,44 +1286,14 @@ function deleteAccount() {
         }
     }
     setGigs(newGigs);
-    
     currentUser = null;
     localStorage.removeItem('gkode_currentUser');
     showToast('✅ Account deleted successfully.', 'success');
     showScreen('welcome');
 }
 
-// ============ PAYMENT ============
 function showPaymentScreen() {
     showToast('💳 Payment coming soon!', 'info');
-}
-
-// ============ VERIFY IDENTITY ============
-function verifyIdentity() {
-    showToast('✅ Identity verified!', 'success');
-    document.getElementById('newPasswordSection').style.display = 'block';
-}
-
-function resetPassword() {
-    var newPass = document.getElementById('newPassword').value.trim();
-    var confirmPass = document.getElementById('confirmPassword').value.trim();
-    
-    if (!newPass || !confirmPass) {
-        showToast('Enter both password fields.', 'error');
-        return;
-    }
-    if (newPass.length < 8) {
-        showToast('Password must be 8+ characters.', 'error');
-        return;
-    }
-    if (newPass !== confirmPass) {
-        showToast('Passwords do not match.', 'error');
-        return;
-    }
-    
-    showToast('✅ Password reset successful!', 'success');
-    document.getElementById('newPasswordSection').style.display = 'none';
-    showScreen('login');
 }
 
 // ============ INIT ============
@@ -1490,7 +1308,7 @@ if (saved) {
             showToast('Welcome back, ' + currentUser.name + '!', 'success');
             showScreen('home');
         }
-    } catch(e) {
+    } catch (e) {
         showScreen('welcome');
     }
 } else {
@@ -1499,5 +1317,3 @@ if (saved) {
 
 console.log('🚀 G-KODE loaded successfully!');
 console.log('📊 Data stored in localStorage.');
-console.log('📸 Camera ready.');
-console.log('🔐 Login with phone and password.');
