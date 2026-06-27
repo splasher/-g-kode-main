@@ -13,6 +13,8 @@ var loginLockTime = null;
 var ADMIN_PHONES = ['0703428192', '0711991467'];
 
 // ============ EMAILJS ============
+
+// Your EmailJS Config
 var EMAILJS_CONFIG = {
     serviceID: 'service_hw35xfu',
     publicKey: 'vc371wcNfQy56zlH8',
@@ -20,6 +22,166 @@ var EMAILJS_CONFIG = {
     resetTemplateID: 'template_0787ox7'
 };
 
+// ============ LOAD EMAILJS ============
+function loadEmailJS(callback) {
+    // Check if already loaded
+    if (typeof emailjs !== 'undefined') {
+        console.log('✅ EmailJS already loaded');
+        callback();
+        return;
+    }
+    
+    console.log('📧 Loading EmailJS...');
+    
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+    
+    script.onload = function() {
+        console.log('✅ EmailJS loaded successfully');
+        emailjs.init(EMAILJS_CONFIG.publicKey);
+        callback();
+    };
+    
+    script.onerror = function() {
+        console.log('❌ EmailJS failed to load');
+        showToast('⚠️ Email service unavailable. Using on-screen code.', 'warning');
+        callback();
+    };
+    
+    // Timeout fallback
+    setTimeout(function() {
+        if (typeof emailjs === 'undefined') {
+            console.log('⚠️ EmailJS load timeout');
+            showToast('⚠️ Email service timeout. Using on-screen code.', 'warning');
+            callback();
+        }
+    }, 10000);
+}
+
+// ============ SEND OTP EMAIL ============
+function sendOTPEmail(userEmail, userName, code) {
+    console.log('📧 Sending OTP to:', userEmail);
+    
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('📱 Your code: ' + code, 'info');
+            return;
+        }
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            code: code,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        console.log('📧 Sending OTP with params:', templateParams);
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.otpTemplateID,
+            templateParams
+        )
+        .then(function(response) {
+            console.log('✅ OTP email sent!', response.status, response.text);
+            showToast('📧 Verification code sent to your email!', 'success');
+        })
+        .catch(function(error) {
+            console.log('❌ OTP email failed:', error);
+            showToast('📱 Your code: ' + code, 'info');
+        });
+    });
+}
+
+// ============ SEND PASSWORD RESET EMAIL ============
+function sendPasswordResetEmail(userEmail, userName, resetCode) {
+    console.log('📧 Sending password reset to:', userEmail);
+    
+    loadEmailJS(function() {
+        if (typeof emailjs === 'undefined') {
+            showToast('⚠️ Email unavailable. Please contact support.', 'error');
+            return;
+        }
+        
+        // Create reset link
+        var resetLink = window.location.origin + '/reset-password.html?code=' + resetCode + '&email=' + encodeURIComponent(userEmail);
+        
+        var templateParams = {
+            to_email: userEmail,
+            to_name: userName || 'User',
+            reset_link: resetLink,
+            app_name: 'G-KODE',
+            year: new Date().getFullYear()
+        };
+        
+        console.log('📧 Sending reset with params:', templateParams);
+        
+        emailjs.send(
+            EMAILJS_CONFIG.serviceID,
+            EMAILJS_CONFIG.resetTemplateID,
+            templateParams
+        )
+        .then(function(response) {
+            console.log('✅ Password reset email sent!', response.status, response.text);
+            showToast('📧 Password reset link sent to your email!', 'success');
+        })
+        .catch(function(error) {
+            console.log('❌ Reset email failed:', error);
+            showToast('⚠️ Please contact support for password reset', 'error');
+        });
+    });
+}
+
+// ============ SEND PASSWORD RESET - TRIGGER ============
+function sendPasswordReset() {
+    var email = document.getElementById('resetEmail').value.trim();
+    
+    console.log('🔑 Reset password requested for:', email);
+    
+    if (!email) {
+        showToast('Please enter your email address.', 'error');
+        return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('Please enter a valid email address.', 'error');
+        return;
+    }
+    
+    var users = getUsers();
+    console.log('👥 Checking', users.length, 'users for email:', email);
+    
+    var found = null;
+    for (var i = 0; i < users.length; i++) {
+        if (users[i].email === email) {
+            found = users[i];
+            break;
+        }
+    }
+    
+    if (!found) {
+        console.log('❌ No user found with email:', email);
+        showToast('No account found with that email.', 'error');
+        return;
+    }
+    
+    console.log('✅ User found:', found.name);
+    
+    var resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🔑 Reset code generated:', resetCode);
+    
+    sendPasswordResetEmail(email, found.name, resetCode);
+    
+    // Store reset code for verification
+    localStorage.setItem('gkode_reset_code', resetCode);
+    localStorage.setItem('gkode_reset_email', email);
+    
+    showToast('📧 Password reset link sent to your email!', 'success');
+    console.log('✅ Password reset process complete');
+}
 // ============ DATA ============
 function getUsers() {
     try {
