@@ -13,7 +13,7 @@ body {
     background: #f5f5f5;
 }
 
-/* ===== KENYAN BACKGROUND IMAGES - ROTATING ===== */
+/* ===== BACKGROUND IMAGES - LOCAL FILES ===== */
 .background-wrapper {
     position: fixed;
     top: 0;
@@ -29,25 +29,36 @@ body {
 }
 
 @keyframes bgRotate {
-    0%   { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
-    20%  { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
-    25%  { background-image: url('https://images.pexels.com/photos/33610292/pexels-photo-33610292.jpeg?w=1200'); }
-    45%  { background-image: url('https://images.pexels.com/photos/33610292/pexels-photo-33610292.jpeg?w=1200'); }
-    50%  { background-image: url('https://images.pexels.com/photos/29891537/pexels-photo-29891537.jpeg?w=1200'); }
-    70%  { background-image: url('https://images.pexels.com/photos/29891537/pexels-photo-29891537.jpeg?w=1200'); }
-    75%  { background-image: url('https://images.pexels.com/photos/15483543/pexels-photo-15483543.jpeg?w=1200'); }
-    95%  { background-image: url('https://images.pexels.com/photos/15483543/pexels-photo-15483543.jpeg?w=1200'); }
-    100% { background-image: url('https://images.pexels.com/photos/26921815/pexels-photo-26921815.jpeg?w=1200'); }
+    0%   { background-image: url('images/bg1.jpg'); }
+    20%  { background-image: url('images/bg1.jpg'); }
+    25%  { background-image: url('images/bg2.jpg'); }
+    45%  { background-image: url('images/bg2.jpg'); }
+    50%  { background-image: url('images/bg3.jpg'); }
+    70%  { background-image: url('images/bg3.jpg'); }
+    75%  { background-image: url('images/bg4.jpg'); }
+    95%  { background-image: url('images/bg4.jpg'); }
+    100% { background-image: url('images/bg1.jpg'); }
 }
 
-/* Overlay for readability */
+/* Fallback if images don't load */
+.background-wrapper::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #006400;
+    z-index: -1;
+}
+
 .background-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.82);
     z-index: -1;
 }
 
@@ -68,14 +79,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== TYPOGRAPHY ===== */
@@ -217,44 +222,25 @@ select {
 }
 
 .toast {
-    padding: 15px 20px;
+    padding: 12px 20px;
     border-radius: 10px;
     color: #fff;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     animation: slideDown 0.4s ease;
     pointer-events: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-weight: 500;
+    font-size: 14px;
 }
 
-.toast.success {
-    background: #006400;
-}
-
-.toast.error {
-    background: #cc0000;
-}
-
-.toast.info {
-    background: #2196F3;
-}
-
-.toast.warning {
-    background: #ff9800;
-}
+.toast.success { background: #006400; }
+.toast.error { background: #cc0000; }
+.toast.info { background: #2196F3; }
+.toast.warning { background: #ff9800; }
 
 @keyframes slideDown {
-    from {
-        transform: translateY(-100px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(-100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 /* ===== LOADER ===== */
@@ -269,12 +255,8 @@ select {
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* ===== BOTTOM NAV ===== */
@@ -346,15 +328,9 @@ select {
 }
 
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.5);
-    }
-    70% {
-        box-shadow: 0 0 0 15px rgba(204, 0, 0, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(204, 0, 0, 0);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.5); }
+    70% { box-shadow: 0 0 0 15px rgba(204, 0, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0); }
 }
 
 /* ===== TAB SYSTEM ===== */
