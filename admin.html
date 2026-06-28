@@ -86,10 +86,6 @@
             background: #cc0000;
             color: #fff;
         }
-        .badge-active {
-            background: #2196F3;
-            color: #fff;
-        }
         .login-box {
             max-width: 400px;
             margin: 100px auto;
@@ -129,33 +125,21 @@
             border-bottom: 2px solid #006400;
             padding-bottom: 5px;
         }
-        .gig-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
+        .danger-zone {
+            border: 2px solid #cc0000;
+            border-radius: 12px;
+            padding: 15px;
+            background: #fff5f5;
         }
-        .gig-item:last-child {
-            border-bottom: none;
-        }
-        .complaint-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
-        }
-        .complaint-item:last-child {
-            border-bottom: none;
-        }
-        .status-resolved {
-            color: #006400;
-        }
-        .status-pending {
-            color: #ff9800;
+        .danger-zone .section-title {
+            border-bottom-color: #cc0000;
+            color: #cc0000;
         }
     </style>
 </head>
 <body>
 
-    <!-- ============================================ -->
-    <!-- LOGIN BOX -->
-    <!-- ============================================ -->
+    <!-- ===== LOGIN BOX ===== -->
     <div id="loginBox" class="login-box">
         <h1>🔐 Admin Panel</h1>
         <p style="color:#888; margin-bottom:20px;">Founder Access Only — Splasher</p>
@@ -164,9 +148,7 @@
         <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <!-- ============================================ -->
-    <!-- ADMIN PANEL -->
-    <!-- ============================================ -->
+    <!-- ===== ADMIN PANEL ===== -->
     <div id="adminPanel" style="display:none;">
         <h1>🚨 Admin Panel</h1>
         <p style="color:#888; margin-bottom:20px;">G-KODE — Kenya Helping Kenya</p>
@@ -270,14 +252,22 @@
             </div>
         </div>
 
-        <!-- ===== DANGER ZONE ===== -->
-        <div class="section-title" style="border-bottom-color:#cc0000;">⚠️ DANGER ZONE</div>
-        <div class="admin-card">
+        <!-- ============================================ -->
+        <!-- DANGER ZONE (WITH RESET BUTTON) -->
+        <!-- ============================================ -->
+        <div class="section-title" style="border-bottom-color:#cc0000; color:#cc0000;">⚠️ DANGER ZONE</div>
+        <div class="admin-card danger-zone">
             <div class="flex-buttons">
-                <button class="btn red btn-small" onclick="clearAllData()">🔥 Reset All Data</button>
+                <button class="btn red btn-small" onclick="resetEverything()">🔄 Reset App Data</button>
+                <button class="btn red btn-small" onclick="clearAllData()">🔥 Clear All Data</button>
                 <button class="btn red btn-small" onclick="resetApp()">🔄 Full App Reset</button>
             </div>
-            <p style="font-size:11px; color:#cc0000; margin-top:5px;">⚠️ These actions cannot be undone. A backup will be created automatically.</p>
+            <p style="font-size:11px; color:#cc0000; margin-top:10px;">
+                ⚠️ These actions cannot be undone. A backup will be created automatically.
+            </p>
+            <p style="font-size:11px; color:#cc0000; margin-top:5px;">
+                🔄 "Reset App Data" will clear user data and reload the app.
+            </p>
         </div>
 
         <!-- ===== OUTPUT ===== -->
@@ -327,10 +317,6 @@
         // ============================================
         function getData(key) {
             try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
-        }
-
-        function setData(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
         }
 
         function getUsers() { return getData('gkode_users'); }
@@ -434,10 +420,87 @@
             output.innerHTML = html;
         }
 
+        // ============================================
+        // DANGER ZONE FUNCTIONS (Reset moved here)
+        // ============================================
+
+        function resetEverything() {
+            if (!confirm('🔄 WARNING: This will reset ALL app data on this device!\n\nContinue?')) return;
+            if (!confirm('FINAL WARNING: This cannot be undone! Continue?')) return;
+
+            // Save backup first
+            downloadBackup();
+
+            // Clear all data
+            localStorage.removeItem('gkode_users');
+            localStorage.removeItem('gkode_gigs');
+            localStorage.removeItem('gkode_complaints');
+            localStorage.removeItem('gkode_payments');
+            localStorage.removeItem('gkode_companies');
+            localStorage.removeItem('gkode_products');
+            localStorage.removeItem('gkode_orders');
+            localStorage.removeItem('gkode_adminLogs');
+            localStorage.removeItem('gkode_professions');
+            localStorage.removeItem('gkode_categories');
+            localStorage.removeItem('gkode_user');
+            localStorage.removeItem('gkode_token');
+
+            showToast('🔄 All data reset. Backup saved.', 'success');
+            addLog('All data reset by admin');
+            loadStats();
+            document.getElementById('output').innerHTML = '<p style="color:#006400;">✅ All data has been reset. A backup was saved.</p>';
+        }
+
+        function clearAllData() {
+            if (!confirm('🔥 WARNING: This will DELETE ALL data! Continue?')) return;
+            if (!confirm('FINAL WARNING: This cannot be undone! Continue?')) return;
+
+            // Save backup first
+            downloadBackup();
+
+            // Clear all data
+            localStorage.removeItem('gkode_users');
+            localStorage.removeItem('gkode_gigs');
+            localStorage.removeItem('gkode_complaints');
+            localStorage.removeItem('gkode_payments');
+            localStorage.removeItem('gkode_companies');
+            localStorage.removeItem('gkode_products');
+            localStorage.removeItem('gkode_orders');
+            localStorage.removeItem('gkode_adminLogs');
+            localStorage.removeItem('gkode_professions');
+            localStorage.removeItem('gkode_categories');
+            localStorage.removeItem('gkode_user');
+            localStorage.removeItem('gkode_token');
+
+            showToast('✅ All data cleared. Backup saved.', 'success');
+            addLog('All data cleared by admin');
+            loadStats();
+            document.getElementById('output').innerHTML = '<p style="color:#006400;">✅ All data has been cleared. A backup was saved.</p>';
+        }
+
+        function resetApp() {
+            if (!confirm('🔄 Reset entire app? This will clear all data and reload.')) return;
+            if (!confirm('Final warning: This cannot be undone!')) return;
+
+            // Save backup
+            downloadBackup();
+
+            // Clear everything
+            localStorage.clear();
+
+            showToast('🔄 App reset. Refreshing...', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+
+        // ============================================
+        // OTHER VIEW FUNCTIONS
+        // ============================================
+
         function searchUsers() {
             const query = document.getElementById('userSearch').value.toLowerCase();
             const items = document.querySelectorAll('.user-item');
-
             items.forEach(item => {
                 const name = item.dataset.name || '';
                 const phone = item.dataset.phone || '';
@@ -448,19 +511,13 @@
 
         function viewBannedUsers() {
             const users = getUsers().filter(u => u.isBanned);
-            if (users.length === 0) {
-                showToast('No banned users', 'info');
-                return;
-            }
+            if (users.length === 0) { showToast('No banned users', 'info'); return; }
             displayUsers(users, '🚫 Banned Users');
         }
 
         function viewPaidUsers() {
             const users = getUsers().filter(u => u.isPaid);
-            if (users.length === 0) {
-                showToast('No paid users', 'info');
-                return;
-            }
+            if (users.length === 0) { showToast('No paid users', 'info'); return; }
             displayUsers(users, '✅ Paid Users');
         }
 
@@ -517,6 +574,7 @@
         // ============================================
         // USER ACTIONS
         // ============================================
+
         function banUser(phone) {
             if (!confirm(`Ban user ${phone}? They will lose all access.`)) return;
             let users = getUsers();
@@ -524,7 +582,7 @@
                 if (u.phone === phone) u.isBanned = true;
                 return u;
             });
-            setData('gkode_users', users);
+            localStorage.setItem('gkode_users', JSON.stringify(users));
             showToast('✅ User banned', 'success');
             addLog('Banned user: ' + phone);
             viewUsers();
@@ -538,7 +596,7 @@
                 if (u.phone === phone) u.isBanned = false;
                 return u;
             });
-            setData('gkode_users', users);
+            localStorage.setItem('gkode_users', JSON.stringify(users));
             showToast('✅ User unbanned', 'success');
             addLog('Unbanned user: ' + phone);
             viewUsers();
@@ -549,7 +607,7 @@
             if (!confirm(`⚠️ Delete user ${phone} permanently? This cannot be undone!`)) return;
             let users = getUsers();
             users = users.filter(u => u.phone !== phone);
-            setData('gkode_users', users);
+            localStorage.setItem('gkode_users', JSON.stringify(users));
             showToast('🗑️ User deleted', 'info');
             addLog('Deleted user: ' + phone);
             viewUsers();
@@ -559,6 +617,7 @@
         // ============================================
         // VIEW GIGS
         // ============================================
+
         function viewGigs() {
             const gigs = getGigs();
             displayGigs(gigs, '📋 All Gigs');
@@ -633,7 +692,7 @@
             if (!confirm('Delete this gig?')) return;
             let gigs = getGigs();
             gigs = gigs.filter(g => g.id !== id);
-            setData('gkode_gigs', gigs);
+            localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
             showToast('🗑️ Gig deleted', 'info');
             addLog('Deleted gig: ' + id);
             viewGigs();
@@ -643,6 +702,7 @@
         // ============================================
         // VIEW COMPLAINTS
         // ============================================
+
         function viewComplaints() {
             const complaints = getComplaints();
             displayComplaints(complaints, '🚩 All Complaints');
@@ -691,7 +751,7 @@
                 if (c.id === id) c.resolved = true;
                 return c;
             });
-            setData('gkode_complaints', complaints);
+            localStorage.setItem('gkode_complaints', JSON.stringify(complaints));
             showToast('✅ Complaint resolved', 'success');
             addLog('Resolved complaint: ' + id);
             viewComplaints();
@@ -702,7 +762,7 @@
             if (!confirm('Delete this complaint?')) return;
             let complaints = getComplaints();
             complaints = complaints.filter(c => c.id !== id);
-            setData('gkode_complaints', complaints);
+            localStorage.setItem('gkode_complaints', JSON.stringify(complaints));
             showToast('🗑️ Complaint deleted', 'info');
             viewComplaints();
             loadStats();
@@ -711,6 +771,7 @@
         // ============================================
         // VIEW STRIKES
         // ============================================
+
         function viewStrikes() {
             const users = getUsers().filter(u => u.strikes > 0);
             const output = document.getElementById('output');
@@ -739,6 +800,7 @@
         // ============================================
         // VIEW BUSINESS & MARKETPLACE
         // ============================================
+
         function viewBusinesses() {
             const businesses = getBusinesses();
             const output = document.getElementById('output');
@@ -809,6 +871,7 @@
         // ============================================
         // VIEW PAYMENTS & REVENUE
         // ============================================
+
         function viewPayments() {
             const payments = getPayments();
             const output = document.getElementById('output');
@@ -870,6 +933,7 @@
         // ============================================
         // SYSTEM TOOLS
         // ============================================
+
         function downloadBackup() {
             const data = {
                 exportedAt: new Date().toISOString(),
@@ -896,14 +960,13 @@
             a.click();
             document.body.removeChild(a);
 
-            // Save to backups list
             let backups = getBackups();
             backups.push({
                 id: Date.now().toString(),
                 timestamp: new Date().toISOString(),
                 size: blob.size
             });
-            setData('gkode_backups', backups);
+            localStorage.setItem('gkode_backups', JSON.stringify(backups));
 
             showToast('✅ Backup downloaded and saved', 'success');
             addLog('Backup created');
@@ -1008,52 +1071,9 @@
         }
 
         // ============================================
-        // DANGER ZONE
-        // ============================================
-        function clearAllData() {
-            if (!confirm('🔥 WARNING: This will DELETE ALL data! Continue?')) return;
-            if (!confirm('FINAL WARNING: This cannot be undone! Continue?')) return;
-
-            // Save backup first
-            downloadBackup();
-
-            // Clear all data
-            localStorage.removeItem('gkode_users');
-            localStorage.removeItem('gkode_gigs');
-            localStorage.removeItem('gkode_complaints');
-            localStorage.removeItem('gkode_payments');
-            localStorage.removeItem('gkode_companies');
-            localStorage.removeItem('gkode_products');
-            localStorage.removeItem('gkode_orders');
-            localStorage.removeItem('gkode_adminLogs');
-            localStorage.removeItem('gkode_professions');
-            localStorage.removeItem('gkode_categories');
-
-            showToast('✅ All data cleared. Backup saved.', 'success');
-            addLog('All data cleared');
-            loadStats();
-            document.getElementById('output').innerHTML = '<p style="color:#006400;">✅ All data has been cleared. A backup was saved.</p>';
-        }
-
-        function resetApp() {
-            if (!confirm('🔄 Reset entire app? This will clear all data and reload.')) return;
-            if (!confirm('Final warning: This cannot be undone!')) return;
-
-            // Save backup
-            downloadBackup();
-
-            // Clear everything
-            localStorage.clear();
-
-            showToast('🔄 App reset. Refreshing...', 'info');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 2000);
-        }
-
-        // ============================================
         // TOAST
         // ============================================
+
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container') || (() => {
                 const c = document.createElement('div');
@@ -1085,6 +1105,7 @@
         // ============================================
         // ADD LOG
         // ============================================
+
         function addLog(action) {
             let logs = getLogs();
             logs.push({
@@ -1093,14 +1114,14 @@
                 user: 'Admin',
                 time: new Date().toISOString()
             });
-            setData('gkode_adminLogs', logs);
+            localStorage.setItem('gkode_adminLogs', JSON.stringify(logs));
         }
 
         // ============================================
         // INIT
         // ============================================
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if already logged in
             if (localStorage.getItem('adminLoggedIn') === 'true') {
                 adminLogin();
             }

@@ -32,7 +32,6 @@
         <p class="tagline">Skill is Currency. Trust is the Bank.<br>Community is the Network.</p>
         <button class="btn green" onclick="showScreen('register')">REGISTER</button>
         <button class="btn outline" onclick="showScreen('login')">LOGIN</button>
-        <button class="btn red" onclick="resetEverything()" style="margin-top:20px; font-size:12px;">🔄 RESET APP DATA</button>
         <p class="footer-text">Kenya Helping Kenya.</p>
         <p style="text-align:center; margin-top:20px; font-size:12px;">
             <a href="bill-of-rights.html" style="color:#006400;">🇰🇪 Your Rights Under the Kenyan Constitution</a>
@@ -43,7 +42,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER -->
+    <!-- SCREEN: REGISTER (FIXED) -->
     <!-- ============================================ -->
     <div id="register" class="screen">
         <h2>📝 Create Account</h2>
@@ -115,7 +114,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: LOGIN -->
+    <!-- SCREEN: LOGIN (FIXED) -->
     <!-- ============================================ -->
     <div id="login" class="screen">
         <h2>🔐 Login</h2>
@@ -134,13 +133,13 @@
                     <input type="checkbox" id="rememberMe" style="width:auto; margin:0;">
                     <label for="rememberMe" style="font-size:13px; color:#666;">Remember me</label>
                 </div>
-                <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:13px; padding:0; margin:0;">Forgot Password?</button>
             </div>
             
             <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
         </form>
         
         <p class="form-link" onclick="showScreen('register')">Don't have an account? <span>Register</span></p>
+        <p class="form-link" onclick="showScreen('resetPassword')" style="color:#cc0000;">🔑 Forgot Password?</p>
         <button class="btn outline" onclick="showScreen('welcome')" style="margin-top:5px;">BACK</button>
         <button class="btn outline" onclick="startFresh()" style="background:none; color:#cc0000; border:1px solid #cc0000; font-size:12px; margin-top:10px;">🆕 New User on Shared Phone? Tap Here</button>
     </div>
@@ -213,7 +212,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: HOME (WITH PROXIMITY) -->
+    <!-- SCREEN: HOME -->
     <!-- ============================================ -->
     <div id="home" class="screen">
         <div class="header">
@@ -226,7 +225,6 @@
             <button id="tabTaken" onclick="switchTab('taken')" style="flex:1; padding:10px; background:#ddd; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🔴 TAKEN</button>
         </div>
         
-        <!-- Proximity Filter -->
         <div style="display:flex; gap:5px; margin-bottom:10px;">
             <select id="proximityRadius" onchange="loadGigs()" style="flex:1; padding:8px; border:2px solid #ddd; border-radius:8px; font-size:13px;">
                 <option value="5">📍 Within 5km</option>
@@ -245,7 +243,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: POST GIG (WITH LOCATION) -->
+    <!-- SCREEN: POST GIG -->
     <!-- ============================================ -->
     <div id="postGig" class="screen">
         <h2>📋 Post a Gig</h2>
@@ -274,7 +272,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: CHAT (WITH LOCATION SHARING) -->
+    <!-- SCREEN: CHAT -->
     <!-- ============================================ -->
     <div id="chat" class="screen">
         <div class="chat-header">
@@ -500,7 +498,7 @@
     <div id="privacy" class="screen">
         <h2>🔒 Privacy Policy</h2>
         <div style="background:#fff; padding:15px; border-radius:10px; max-height:400px; overflow-y:auto; font-size:13px; line-height:1.6;">
-            <p><strong>1. Data We Collect</strong><br>Name, phone, ID, location, profession, skills, photo, ID scan, GPS location.</p>
+            <p><strong>1. Data We Collect</strong><br>Name, phone, ID, email, location, profession, skills, photo, ID scan, GPS location.</p>
             <p><strong>2. What's Public</strong><br>Name, profession, skills, ratings. ID, password, and location data are NEVER public.</p>
             <p><strong>3. Data Security</strong><br>Passwords encrypted. Data stored securely.</p>
             <p><strong>4. Admin Access</strong><br>Only the Founder can access user ID scans, GPS logs, and activity records.</p>
