@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>G-KODE — Kenya Helping Kenya</title>
     
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://your-api.com">
-    <link rel="preconnect" href="https://your-supabase.com">
+    <!-- ===== GOOGLE MAPS API ===== -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places,geometry"></script>
+    
+    <!-- ===== SUPABASE ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- ===== EMAILJS ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -41,47 +46,103 @@
     <!-- SCREEN: REGISTER -->
     <!-- ============================================ -->
     <div id="register" class="screen">
-        <h2>Create Account</h2>
-        <input type="text" id="regName" placeholder="Full Name *">
-        <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *">
-        <input type="text" id="regID" placeholder="National ID Number *">
-        <div style="position:relative;">
-            <input type="password" id="regPassword" placeholder="Password (6+ chars, mix letters & numbers) *" minlength="6" style="padding-right:50px;">
-            <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-        </div>
-        <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 6+ characters with both letters and numbers</small>
-        <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *">
-        <select id="regProfession" onchange="checkProfession()" style="width:100%; padding:14px; margin-bottom:5px; border:2px solid #ddd; border-radius:10px; font-size:16px;">
-            <option value="">-- Select Your Profession * --</option>
-        </select>
-        <div id="otherProfessionBox" style="display:none;">
-            <input type="text" id="regOtherProfession" placeholder="Please specify your profession *">
-            <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
-        </div>
-        <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)">
-        <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Profile Photo *</label>
-        <input type="file" id="regPhoto" accept="image/*" style="padding:10px;">
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">Scan National ID (Front) *</label>
-        <input type="file" id="regIDScan" accept="image/*" style="padding:10px;">
-        <button class="btn green" onclick="register()">REGISTER</button>
-        <button class="btn outline" onclick="showScreen('welcome')">BACK</button>
+        <h2>📝 Create Account</h2>
+        <p style="color:#666; font-size:14px; margin-bottom:15px;">Join G-KODE — Kenya Helping Kenya 🇰🇪</p>
+        
+        <form id="registerForm" onsubmit="register(event)">
+            <input type="text" id="regName" placeholder="Full Name (as on ID) *" required>
+            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required>
+            <input type="text" id="regID" placeholder="National ID Number (8 digits) *" required pattern="[0-9]{8}">
+            <input type="email" id="regEmail" placeholder="Email Address *" required>
+            
+            <div style="position:relative;">
+                <input type="password" id="regPassword" placeholder="Password (6+ chars, mix letters & numbers) *" minlength="6" style="padding-right:50px;" required>
+                <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+            </div>
+            <div style="position:relative;">
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password *" minlength="6" style="padding-right:50px;" required>
+                <span onclick="togglePassword('regConfirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+            </div>
+            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 6+ characters with both letters and numbers</small>
+            
+            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required>
+            
+            <select id="regProfession" onchange="checkProfession()" style="width:100%; padding:14px; margin-bottom:5px; border:2px solid #ddd; border-radius:10px; font-size:16px;" required>
+                <option value="">-- Select Your Profession * --</option>
+            </select>
+            
+            <div id="otherProfessionBox" style="display:none;">
+                <input type="text" id="regOtherProfession" placeholder="Please specify your profession *">
+                <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
+            </div>
+            
+            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)">
+            <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
+            
+            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">📸 Profile Photo *</label>
+            <input type="file" id="regPhoto" accept="image/*" style="padding:10px;" required>
+            <small style="color:#888; display:block; margin-top:-10px; margin-bottom:10px;">Take a clear photo of your face</small>
+            
+            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">🆔 Scan National ID (Front) *</label>
+            <input type="file" id="regIDScan" accept="image/*" style="padding:10px;" required>
+            <small style="color:#888; display:block; margin-top:-10px; margin-bottom:10px;">Upload a clear photo of your ID</small>
+            
+            <div style="background:#e8f5e9; padding:15px; border-radius:10px; margin-bottom:15px;">
+                <p style="font-size:13px; color:#006400; margin-bottom:8px;">📧 Email Verification</p>
+                <p style="font-size:12px; color:#666;">We'll send a verification code to your email.</p>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                <input type="checkbox" id="regTerms" required style="width:auto; margin:0;">
+                <label for="regTerms" style="font-size:13px; color:#666;">I agree to the <a href="#" onclick="showScreen('terms'); return false;" style="color:#006400;">Terms of Use</a> and <a href="#" onclick="showScreen('privacy'); return false;" style="color:#006400;">Privacy Policy</a></label>
+            </div>
+            
+            <div id="otpSection" style="display:none; background:#fff3e0; padding:15px; border-radius:10px; margin-bottom:15px;">
+                <p style="font-weight:bold; color:#006400;">📧 Verification Code Sent</p>
+                <p style="font-size:13px; color:#666; margin-bottom:10px;">Enter the 6-digit code sent to your email:</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="regOtp" placeholder="6-digit code" maxlength="6" style="flex:1; text-align:center; font-size:20px; letter-spacing:5px;">
+                    <button type="button" class="btn green" onclick="verifyOtp()" style="width:auto; padding:14px 20px; margin:0;">VERIFY</button>
+                </div>
+                <button type="button" class="btn outline" onclick="resendOtp()" style="font-size:12px; padding:8px; margin-top:5px;">🔄 Resend Code</button>
+            </div>
+            
+            <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
+        </form>
+        
+        <p class="form-link" onclick="showScreen('login')">Already have an account? <span>Login</span></p>
+        <p class="back-link" onclick="showScreen('welcome')">← Back</p>
     </div>
 
     <!-- ============================================ -->
     <!-- SCREEN: LOGIN -->
     <!-- ============================================ -->
     <div id="login" class="screen">
-        <h2>Login</h2>
-        <input type="tel" id="loginPhone" placeholder="Phone Number">
-        <div style="position:relative;">
-            <input type="password" id="loginPassword" placeholder="Password" style="padding-right:50px;">
-            <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
-        </div>
-        <button class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:14px; margin-bottom:10px;">Forgot Password?</button>
-        <button class="btn green" onclick="login()">LOGIN</button>
-        <button class="btn outline" onclick="showScreen('welcome')">BACK</button>
-        <button class="btn outline" onclick="startFresh()" style="background:none; color:#cc0000; border:1px solid #cc0000; font-size:12px; margin-top:5px;">🆕 New User on Shared Phone? Tap Here</button>
+        <h2>🔐 Login</h2>
+        <p style="color:#666; font-size:14px; margin-bottom:15px;">Welcome back! 🇰🇪</p>
+        
+        <form id="loginForm" onsubmit="login(event)">
+            <input type="tel" id="loginPhone" placeholder="Phone Number" required>
+            
+            <div style="position:relative;">
+                <input type="password" id="loginPassword" placeholder="Password" style="padding-right:50px;" required>
+                <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="rememberMe" style="width:auto; margin:0;">
+                    <label for="rememberMe" style="font-size:13px; color:#666;">Remember me</label>
+                </div>
+                <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:13px; padding:0; margin:0;">Forgot Password?</button>
+            </div>
+            
+            <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
+        </form>
+        
+        <p class="form-link" onclick="showScreen('register')">Don't have an account? <span>Register</span></p>
+        <button class="btn outline" onclick="showScreen('welcome')" style="margin-top:5px;">BACK</button>
+        <button class="btn outline" onclick="startFresh()" style="background:none; color:#cc0000; border:1px solid #cc0000; font-size:12px; margin-top:10px;">🆕 New User on Shared Phone? Tap Here</button>
     </div>
 
     <!-- ============================================ -->
@@ -90,26 +151,48 @@
     <div id="resetPassword" class="screen">
         <h2>🔑 Reset Password</h2>
         <p style="font-size:14px; color:#666; margin-bottom:15px;">Forgot your password? Verify your identity to reset it.</p>
-        <input type="tel" id="resetPhone" placeholder="Registered Phone Number *">
-        <input type="text" id="resetID" placeholder="National ID Number *">
-        <input type="text" id="resetProfession" placeholder="Your Registered Profession *">
-        <input type="text" id="resetLocation" placeholder="Your Registered Location *">
-        <small style="color:#cc0000; display:block; margin-bottom:10px;">⚠️ All fields must match your registration details exactly.</small>
-        <button class="btn green" onclick="verifyIdentity()">VERIFY IDENTITY</button>
-        <div id="newPasswordSection" style="display:none;">
-            <hr style="margin:15px 0;">
-            <p style="color:#006400; font-weight:bold;">✅ Identity Verified</p>
-            <div style="position:relative;">
-                <input type="password" id="newPassword" placeholder="New Password (6+ chars, letters & numbers) *" minlength="6" style="padding-right:50px;">
-                <span onclick="togglePassword('newPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+        
+        <form id="resetForm" onsubmit="sendResetCode(event)">
+            <div id="resetStep1">
+                <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 1: Verify Your Email</p>
+                <input type="email" id="resetEmail" placeholder="Registered Email Address *" required>
+                <p style="font-size:12px; color:#888; margin-bottom:10px;">We'll send a reset code to your registered email</p>
+                <button type="submit" class="btn green" id="sendResetBtn">📧 SEND RESET CODE</button>
             </div>
-            <div style="position:relative;">
-                <input type="password" id="confirmPassword" placeholder="Confirm New Password *" style="padding-right:50px;">
-                <span onclick="togglePassword('confirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+            
+            <div id="resetStep2" style="display:none;">
+                <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 2: Verify Your Identity</p>
+                <div style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:10px;">
+                    <p style="font-size:12px; color:#006400;">✅ Reset code sent to <span id="resetEmailDisplay"></span></p>
+                </div>
+                <input type="text" id="resetOtp" placeholder="Enter 6-digit reset code *" maxlength="6" required>
+                <input type="tel" id="resetPhone" placeholder="Registered Phone Number *" required>
+                <input type="text" id="resetID" placeholder="National ID Number *" required>
+                <input type="text" id="resetProfession" placeholder="Your Registered Profession *" required>
+                <input type="text" id="resetLocation" placeholder="Your Registered Location *" required>
+                <small style="color:#cc0000; display:block; margin-bottom:10px;">⚠️ All fields must match your registration details exactly.</small>
+                <button type="button" class="btn green" onclick="verifyResetIdentity()">VERIFY IDENTITY</button>
+                <button type="button" class="btn outline" onclick="resendResetCode()" style="font-size:12px; padding:8px; margin-top:5px;">🔄 Resend Code</button>
             </div>
-            <button class="btn green" onclick="resetPassword()">RESET PASSWORD</button>
-        </div>
-        <button class="btn outline" onclick="showScreen('login')">BACK TO LOGIN</button>
+            
+            <div id="resetStep3" style="display:none;">
+                <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 3: Set New Password</p>
+                <div style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:10px;">
+                    <p style="font-size:12px; color:#006400;">✅ Identity Verified</p>
+                </div>
+                <div style="position:relative;">
+                    <input type="password" id="newPassword" placeholder="New Password (6+ chars, letters & numbers) *" minlength="6" style="padding-right:50px;" required>
+                    <span onclick="togglePassword('newPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+                </div>
+                <div style="position:relative;">
+                    <input type="password" id="confirmPassword" placeholder="Confirm New Password *" style="padding-right:50px;" required>
+                    <span onclick="togglePassword('confirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
+                </div>
+                <button type="button" class="btn green" onclick="resetPassword()">RESET PASSWORD</button>
+            </div>
+        </form>
+        
+        <button class="btn outline" onclick="showScreen('login')" style="margin-top:10px;">BACK TO LOGIN</button>
     </div>
 
     <!-- ============================================ -->
@@ -130,58 +213,82 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: HOME -->
+    <!-- SCREEN: HOME (WITH PROXIMITY) -->
     <!-- ============================================ -->
     <div id="home" class="screen">
-        <h2>📍 Gigs Near You</h2>
-        <div style="display:flex; gap:5px; margin-bottom:15px;">
-            <button id="tabOpen" onclick="switchTab('open')" style="flex:1; padding:10px; background:#006400; color:#FFD700; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🟢 OPEN GIGS</button>
+        <div class="header">
+            <h2>📍 Gigs Near You</h2>
+            <button class="btn" style="padding:5px 12px; font-size:11px; width:auto; background:#2196F3; color:#fff;" onclick="updateWorkerLocation()">📡 Update Location</button>
+        </div>
+        
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <button id="tabOpen" onclick="switchTab('open')" style="flex:1; padding:10px; background:#006400; color:#FFD700; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🟢 OPEN</button>
             <button id="tabTaken" onclick="switchTab('taken')" style="flex:1; padding:10px; background:#ddd; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🔴 TAKEN</button>
         </div>
+        
+        <!-- Proximity Filter -->
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <select id="proximityRadius" onchange="loadGigs()" style="flex:1; padding:8px; border:2px solid #ddd; border-radius:8px; font-size:13px;">
+                <option value="5">📍 Within 5km</option>
+                <option value="10" selected>📍 Within 10km</option>
+                <option value="20">📍 Within 20km</option>
+                <option value="50">📍 Within 50km</option>
+                <option value="0">📍 Anywhere</option>
+            </select>
+            <button class="btn" style="padding:8px 15px; width:auto; background:#2196F3; color:#fff;" onclick="showOnMap()">🗺️ Map</button>
+        </div>
+        
         <div id="gigsList"></div>
+        
         <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
         <button class="btn outline" onclick="logout()">LOGOUT</button>
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: POST GIG -->
+    <!-- SCREEN: POST GIG (WITH LOCATION) -->
     <!-- ============================================ -->
     <div id="postGig" class="screen">
-        <h2>Post a Gig</h2>
-        <input type="text" id="gigTitle" placeholder="Title (e.g., Leaking Sink)">
-        <input type="text" id="gigSkill" placeholder="Skill Needed (e.g., Plumbing)">
-        <input type="text" id="gigLocation" placeholder="Location">
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">📍 Share Your Exact Location (Optional)</label>
+        <h2>📋 Post a Gig</h2>
+        <input type="text" id="gigTitle" placeholder="Title (e.g., Leaking Sink)" required>
+        <input type="text" id="gigSkill" placeholder="Skill Needed (e.g., Plumbing)" required>
+        <input type="text" id="gigLocation" placeholder="Location" required>
+        
+        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">📍 Share Your Exact Location</label>
         <button type="button" class="btn outline" onclick="captureGigLocation()" style="margin-bottom:10px;">📍 CAPTURE MY LOCATION</button>
         <input type="text" id="gigGPSLat" style="display:none;">
         <input type="text" id="gigGPSLon" style="display:none;">
         <small id="gigLocationStatus" style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">No location captured yet</small>
+        
         <select id="gigUrgency">
             <option value="Normal">Normal</option>
             <option value="Urgent">Urgent</option>
-            <option value="Emergency">Emergency</option>
+            <option value="Emergency">🚨 Emergency</option>
         </select>
-        <input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)">
-        <input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)">
+        
+        <input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)" required>
+        <input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)" required>
         <textarea id="gigDesc" placeholder="Describe the job..."></textarea>
+        
         <button class="btn green" onclick="postGig()">POST GIG</button>
         <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: CHAT -->
+    <!-- SCREEN: CHAT (WITH LOCATION SHARING) -->
     <!-- ============================================ -->
     <div id="chat" class="screen">
-        <h2>💬 Chat</h2>
-        <p id="chatPartner" style="color:#006400; font-weight:bold; margin-bottom:10px;"></p>
+        <div class="chat-header">
+            <h3>💬 Chat</h3>
+            <button class="btn green" style="padding:5px 10px; font-size:11px; width:auto;" onclick="shareLiveLocation()">📍 Share Location</button>
+            <button class="btn green" style="padding:5px 10px; font-size:11px; width:auto; background:#2196F3; color:#fff;" onclick="navigateToClient()">🧭 Navigate</button>
+            <button class="btn" style="padding:5px 10px; font-size:11px; width:auto; background:#ddd; color:#000;" onclick="showScreen('home')">✕</button>
+        </div>
         <div id="chatMessages" style="background:#f5f5f5; border-radius:10px; padding:10px; height:250px; overflow-y:auto; margin-bottom:10px;"></div>
         <input type="text" id="chatGigId" style="display:none;">
         <div style="display:flex; gap:5px;">
             <input type="text" id="chatInput" placeholder="Type your message..." style="flex:1;">
             <button class="btn green" onclick="sendMessage()" style="width:auto; padding:14px 20px;">SEND</button>
         </div>
-        <button class="btn outline" onclick="shareLiveLocation()" style="margin-top:5px;">📍 SHARE MY LIVE LOCATION</button>
-        <button class="btn green" onclick="navigateToClient()" style="margin-top:5px;">🧭 NAVIGATE TO CLIENT</button>
         <button class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
     </div>
 
@@ -245,6 +352,8 @@
             <h3 style="color:#006400;">My Gigs</h3>
             <div id="myGigsList"></div>
             <hr style="margin:20px 0;">
+            <button class="btn outline" onclick="updateWorkerLocation()">📍 Update My Location</button>
+            <button class="btn outline" onclick="showProximityProfile()">📊 My Proximity Profile</button>
             <button class="btn outline" onclick="showPaymentScreen()">💳 Pay Ksh 300 (One-Time)</button>
             <button class="btn outline" onclick="showScreen('companyRegister')">🏢 Register Business</button>
             <button class="btn outline" onclick="showScreen('companyDashboard')">📊 My Business</button>
@@ -413,6 +522,24 @@
             <p><strong>Emergency:</strong><br>Tap 🚨 anytime. Police, Fire, Ambulance on speed dial.</p>
         </div>
         <button class="btn outline" onclick="showScreen('profile')" style="margin-top:10px;">BACK TO PROFILE</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCREEN: MAP VIEW -->
+    <!-- ============================================ -->
+    <div id="mapView" class="screen">
+        <div class="header">
+            <h2>🗺️ Map View</h2>
+            <button class="btn" style="padding:5px 12px; font-size:11px; width:auto; background:#ddd; color:#000;" onclick="showScreen('home')">✕</button>
+        </div>
+        <div id="mapContainer" style="height:70vh; border-radius:10px; overflow:hidden; background:#e8e8e8; position:relative;">
+            <div id="map" style="height:100%; width:100%;"></div>
+            <div id="mapLoading" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#888;">
+                <div class="loader"></div>
+                <p style="margin-top:10px;">Loading map...</p>
+            </div>
+        </div>
+        <button class="btn outline" onclick="showScreen('home')" style="margin-top:10px;">BACK TO GIGS</button>
     </div>
 
     <!-- ============================================ -->
