@@ -11,6 +11,7 @@
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .admin-card {
             background: #fff;
@@ -50,6 +51,7 @@
             width: auto;
             display: inline-block;
             margin-right: 5px;
+            margin-bottom: 5px;
         }
         .user-item {
             border-bottom: 1px solid #eee;
@@ -97,7 +99,7 @@
             text-align: center;
         }
         #output {
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
         .back-link {
@@ -110,25 +112,66 @@
         .back-link:hover {
             text-decoration: underline;
         }
+        .flex-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .flex-buttons .btn-small {
+            flex: 1;
+            min-width: 100px;
+        }
+        .section-title {
+            color: #006400;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            border-bottom: 2px solid #006400;
+            padding-bottom: 5px;
+        }
+        .gig-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .gig-item:last-child {
+            border-bottom: none;
+        }
+        .complaint-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .complaint-item:last-child {
+            border-bottom: none;
+        }
+        .status-resolved {
+            color: #006400;
+        }
+        .status-pending {
+            color: #ff9800;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ===== LOGIN ===== -->
+    <!-- ============================================ -->
+    <!-- LOGIN BOX -->
+    <!-- ============================================ -->
     <div id="loginBox" class="login-box">
         <h1>🔐 Admin Panel</h1>
-        <p style="color:#888; margin-bottom:20px;">Founder Access Only</p>
-        <input type="password" id="adminKey" placeholder="Enter Admin Key" style="max-width:300px; margin:0 auto;">
+        <p style="color:#888; margin-bottom:20px;">Founder Access Only — Splasher</p>
+        <input type="password" id="adminKey" placeholder="Enter Admin Key" style="max-width:300px; margin:0 auto;" onkeydown="if(event.key==='Enter') adminLogin()">
         <button class="btn green" onclick="adminLogin()">AUTHENTICATE</button>
         <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <!-- ===== ADMIN PANEL ===== -->
+    <!-- ============================================ -->
+    <!-- ADMIN PANEL -->
+    <!-- ============================================ -->
     <div id="adminPanel" style="display:none;">
         <h1>🚨 Admin Panel</h1>
         <p style="color:#888; margin-bottom:20px;">G-KODE — Kenya Helping Kenya</p>
 
-        <!-- Stats -->
+        <!-- ===== STATS DASHBOARD ===== -->
         <div class="admin-card">
             <h3>📊 Dashboard</h3>
             <div class="stats">
@@ -144,33 +187,118 @@
                     <div class="number" id="statRevenue">Ksh 0</div>
                     <div class="label">💰 Revenue</div>
                 </div>
+                <div class="stat">
+                    <div class="number" id="statComplaints">0</div>
+                    <div class="label">🚩 Complaints</div>
+                </div>
+                <div class="stat">
+                    <div class="number" id="statBusinesses">0</div>
+                    <div class="label">🏢 Businesses</div>
+                </div>
+                <div class="stat">
+                    <div class="number" id="statProducts">0</div>
+                    <div class="label">📦 Products</div>
+                </div>
             </div>
         </div>
 
-        <!-- Actions -->
+        <!-- ===== USER MANAGEMENT ===== -->
+        <div class="section-title">👥 USER MANAGEMENT</div>
         <div class="admin-card">
-            <h3>🔧 Actions</h3>
-            <button class="btn green btn-small" onclick="viewUsers()">👥 View Users</button>
-            <button class="btn green btn-small" onclick="viewGigs()">📋 View Gigs</button>
-            <button class="btn green btn-small" onclick="viewComplaints()">🚩 Complaints</button>
-            <button class="btn green btn-small" onclick="downloadBackup()">💾 Backup</button>
-            <button class="btn red btn-small" onclick="clearAllData()">🔥 Reset All</button>
+            <div class="flex-buttons">
+                <button class="btn green btn-small" onclick="viewUsers()">👥 View Users</button>
+                <button class="btn green btn-small" onclick="viewBannedUsers()">🚫 Banned Users</button>
+                <button class="btn green btn-small" onclick="viewPaidUsers()">✅ Paid Users</button>
+            </div>
         </div>
 
-        <!-- Output -->
+        <!-- ===== GIG MANAGEMENT ===== -->
+        <div class="section-title">📋 GIG MANAGEMENT</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn green btn-small" onclick="viewGigs()">📋 All Gigs</button>
+                <button class="btn green btn-small" onclick="viewOpenGigs()">🟢 Open Gigs</button>
+                <button class="btn green btn-small" onclick="viewCompletedGigs()">✅ Completed Gigs</button>
+            </div>
+        </div>
+
+        <!-- ===== BUSINESS & MARKETPLACE ===== -->
+        <div class="section-title">🏢 BUSINESS & MARKETPLACE</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn green btn-small" onclick="viewBusinesses()">🏢 Businesses</button>
+                <button class="btn green btn-small" onclick="viewProducts()">📦 Products</button>
+                <button class="btn green btn-small" onclick="viewOrders()">📋 Orders</button>
+            </div>
+        </div>
+
+        <!-- ===== COMPLAINTS & SECURITY ===== -->
+        <div class="section-title">🚩 COMPLAINTS & SECURITY</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn green btn-small" onclick="viewComplaints()">🚩 All Complaints</button>
+                <button class="btn green btn-small" onclick="viewPendingComplaints()">🟡 Pending</button>
+                <button class="btn green btn-small" onclick="viewResolvedComplaints()">✅ Resolved</button>
+                <button class="btn red btn-small" onclick="viewStrikes()">⚠️ Strikes Report</button>
+            </div>
+        </div>
+
+        <!-- ===== PAYMENT SYSTEM ===== -->
+        <div class="section-title">💳 PAYMENT SYSTEM</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn green btn-small" onclick="viewPayments()">💰 Payments</button>
+                <button class="btn green btn-small" onclick="viewRevenueReport()">📊 Revenue Report</button>
+                <button class="btn orange btn-small" onclick="togglePaymentSystem()" id="paymentToggleBtn">🔒 Toggle Payment</button>
+            </div>
+            <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:8px;">
+                <span>Payment Status: </span>
+                <span id="paymentStatus" style="font-weight:bold; color:#006400;">✅ ACTIVE</span>
+                <span style="font-size:12px; color:#888; display:block;">User Fee: Ksh 300 | Commission: 3%</span>
+            </div>
+        </div>
+
+        <!-- ===== SYSTEM TOOLS ===== -->
+        <div class="section-title">🔧 SYSTEM TOOLS</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn blue btn-small" onclick="downloadBackup()">💾 Backup Data</button>
+                <button class="btn blue btn-small" onclick="viewBackups()">📂 Backups</button>
+                <button class="btn blue btn-small" onclick="viewLogs()">📜 Activity Logs</button>
+                <button class="btn blue btn-small" onclick="viewSystemHealth()">🏥 System Health</button>
+                <button class="btn blue btn-small" onclick="exportUsersCSV()">📤 Export CSV</button>
+            </div>
+        </div>
+
+        <!-- ===== DANGER ZONE ===== -->
+        <div class="section-title" style="border-bottom-color:#cc0000;">⚠️ DANGER ZONE</div>
+        <div class="admin-card">
+            <div class="flex-buttons">
+                <button class="btn red btn-small" onclick="clearAllData()">🔥 Reset All Data</button>
+                <button class="btn red btn-small" onclick="resetApp()">🔄 Full App Reset</button>
+            </div>
+            <p style="font-size:11px; color:#cc0000; margin-top:5px;">⚠️ These actions cannot be undone. A backup will be created automatically.</p>
+        </div>
+
+        <!-- ===== OUTPUT ===== -->
         <div id="output"></div>
 
-        <!-- Logout -->
-        <button class="btn outline" onclick="adminLogout()">🚪 Logout</button>
+        <!-- ===== LOGOUT ===== -->
+        <button class="btn outline" onclick="adminLogout()" style="margin-top:20px;">🚪 Logout</button>
         <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
     <script>
-        // ===== ADMIN CONFIG =====
+        // ============================================
+        // ADMIN CONFIG
+        // ============================================
         const ADMIN_KEY = 'MAYA';
         let adminLoggedIn = false;
+        let paymentEnabled = true;
 
-        // ===== LOGIN =====
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
         function adminLogin() {
             const key = document.getElementById('adminKey').value;
             if (key === ADMIN_KEY) {
@@ -178,6 +306,7 @@
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 loadStats();
+                updatePaymentStatus();
                 showToast('✅ Welcome Admin!', 'success');
             } else {
                 showToast('❌ Access denied', 'error');
@@ -189,128 +318,215 @@
             document.getElementById('loginBox').style.display = 'block';
             document.getElementById('adminPanel').style.display = 'none';
             document.getElementById('adminKey').value = '';
+            document.getElementById('output').innerHTML = '';
             showToast('Logged out', 'info');
         }
 
-        // ===== DATA HELPERS =====
+        // ============================================
+        // DATA HELPERS
+        // ============================================
         function getData(key) {
             try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+        }
+
+        function setData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
         }
 
         function getUsers() { return getData('gkode_users'); }
         function getGigs() { return getData('gkode_gigs'); }
         function getComplaints() { return getData('gkode_complaints'); }
         function getPayments() { return getData('gkode_payments'); }
+        function getBusinesses() { return getData('gkode_companies'); }
+        function getProducts() { return getData('gkode_products'); }
+        function getOrders() { return getData('gkode_orders'); }
+        function getLogs() { return getData('gkode_adminLogs'); }
+        function getBackups() { return getData('gkode_backups'); }
 
-        // ===== LOAD STATS =====
+        // ============================================
+        // LOAD STATS
+        // ============================================
         function loadStats() {
             const users = getUsers();
             const gigs = getGigs();
+            const complaints = getComplaints();
             const payments = getPayments();
-            
+            const businesses = getBusinesses();
+            const products = getProducts();
+
             let totalRevenue = 0;
             payments.forEach(p => { if (p.verified) totalRevenue += p.amount; });
-            
+
             document.getElementById('statUsers').textContent = users.length;
             document.getElementById('statGigs').textContent = gigs.length;
             document.getElementById('statRevenue').textContent = 'Ksh ' + totalRevenue.toLocaleString();
+            document.getElementById('statComplaints').textContent = complaints.length;
+            document.getElementById('statBusinesses').textContent = businesses.length;
+            document.getElementById('statProducts').textContent = products.length;
         }
 
-        // ===== VIEW USERS =====
+        // ============================================
+        // PAYMENT SYSTEM
+        // ============================================
+        function togglePaymentSystem() {
+            paymentEnabled = !paymentEnabled;
+            updatePaymentStatus();
+            const status = paymentEnabled ? 'ENABLED' : 'DISABLED';
+            showToast('💳 Payment system ' + status, paymentEnabled ? 'success' : 'warning');
+            addLog('Payment system ' + status);
+        }
+
+        function updatePaymentStatus() {
+            const statusEl = document.getElementById('paymentStatus');
+            const toggleBtn = document.getElementById('paymentToggleBtn');
+
+            if (paymentEnabled) {
+                statusEl.textContent = '✅ ACTIVE';
+                statusEl.style.color = '#006400';
+                toggleBtn.textContent = '🔒 Toggle Payment';
+                toggleBtn.className = 'btn orange btn-small';
+            } else {
+                statusEl.textContent = '⛔ DISABLED (Testing)';
+                statusEl.style.color = '#ff9800';
+                toggleBtn.textContent = '🔓 Toggle Payment';
+                toggleBtn.className = 'btn green btn-small';
+            }
+        }
+
+        // ============================================
+        // VIEW USERS
+        // ============================================
         function viewUsers() {
             const users = getUsers();
             const output = document.getElementById('output');
-            
+
             if (users.length === 0) {
                 output.innerHTML = '<p>No users found.</p>';
                 return;
             }
-            
+
             let html = '<h3>👥 All Users (' + users.length + ')</h3>';
+            html += '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
+            html += '<div id="userList">';
+
             users.forEach((u, i) => {
-                const status = u.isBanned ? 'banned' : (u.isPaid ? 'paid' : 'unpaid');
                 const statusClass = u.isBanned ? 'badge-banned' : (u.isPaid ? 'badge-paid' : 'badge-unpaid');
                 const statusText = u.isBanned ? '🚫 Banned' : (u.isPaid ? '✅ Paid' : '🟡 Unpaid');
-                
+
                 html += `
-                    <div class="user-item">
+                    <div class="user-item" data-name="${u.name.toLowerCase()}" data-phone="${u.phone}">
                         <div class="name">${u.name}</div>
                         <div class="phone">📞 ${u.phone} | 🆔 ${u.id}</div>
                         <div>📍 ${u.location} | 👔 ${u.profession}</div>
                         <div>⭐ ${u.rating || 0} (${u.reviewCount || 0} reviews) | ⚠️ ${u.strikes || 0} strikes</div>
                         <div><span class="badge ${statusClass}">${statusText}</span></div>
-                        ${!u.isBanned ? `<button class="btn red btn-small" onclick="banUser('${u.phone}')">🚫 Ban</button>` : 
-                                        `<button class="btn green btn-small" onclick="unbanUser('${u.phone}')">✅ Unban</button>`}
-                        <button class="btn red btn-small" onclick="deleteUser('${u.phone}')">🗑️ Delete</button>
-                        <hr>
+                        <div style="margin-top:5px;">
+                            ${!u.isBanned ? `<button class="btn red btn-small" onclick="banUser('${u.phone}')">🚫 Ban</button>` :
+                            `<button class="btn green btn-small" onclick="unbanUser('${u.phone}')">✅ Unban</button>`}
+                            <button class="btn red btn-small" onclick="deleteUser('${u.phone}')">🗑️ Delete</button>
+                            <button class="btn blue btn-small" onclick="viewUserDetails('${u.phone}')">📋 Details</button>
+                        </div>
                     </div>
                 `;
             });
+
+            html += '</div>';
             output.innerHTML = html;
         }
 
-        // ===== VIEW GIGS =====
-        function viewGigs() {
-            const gigs = getGigs();
-            const output = document.getElementById('output');
-            
-            if (gigs.length === 0) {
-                output.innerHTML = '<p>No gigs found.</p>';
+        function searchUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.user-item');
+
+            items.forEach(item => {
+                const name = item.dataset.name || '';
+                const phone = item.dataset.phone || '';
+                const match = name.includes(query) || phone.includes(query);
+                item.style.display = match ? 'block' : 'none';
+            });
+        }
+
+        function viewBannedUsers() {
+            const users = getUsers().filter(u => u.isBanned);
+            if (users.length === 0) {
+                showToast('No banned users', 'info');
                 return;
             }
-            
-            let html = '<h3>📋 All Gigs (' + gigs.length + ')</h3>';
+            displayUsers(users, '🚫 Banned Users');
+        }
+
+        function viewPaidUsers() {
+            const users = getUsers().filter(u => u.isPaid);
+            if (users.length === 0) {
+                showToast('No paid users', 'info');
+                return;
+            }
+            displayUsers(users, '✅ Paid Users');
+        }
+
+        function displayUsers(users, title) {
+            let html = `<h3>${title} (${users.length})</h3>`;
+            users.forEach(u => {
+                html += `
+                    <div class="user-item">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone}</div>
+                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
+                        <div>⭐ ${u.rating || 0} | ⚠️ ${u.strikes || 0} strikes</div>
+                    </div>
+                `;
+            });
+            document.getElementById('output').innerHTML = html;
+        }
+
+        function viewUserDetails(phone) {
+            const users = getUsers();
+            const user = users.find(u => u.phone === phone);
+            if (!user) {
+                showToast('User not found', 'error');
+                return;
+            }
+
+            const gigs = getGigs().filter(g => g.clientPhone === phone || g.workerPhone === phone);
+            const complaints = getComplaints().filter(c => c.userId === phone || c.reporterId === phone);
+
+            let html = `<h3>📋 User Details: ${user.name}</h3>`;
+            html += `<div class="admin-card"><p><strong>Phone:</strong> ${user.phone}</p>`;
+            html += `<p><strong>ID:</strong> ${user.id}</p>`;
+            html += `<p><strong>Location:</strong> ${user.location}</p>`;
+            html += `<p><strong>Profession:</strong> ${user.profession}</p>`;
+            html += `<p><strong>Skills:</strong> ${user.skills || 'None'}</p>`;
+            html += `<p><strong>Rating:</strong> ⭐ ${user.rating || 0} (${user.reviewCount || 0} reviews)</p>`;
+            html += `<p><strong>Strikes:</strong> ⚠️ ${user.strikes || 0}</p>`;
+            html += `<p><strong>Status:</strong> ${user.isBanned ? '🚫 Banned' : (user.isPaid ? '✅ Paid' : '🟡 Unpaid')}</p>`;
+            html += `<p><strong>Joined:</strong> ${new Date(user.registeredAt).toLocaleString()}</p></div>`;
+
+            html += `<h4>📋 Gigs (${gigs.length})</h4>`;
             gigs.forEach(g => {
-                html += `
-                    <div class="user-item">
-                        <div><strong>${g.title}</strong> — ${g.status}</div>
-                        <div>👤 ${g.client} | 🛠️ ${g.skill}</div>
-                        <div>📍 ${g.location} | 💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
-                        ${g.worker ? `<div>👷 Worker: ${g.worker}</div>` : ''}
-                        <div style="font-size:11px; color:#888;">📅 ${new Date(g.createdAt).toLocaleString()}</div>
-                        <button class="btn red btn-small" onclick="deleteGig('${g.id}')">🗑️ Delete</button>
-                        <hr>
-                    </div>
-                `;
+                html += `<div class="gig-item">${g.title} — ${g.status} (${g.location})</div>`;
             });
-            output.innerHTML = html;
-        }
 
-        // ===== VIEW COMPLAINTS =====
-        function viewComplaints() {
-            const complaints = getComplaints();
-            const output = document.getElementById('output');
-            
-            if (complaints.length === 0) {
-                output.innerHTML = '<p>No complaints found.</p>';
-                return;
-            }
-            
-            let html = '<h3>🚩 Complaints (' + complaints.length + ')</h3>';
+            html += `<h4>🚩 Complaints (${complaints.length})</h4>`;
             complaints.forEach(c => {
-                html += `
-                    <div class="user-item">
-                        <div><strong>${c.reason}</strong> — ${c.resolved ? '✅ Resolved' : '🟡 Pending'}</div>
-                        <div>📝 ${c.details}</div>
-                        <div style="font-size:11px; color:#888;">📅 ${new Date(c.date).toLocaleString()}</div>
-                        <button class="btn green btn-small" onclick="resolveComplaint('${c.id}')">✅ Resolve</button>
-                        <hr>
-                    </div>
-                `;
+                html += `<div class="complaint-item">${c.reason} — ${c.resolved ? '✅ Resolved' : '🟡 Pending'}</div>`;
             });
-            output.innerHTML = html;
+
+            document.getElementById('output').innerHTML = html;
         }
 
-        // ===== ADMIN ACTIONS =====
+        // ============================================
+        // USER ACTIONS
+        // ============================================
         function banUser(phone) {
-            if (!confirm(`Ban user ${phone}?`)) return;
+            if (!confirm(`Ban user ${phone}? They will lose all access.`)) return;
             let users = getUsers();
             users = users.map(u => {
                 if (u.phone === phone) u.isBanned = true;
                 return u;
             });
-            localStorage.setItem('gkode_users', JSON.stringify(users));
+            setData('gkode_users', users);
             showToast('✅ User banned', 'success');
+            addLog('Banned user: ' + phone);
             viewUsers();
             loadStats();
         }
@@ -322,8 +538,9 @@
                 if (u.phone === phone) u.isBanned = false;
                 return u;
             });
-            localStorage.setItem('gkode_users', JSON.stringify(users));
+            setData('gkode_users', users);
             showToast('✅ User unbanned', 'success');
+            addLog('Unbanned user: ' + phone);
             viewUsers();
             loadStats();
         }
@@ -332,20 +549,140 @@
             if (!confirm(`⚠️ Delete user ${phone} permanently? This cannot be undone!`)) return;
             let users = getUsers();
             users = users.filter(u => u.phone !== phone);
-            localStorage.setItem('gkode_users', JSON.stringify(users));
+            setData('gkode_users', users);
             showToast('🗑️ User deleted', 'info');
+            addLog('Deleted user: ' + phone);
             viewUsers();
             loadStats();
+        }
+
+        // ============================================
+        // VIEW GIGS
+        // ============================================
+        function viewGigs() {
+            const gigs = getGigs();
+            displayGigs(gigs, '📋 All Gigs');
+        }
+
+        function viewOpenGigs() {
+            const gigs = getGigs().filter(g => g.status === 'Open');
+            if (gigs.length === 0) { showToast('No open gigs', 'info'); return; }
+            displayGigs(gigs, '🟢 Open Gigs');
+        }
+
+        function viewCompletedGigs() {
+            const gigs = getGigs().filter(g => g.status === 'Completed');
+            if (gigs.length === 0) { showToast('No completed gigs', 'info'); return; }
+            displayGigs(gigs, '✅ Completed Gigs');
+        }
+
+        function displayGigs(gigs, title) {
+            const output = document.getElementById('output');
+            if (gigs.length === 0) {
+                output.innerHTML = '<p>No gigs found.</p>';
+                return;
+            }
+
+            let html = `<h3>${title} (${gigs.length})</h3>`;
+            gigs.forEach(g => {
+                html += `
+                    <div class="gig-item">
+                        <div><strong>${g.title}</strong> — ${g.status}</div>
+                        <div>👤 ${g.client} | 🛠️ ${g.skill}</div>
+                        <div>📍 ${g.location} | 💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
+                        ${g.worker ? `<div>👷 Worker: ${g.worker}</div>` : ''}
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(g.createdAt).toLocaleString()}</div>
+                        <div style="margin-top:5px;">
+                            <button class="btn red btn-small" onclick="deleteGig('${g.id}')">🗑️ Delete</button>
+                            <button class="btn blue btn-small" onclick="viewGigDetails('${g.id}')">📋 Details</button>
+                        </div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewGigDetails(id) {
+            const gigs = getGigs();
+            const gig = gigs.find(g => g.id === id);
+            if (!gig) {
+                showToast('Gig not found', 'error');
+                return;
+            }
+
+            let html = `<h3>📋 Gig Details</h3>`;
+            html += `<div class="admin-card">`;
+            html += `<p><strong>Title:</strong> ${gig.title}</p>`;
+            html += `<p><strong>Skill:</strong> ${gig.skill}</p>`;
+            html += `<p><strong>Location:</strong> ${gig.location}</p>`;
+            html += `<p><strong>Budget:</strong> Ksh ${gig.budgetMin} - ${gig.budgetMax}</p>`;
+            html += `<p><strong>Urgency:</strong> ${gig.urgency}</p>`;
+            html += `<p><strong>Status:</strong> ${gig.status}</p>`;
+            html += `<p><strong>Client:</strong> ${gig.client} (${gig.clientPhone})</p>`;
+            if (gig.worker) html += `<p><strong>Worker:</strong> ${gig.worker} (${gig.workerPhone})</p>`;
+            html += `<p><strong>Description:</strong> ${gig.description || 'None'}</p>`;
+            if (gig.gpsLat && gig.gpsLon) {
+                html += `<p><strong>GPS:</strong> ${gig.gpsLat}, ${gig.gpsLon}</p>`;
+            }
+            html += `<p><strong>Posted:</strong> ${new Date(gig.createdAt).toLocaleString()}</p>`;
+            html += `</div>`;
+            document.getElementById('output').innerHTML = html;
         }
 
         function deleteGig(id) {
             if (!confirm('Delete this gig?')) return;
             let gigs = getGigs();
             gigs = gigs.filter(g => g.id !== id);
-            localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
+            setData('gkode_gigs', gigs);
             showToast('🗑️ Gig deleted', 'info');
+            addLog('Deleted gig: ' + id);
             viewGigs();
             loadStats();
+        }
+
+        // ============================================
+        // VIEW COMPLAINTS
+        // ============================================
+        function viewComplaints() {
+            const complaints = getComplaints();
+            displayComplaints(complaints, '🚩 All Complaints');
+        }
+
+        function viewPendingComplaints() {
+            const complaints = getComplaints().filter(c => !c.resolved);
+            if (complaints.length === 0) { showToast('No pending complaints', 'info'); return; }
+            displayComplaints(complaints, '🟡 Pending Complaints');
+        }
+
+        function viewResolvedComplaints() {
+            const complaints = getComplaints().filter(c => c.resolved);
+            if (complaints.length === 0) { showToast('No resolved complaints', 'info'); return; }
+            displayComplaints(complaints, '✅ Resolved Complaints');
+        }
+
+        function displayComplaints(complaints, title) {
+            const output = document.getElementById('output');
+            if (complaints.length === 0) {
+                output.innerHTML = '<p>No complaints found.</p>';
+                return;
+            }
+
+            let html = `<h3>${title} (${complaints.length})</h3>`;
+            complaints.forEach(c => {
+                const status = c.resolved ? '✅ Resolved' : '🟡 Pending';
+                const statusClass = c.resolved ? 'status-resolved' : 'status-pending';
+                html += `
+                    <div class="complaint-item">
+                        <div><strong>${c.reason}</strong> — <span class="${statusClass}">${status}</span></div>
+                        <div>📝 ${c.details}</div>
+                        <div>👤 User: ${c.userId} | Reporter: ${c.reporterId || 'Unknown'}</div>
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(c.date).toLocaleString()}</div>
+                        ${!c.resolved ? `<button class="btn green btn-small" onclick="resolveComplaint('${c.id}')">✅ Resolve</button>` : ''}
+                        <button class="btn red btn-small" onclick="deleteComplaint('${c.id}')">🗑️ Delete</button>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
         }
 
         function resolveComplaint(id) {
@@ -354,21 +691,203 @@
                 if (c.id === id) c.resolved = true;
                 return c;
             });
-            localStorage.setItem('gkode_complaints', JSON.stringify(complaints));
+            setData('gkode_complaints', complaints);
             showToast('✅ Complaint resolved', 'success');
+            addLog('Resolved complaint: ' + id);
             viewComplaints();
+            loadStats();
         }
 
-        // ===== BACKUP =====
+        function deleteComplaint(id) {
+            if (!confirm('Delete this complaint?')) return;
+            let complaints = getComplaints();
+            complaints = complaints.filter(c => c.id !== id);
+            setData('gkode_complaints', complaints);
+            showToast('🗑️ Complaint deleted', 'info');
+            viewComplaints();
+            loadStats();
+        }
+
+        // ============================================
+        // VIEW STRIKES
+        // ============================================
+        function viewStrikes() {
+            const users = getUsers().filter(u => u.strikes > 0);
+            const output = document.getElementById('output');
+
+            if (users.length === 0) {
+                output.innerHTML = '<p>No users with strikes.</p>';
+                return;
+            }
+
+            let html = '<h3>⚠️ Strikes Report</h3>';
+            users.sort((a, b) => b.strikes - a.strikes);
+            users.forEach(u => {
+                const warning = u.strikes >= 5 ? '🔴 WARNING: Near ban!' : (u.strikes >= 3 ? '🟡 Warning' : '🟢 Ok');
+                html += `
+                    <div class="user-item">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone}</div>
+                        <div>⚠️ ${u.strikes} strikes — ${warning}</div>
+                        <div>${u.isBanned ? '🚫 BANNED' : 'Active'}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        // ============================================
+        // VIEW BUSINESS & MARKETPLACE
+        // ============================================
+        function viewBusinesses() {
+            const businesses = getBusinesses();
+            const output = document.getElementById('output');
+
+            if (businesses.length === 0) {
+                output.innerHTML = '<p>No businesses registered.</p>';
+                return;
+            }
+
+            let html = '<h3>🏢 Businesses (' + businesses.length + ')</h3>';
+            businesses.forEach(b => {
+                html += `
+                    <div class="user-item">
+                        <div class="name">${b.name}</div>
+                        <div>Type: ${b.type} | 📍 ${b.location}</div>
+                        <div>📞 ${b.phone} | Owner: ${b.owner}</div>
+                        <div>💰 Sales: Ksh ${b.totalSales || 0} | Commission: Ksh ${b.totalCommission || 0}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewProducts() {
+            const products = getProducts();
+            const output = document.getElementById('output');
+
+            if (products.length === 0) {
+                output.innerHTML = '<p>No products listed.</p>';
+                return;
+            }
+
+            let html = '<h3>📦 Products (' + products.length + ')</h3>';
+            products.forEach(p => {
+                html += `
+                    <div class="user-item">
+                        <div class="name">${p.name}</div>
+                        <div>🏢 ${p.companyName} | 📂 ${p.category}</div>
+                        <div>💰 Ksh ${p.price}/${p.unit} | 📦 Stock: ${p.stock}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewOrders() {
+            const orders = getOrders();
+            const output = document.getElementById('output');
+
+            if (orders.length === 0) {
+                output.innerHTML = '<p>No orders placed.</p>';
+                return;
+            }
+
+            let html = '<h3>📋 Orders (' + orders.length + ')</h3>';
+            orders.forEach(o => {
+                html += `
+                    <div class="user-item">
+                        <div>📦 ${o.productName || 'Product'}</div>
+                        <div>👤 ${o.buyer || 'Unknown'} | Quantity: ${o.quantity}</div>
+                        <div>💰 Ksh ${o.totalAmount || 0} | Status: ${o.status}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        // ============================================
+        // VIEW PAYMENTS & REVENUE
+        // ============================================
+        function viewPayments() {
+            const payments = getPayments();
+            const output = document.getElementById('output');
+
+            if (payments.length === 0) {
+                output.innerHTML = '<p>No payments recorded.</p>';
+                return;
+            }
+
+            let html = '<h3>💰 Payments (' + payments.length + ')</h3>';
+            payments.forEach(p => {
+                html += `
+                    <div class="user-item">
+                        <div>📞 ${p.phone}</div>
+                        <div>💰 Ksh ${p.amount} | Code: ${p.code}</div>
+                        <div>${p.verified ? '✅ Verified' : '❌ Pending'} | ${p.type || 'User Fee'}</div>
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(p.date).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewRevenueReport() {
+            const payments = getPayments();
+            const users = getUsers();
+            const gigs = getGigs();
+
+            let totalRevenue = 0;
+            let userFees = 0;
+            let commission = 0;
+            let totalOrders = 0;
+
+            payments.forEach(p => {
+                if (p.verified) {
+                    totalRevenue += p.amount;
+                    if (p.type === 'user_fee' || !p.type) userFees += p.amount;
+                    if (p.type === 'commission') commission += p.amount;
+                }
+            });
+
+            const paidUsers = users.filter(u => u.isPaid).length;
+            const completedGigs = gigs.filter(g => g.status === 'Completed').length;
+            const orders = getOrders();
+
+            let html = '<h3>📊 Revenue Report</h3>';
+            html += `<div class="admin-card">`;
+            html += `<p><strong>Total Revenue:</strong> Ksh ${totalRevenue.toLocaleString()}</p>`;
+            html += `<p><strong>User Fees:</strong> Ksh ${userFees.toLocaleString()}</p>`;
+            html += `<p><strong>Commission (3%):</strong> Ksh ${commission.toLocaleString()}</p>`;
+            html += `<p><strong>Paid Users:</strong> ${paidUsers}/${users.length}</p>`;
+            html += `<p><strong>Completed Gigs:</strong> ${completedGigs}</p>`;
+            html += `<p><strong>Total Orders:</strong> ${orders.length}</p>`;
+            html += `<p><strong>Potential Revenue:</strong> Ksh ${(users.length - paidUsers) * 300 + (orders.length * 50)}</p>`;
+            html += `</div>`;
+            document.getElementById('output').innerHTML = html;
+        }
+
+        // ============================================
+        // SYSTEM TOOLS
+        // ============================================
         function downloadBackup() {
             const data = {
                 exportedAt: new Date().toISOString(),
+                app: 'G-KODE',
+                version: '3.0',
                 users: getUsers(),
                 gigs: getGigs(),
                 complaints: getComplaints(),
-                payments: getPayments()
+                payments: getPayments(),
+                businesses: getBusinesses(),
+                products: getProducts(),
+                orders: getOrders(),
+                logs: getLogs(),
+                systemState: {
+                    paymentEnabled: paymentEnabled
+                }
             };
-            
+
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -376,30 +895,165 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showToast('✅ Backup downloaded', 'success');
+
+            // Save to backups list
+            let backups = getBackups();
+            backups.push({
+                id: Date.now().toString(),
+                timestamp: new Date().toISOString(),
+                size: blob.size
+            });
+            setData('gkode_backups', backups);
+
+            showToast('✅ Backup downloaded and saved', 'success');
+            addLog('Backup created');
         }
 
-        // ===== CLEAR ALL =====
+        function viewBackups() {
+            const backups = getBackups();
+            const output = document.getElementById('output');
+
+            if (backups.length === 0) {
+                output.innerHTML = '<p>No backups found.</p>';
+                return;
+            }
+
+            let html = '<h3>📂 Backups (' + backups.length + ')</h3>';
+            backups.slice().reverse().forEach(b => {
+                html += `
+                    <div class="user-item">
+                        <div>📅 ${new Date(b.timestamp).toLocaleString()}</div>
+                        <div>📦 ${b.size ? (b.size / 1024).toFixed(2) + ' KB' : 'Unknown size'}</div>
+                        <div>🆔 ${b.id.slice(-6)}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewLogs() {
+            const logs = getLogs();
+            const output = document.getElementById('output');
+
+            if (logs.length === 0) {
+                output.innerHTML = '<p>No logs found.</p>';
+                return;
+            }
+
+            let html = '<h3>📜 Activity Logs (' + logs.length + ')</h3>';
+            logs.slice().reverse().forEach(l => {
+                html += `
+                    <div class="user-item" style="font-size:12px;">
+                        <div><strong>${l.action || l.type || 'Action'}</strong></div>
+                        <div>👤 ${l.user || 'Admin'} | 📅 ${new Date(l.time || l.timestamp).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        function viewSystemHealth() {
+            const users = getUsers();
+            const gigs = getGigs();
+            const complaints = getComplaints();
+            const payments = getPayments();
+
+            let totalRevenue = 0;
+            payments.forEach(p => { if (p.verified) totalRevenue += p.amount; });
+
+            let storageSize = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    storageSize += localStorage[key].length;
+                }
+            }
+
+            const html = `
+                <h3>🏥 System Health</h3>
+                <div class="admin-card">
+                    <p>👥 Users: <strong>${users.length}</strong></p>
+                    <p>📋 Gigs: <strong>${gigs.length}</strong></p>
+                    <p>🚩 Complaints: <strong>${complaints.length}</strong></p>
+                    <p>💰 Revenue: <strong>Ksh ${totalRevenue.toLocaleString()}</strong></p>
+                    <p>💾 Storage: <strong>${(storageSize / 1024).toFixed(2)} KB</strong></p>
+                    <p>💳 Payment System: <strong>${paymentEnabled ? '✅ Active' : '⛔ Disabled'}</strong></p>
+                    <p>📅 Last Check: <strong>${new Date().toLocaleString()}</strong></p>
+                    <p style="color:#006400;">✅ System is healthy</p>
+                </div>
+            `;
+            document.getElementById('output').innerHTML = html;
+        }
+
+        function exportUsersCSV() {
+            const users = getUsers();
+            if (users.length === 0) {
+                showToast('No users to export', 'error');
+                return;
+            }
+
+            let csv = 'Name,Phone,ID,Location,Profession,Rating,Strikes,Paid,Banned\n';
+            users.forEach(u => {
+                csv += `${u.name},${u.phone},${u.id},${u.location},${u.profession},${u.rating || 0},${u.strikes || 0},${u.isPaid ? 'Yes' : 'No'},${u.isBanned ? 'Yes' : 'No'}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'gkode-users-' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            showToast('✅ Users exported', 'success');
+        }
+
+        // ============================================
+        // DANGER ZONE
+        // ============================================
         function clearAllData() {
             if (!confirm('🔥 WARNING: This will DELETE ALL data! Continue?')) return;
             if (!confirm('FINAL WARNING: This cannot be undone! Continue?')) return;
-            
+
             // Save backup first
             downloadBackup();
-            
-            // Clear all
+
+            // Clear all data
             localStorage.removeItem('gkode_users');
             localStorage.removeItem('gkode_gigs');
             localStorage.removeItem('gkode_complaints');
             localStorage.removeItem('gkode_payments');
+            localStorage.removeItem('gkode_companies');
+            localStorage.removeItem('gkode_products');
+            localStorage.removeItem('gkode_orders');
+            localStorage.removeItem('gkode_adminLogs');
             localStorage.removeItem('gkode_professions');
             localStorage.removeItem('gkode_categories');
-            
+
             showToast('✅ All data cleared. Backup saved.', 'success');
+            addLog('All data cleared');
             loadStats();
+            document.getElementById('output').innerHTML = '<p style="color:#006400;">✅ All data has been cleared. A backup was saved.</p>';
         }
 
-        // ===== TOAST =====
+        function resetApp() {
+            if (!confirm('🔄 Reset entire app? This will clear all data and reload.')) return;
+            if (!confirm('Final warning: This cannot be undone!')) return;
+
+            // Save backup
+            downloadBackup();
+
+            // Clear everything
+            localStorage.clear();
+
+            showToast('🔄 App reset. Refreshing...', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container') || (() => {
                 const c = document.createElement('div');
@@ -408,19 +1062,19 @@
                 document.body.appendChild(c);
                 return c;
             })();
-            
+
             const colors = {
                 success: '#006400',
                 error: '#cc0000',
                 info: '#2196F3',
                 warning: '#ff9800'
             };
-            
+
             const toast = document.createElement('div');
             toast.style.cssText = `background:${colors[type] || '#333'};color:#fff;padding:12px 20px;border-radius:10px;margin-bottom:8px;animation:slideDown 0.3s ease;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);`;
             toast.textContent = message;
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.5s';
@@ -428,9 +1082,33 @@
             }, 4000);
         }
 
-        // ===== INIT =====
+        // ============================================
+        // ADD LOG
+        // ============================================
+        function addLog(action) {
+            let logs = getLogs();
+            logs.push({
+                type: 'ADMIN_ACTION',
+                action: action,
+                user: 'Admin',
+                time: new Date().toISOString()
+            });
+            setData('gkode_adminLogs', logs);
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                adminLogin();
+            }
+        });
+
         console.log('🔐 G-KODE Admin Panel loaded');
         console.log('📊 Admin Key: MAYA');
+        console.log('🇰🇪 Kenya Helping Kenya');
     </script>
 </body>
 </html>
