@@ -1,44 +1,37 @@
-# G-KODE PROPRIETARY LICENSE
+# G-KODE License
 
-Copyright (c) 2026 Splasher. All rights reserved.
+## Proprietary License
+
+Copyright (c) 2026 G-KODE
+
+All rights reserved.
 
 ## Terms of Use
 
-This software and associated documentation files (the "Software") is the proprietary intellectual property of Splasher ("Founder").
+1. **Ownership**: G-KODE is the intellectual property of the Founder (Splasher).
 
-## Restrictions
+2. **Usage**: This software is for the exclusive use of G-KODE operations. No part of this software may be reproduced, distributed, or transmitted in any form without prior written permission.
 
-1. **No Redistribution:** You may not distribute, sell, lease, rent, or sublicense the Software.
+3. **Modification**: No modification, reverse engineering, or derivative works are permitted without explicit authorization.
 
-2. **No Modification:** You may not modify, adapt, or create derivative works of the Software.
+4. **Commercial Use**: Commercial use of any part of this software is strictly prohibited without a separate commercial license.
 
-3. **No Commercial Use:** You may not use the Software for commercial purposes without explicit written permission from the Founder.
+5. **Data Privacy**: All user data collected through this software is governed by the G-KODE Privacy Policy and the Kenya Data Protection Act, 2019.
 
-4. **No Reverse Engineering:** You may not reverse engineer, decompile, or disassemble the Software.
+6. **Disclaimer**: This software is provided "as is" without warranties of any kind.
 
-## Permitted Use
+## Third-Party Licenses
 
-- Viewing the source code for educational or evaluation purposes.
-- Using the live application as an end-user.
+This software includes or uses the following third-party components:
 
-## Ownership
-
-All rights, title, and interest in the Software, including all intellectual property rights, remain with the Founder.
-
-## Legal Protection
-
-This Software is protected under:
-- The Constitution of Kenya, 2010
-- Kenya Copyright Act, 2001
-- International Copyright Laws
+- **Supabase**: MIT License
+- **Pexels Images**: Pexels License (Free for commercial use)
+- **Emojis**: Unicode License
 
 ## Contact
 
-Founder: Splasher
-Project: G-KODE
-Repository: github.com/splasher/-g-kode
-Live App: splasher.github.io/-g-kode/
+For licensing inquiries, contact the Founder through the G-KODE platform.
 
 ---
 
-© 2026 Splasher. All Rights Reserved.
+**G-KODE — Kenya Helping Kenya 🇰🇪**

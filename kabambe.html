@@ -3,32 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-KODE — Kabambe</title>
+    <title>Kabambe — G-KODE</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #fff; color: #000; font-size: 16px; padding: 10px; max-width: 400px; margin: 0 auto; }
-        h1 { color: #006400; font-size: 18px; text-align: center; margin: 10px 0; }
-        .box { border: 1px solid #006400; padding: 10px; margin: 8px 0; border-radius: 5px; }
-        .box h3 { color: #006400; font-size: 14px; margin-bottom: 5px; }
-        .box p { font-size: 13px; margin-bottom: 4px; }
-        a { display: block; padding: 10px; background: #006400; color: #FFD700; text-align: center; text-decoration: none; font-weight: bold; margin: 8px 0; border-radius: 5px; font-size: 14px; }
-        .emergency { background: #cc0000; color: #fff; font-size: 16px; padding: 12px; }
-        .footer { text-align: center; font-size: 11px; color: #006400; margin-top: 15px; }
-        .back { display: inline-block; margin-top: 10px; color: #006400; text-decoration: none; font-weight: bold; }
+        body {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .kabambe-container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .kabambe-container h1 {
+            color: #006400;
+            margin-bottom: 10px;
+        }
+        .kabambe-container .emoji {
+            font-size: 60px;
+            display: block;
+            margin: 20px 0;
+        }
+        .kabambe-container .steps {
+            text-align: left;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+        .kabambe-container .steps li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .kabambe-container .code-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            margin: 15px 0;
+            border: 2px solid #006400;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #006400;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <h1>G-KODE 🔧</h1>
-    <p style="text-align:center;font-size:12px;">Kabambe Version — Works on Any Phone</p>
-    <a href="tel:999" class="emergency">🚨 EMERGENCY — CALL 999</a>
-    <div class="box"><h3>📋 Gigs</h3><p>Open the main app to browse and post gigs.</p></div>
-    <div class="box"><h3>📞 Quick Help</h3>
-        <p>Police: <a href="tel:999" style="display:inline;padding:5px;">999</a></p>
-        <p>Fire: <a href="tel:999" style="display:inline;padding:5px;">999</a></p>
-        <p>Ambulance: <a href="tel:999" style="display:inline;padding:5px;">999</a></p>
-        <p>St. John: <a href="tel:0721225285" style="display:inline;padding:5px;">0721 225 285</a></p>
+    <div class="kabambe-container">
+        <h1>📱 Kabambe</h1>
+        <p style="color:#888;">G-KODE — No Smartphone Needed</p>
+        <span class="emoji">📱</span>
+
+        <h2 style="color:#006400;">How It Works</h2>
+        <p style="color:#666; margin-bottom:20px;">Just dial the number below from any phone.</p>
+
+        <div class="code-box">
+            <strong>📞 *384#</strong>
+        </div>
+
+        <div class="steps">
+            <h3 style="color:#006400;">Steps:</h3>
+            <ol>
+                <li><strong>Dial *384#</strong> from your phone</li>
+                <li><strong>Select G-KODE</strong> from the menu</li>
+                <li><strong>Choose an option:</strong>
+                    <ul>
+                        <li>1 — Register</li>
+                        <li>2 — Login</li>
+                        <li>3 — Post a Gig</li>
+                        <li>4 — Find Gigs</li>
+                        <li>5 — Chat with Client</li>
+                        <li>6 — My Profile</li>
+                    </ul>
+                </li>
+                <li><strong>Follow the prompts</strong> on your screen</li>
+            </ol>
+        </div>
+
+        <div style="background:#e8f5e9; padding:15px; border-radius:10px; margin:20px 0;">
+            <p style="color:#006400; font-weight:bold;">💡 Tips:</p>
+            <ul style="text-align:left; color:#333;">
+                <li>Works on ANY phone — even those without internet</li>
+                <li>All data is saved to your account</li>
+                <li>You can switch between Kabambe and the app anytime</li>
+                <li>No data charges — uses your regular airtime</li>
+            </ul>
+        </div>
+
+        <p style="color:#888; font-size:12px;">📌 USSD charges apply (standard rates)</p>
+        <p style="color:#006400; font-weight:bold;">🇰🇪 Kenya Helping Kenya</p>
     </div>
-    <p class="footer">G-KODE. Kenya Helping Kenya.<br>Kabambe Version</p>
-    <a href="index.html" class="back">← Back to G-KODE</a>
+
+    <a href="index.html" class="back-link">← Back to G-KODE</a>
 </body>
 </html>

@@ -3,35 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-KODE — Your Rights</title>
+    <title>Bill of Rights — G-KODE</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; max-width: 600px; margin: 0 auto; }
-        h1 { color: #006400; font-size: 22px; text-align: center; margin-bottom: 5px; }
-        .sub { color: #555; font-size: 13px; text-align: center; margin-bottom: 20px; }
-        h2 { color: #006400; font-size: 16px; margin-top: 15px; border-left: 4px solid #FFD700; padding-left: 10px; }
-        p { font-size: 14px; line-height: 1.6; margin-bottom: 8px; color: #333; }
-        .highlight { background: #fff; padding: 12px; border-radius: 8px; border-left: 4px solid #006400; margin: 15px 0; }
-        .footer { text-align: center; color: #006400; font-style: italic; margin-top: 20px; font-size: 13px; }
-        a { color: #006400; text-decoration: none; font-weight: bold; }
-        .back { display: block; text-align: center; margin-top: 20px; }
+        body {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .rights-container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .rights-container h1 {
+            color: #006400;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .rights-container .section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .rights-container .section:last-child {
+            border-bottom: none;
+        }
+        .rights-container .section h3 {
+            color: #006400;
+            margin-bottom: 10px;
+        }
+        .rights-container .section p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .rights-container .section .article {
+            font-weight: bold;
+            color: #006400;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #006400;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <h1>🇰🇪 Your Rights Under the Kenyan Constitution</h1>
-    <p class="sub">G-KODE is built on the Constitution of Kenya, 2010.</p>
-    <h2>Article 27 — Equality</h2><p>No discrimination. Manyatta to Mansion.</p>
-    <h2>Article 28 — Human Dignity</h2><p>Your dignity is protected.</p>
-    <h2>Article 29 — Security</h2><p>Emergency button protects you.</p>
-    <h2>Article 30 — No Forced Labour</h2><p>You choose gigs freely.</p>
-    <h2>Article 31 — Privacy</h2><p>Your data is private and encrypted.</p>
-    <h2>Article 40 — Property</h2><p>Escrow protects your money.</p>
-    <h2>Article 41 — Fair Labour</h2><p>Fair pay, fair conditions.</p>
-    <h2>Article 46 — Consumer Rights</h2><p>Quality services through ratings.</p>
-    <h2>Article 47 — Fair Admin</h2><p>Transparent penalties, appealable.</p>
-    <h2>Article 48 — Access to Justice</h2><p>Free dispute resolution.</p>
-    <div class="highlight"><p><strong>⚠️ Rights violated?</strong><br>Contact G-KODE support or KNCHR.</p></div>
-    <p class="footer">G-KODE. Built on the Constitution of Kenya, 2010.</p>
-    <a href="index.html" class="back">← Back to G-KODE</a>
+    <div class="rights-container">
+        <h1>🇰🇪 The Constitution of Kenya</h1>
+        <h2 style="text-align:center; color:#006400; margin-bottom:20px;">Bill of Rights</h2>
+
+        <div class="section">
+            <h3>Article 27 — Equality and Freedom from Discrimination</h3>
+            <p>Every person is equal before the law and has the right to equal protection and equal benefit of the law. The State shall not discriminate directly or indirectly against any person on any ground, including race, sex, pregnancy, marital status, health status, ethnic or social origin, colour, age, disability, religion, conscience, belief, culture, dress, language or birth.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 28 — Human Dignity</h3>
+            <p>Every person has inherent dignity and the right to have that dignity respected and protected.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 29 — Freedom and Security of the Person</h3>
+            <p>Every person has the right to freedom and security of the person, which includes the right not to be deprived of freedom arbitrarily or without just cause, and not to be subjected to any form of violence from either public or private sources.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 31 — Privacy</h3>
+            <p>Every person has the right to privacy, which includes the right not to have their person, home or property searched, their possessions seized, information relating to their family or private affairs unnecessarily required or revealed, or the privacy of their communications infringed.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 35 — Access to Information</h3>
+            <p>Every citizen has the right to access information held by the State, and information held by another person and required for the exercise or protection of any right or fundamental freedom.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 36 — Freedom of Association</h3>
+            <p>Every person has the right to freedom of association, which includes the right to form, join or participate in the activities of an association of any kind.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 37 — Assembly, Demonstration, Picketing and Petition</h3>
+            <p>Every person has the right, peaceably and unarmed, to assemble, to demonstrate, to picket, and to present petitions to public authorities.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 41 — Labour Relations</h3>
+            <p>Every person has the right to fair labour practices. Every worker has the right to form, join or participate in the activities and programmes of a trade union, and to go on strike.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 43 — Economic and Social Rights</h3>
+            <p>Every person has the right to the highest attainable standard of health, to accessible and adequate housing, to reasonable standards of sanitation, to be free from hunger, and to have adequate food of acceptable quality.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 53 — Children's Rights</h3>
+            <p>Every child has the right to a name and nationality from birth, to free and compulsory basic education, to basic nutrition, shelter and health care, to be protected from abuse, neglect, harmful cultural practices, all forms of violence, and from hazardous or exploitative labour.</p>
+        </div>
+
+        <div class="section">
+            <h3>Article 57 — Older Members of Society</h3>
+            <p>The State shall take measures to ensure the rights of older persons to participate fully in the affairs of society, to live in dignity and respect, and to receive reasonable care and assistance from their family and the State.</p>
+        </div>
+
+        <p style="text-align:center; color:#888; font-size:12px; margin-top:20px;">The Constitution of Kenya, 2010 — Chapter Four</p>
+        <p style="text-align:center; color:#006400; font-size:14px; font-weight:bold;">🇰🇪 Kenya Helping Kenya</p>
+    </div>
+
+    <a href="index.html" class="back-link">← Back to G-KODE</a>
 </body>
 </html>

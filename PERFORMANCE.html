@@ -1,127 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>G-KODE</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,sans-serif;background:#f5f5f5;color:#000}.screen{display:none;padding:20px;padding-bottom:80px;max-width:500px;margin:0 auto}.screen.active{display:block}.btn{width:100%;padding:15px;font-size:16px;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-bottom:12px}.btn.green{background:#006400;color:#FFD700}.btn.outline{background:#fff;color:#006400;border:2px solid #006400}.btn.red{background:#cc0000;color:#fff}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;padding:8px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.1);z-index:1000}.bottom-nav.hidden{display:none}.bottom-nav button{background:0;border:0;font-size:11px;padding:5px 10px;cursor:pointer;color:#666;display:flex;flex-direction:column;align-items:center;gap:2px}.bottom-nav button .icon{font-size:22px}.bottom-nav button.active{color:#006400;font-weight:700}input,select,textarea{width:100%;padding:14px;margin-bottom:15px;border:2px solid #ddd;border-radius:10px;font-size:16px;background:#fff}.gig-card{background:#fff;border-radius:12px;padding:15px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border-left:4px solid #006400}.gig-title{font-size:18px;font-weight:700;color:#006400}.gig-meta{font-size:14px;color:#666;margin:5px 0}.gig-budget{font-size:16px;font-weight:700;color:#006400}.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}.badge-open{background:#006400;color:#FFD700}.badge-taken{background:#999;color:#fff}.tab-container{display:flex;gap:5px;margin-bottom:15px}.tab-container button{flex:1;padding:10px;border:0;border-radius:8px;font-weight:700;cursor:pointer;background:#ddd;color:#000}.tab-container button.active{background:#006400;color:#FFD700}.chat-messages{background:#f5f5f5;border-radius:10px;padding:10px;height:250px;overflow-y:auto;margin-bottom:10px}.chat-message{margin-bottom:8px;padding:10px 14px;border-radius:15px;max-width:80%;word-wrap:break-word}.chat-message.sent{background:#006400;color:#fff;margin-left:auto;border-bottom-right-radius:5px}.chat-message.received{background:#fff;color:#000;border-bottom-left-radius:5px}.hidden{display:none!important}.emergency-float{position:fixed;bottom:90px;right:20px;background:#cc0000;color:#fff;font-size:28px;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:999;border:0;cursor:pointer;animation:pulse 2s infinite}@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(204,0,0,0.5)}70%{box-shadow:0 0 0 15px rgba(204,0,0,0)}100%{box-shadow:0 0 0 0 rgba(204,0,0,0)}}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance — G-KODE</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .perf-container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .perf-container h1 {
+            color: #006400;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric .label {
+            color: #666;
+        }
+        .metric .value {
+            font-weight: bold;
+            color: #006400;
+        }
+        .metric .value.good { color: #006400; }
+        .metric .value.warning { color: #ff9800; }
+        .metric .value.danger { color: #cc0000; }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #006400;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .refresh-btn {
+            margin: 15px 0;
+        }
+    </style>
 </head>
 <body>
-<div id="toast-container"></div>
-<button class="emergency-float" onclick="emergencyCall()">🚨</button>
-<div id="welcome" class="screen active">
-<img src="https://i.postimg.cc/zfQY4nKc/GKODE-2.png" style="width:180px;display:block;margin:30px auto 10px;">
-<p style="text-align:center;color:#006400;font-size:16px;margin-bottom:40px;line-height:1.5;">Skill is Currency. Trust is the Bank.<br>Community is the Network.</p>
-<button class="btn green" onclick="showScreen('register')">REGISTER</button>
-<button class="btn outline" onclick="showScreen('login')">LOGIN</button>
-<p style="text-align:center;color:#FFD700;font-style:italic;margin-top:30px;">Kenya Helping Kenya.</p>
-</div>
-<div id="register" class="screen"><h2>Create Account</h2>
-<input type="text" id="regName" placeholder="Full Name *">
-<input type="tel" id="regPhone" placeholder="Phone Number *">
-<input type="email" id="regEmail" placeholder="Email *">
-<input type="text" id="regID" placeholder="National ID *">
-<div style="position:relative;"><input type="password" id="regPassword" placeholder="Password (8+ chars)" style="padding-right:50px;"><span onclick="togglePassword('regPassword',this)" style="position:absolute;right:15px;top:14px;cursor:pointer;font-size:20px;">👁️</span></div>
-<input type="text" id="regLocation" placeholder="Location *">
-<select id="regProfession"></select>
-<div id="otherProfessionBox" style="display:none;"><input type="text" id="regOtherProfession" placeholder="Specify profession *"></div>
-<input type="text" id="regSkills" placeholder="Additional skills">
-<input type="file" id="regPhoto" accept="image/*" style="padding:10px;">
-<input type="file" id="regIDScan" accept="image/*" style="padding:10px;">
-<button class="btn green" onclick="register(event)">REGISTER</button>
-<button class="btn outline" onclick="showScreen('welcome')">BACK</button></div>
-<div id="login" class="screen"><h2>Login</h2>
-<input type="tel" id="loginPhone" placeholder="Phone Number">
-<div style="position:relative;"><input type="password" id="loginPassword" placeholder="Password" style="padding-right:50px;"><span onclick="togglePassword('loginPassword',this)" style="position:absolute;right:15px;top:14px;cursor:pointer;font-size:20px;">👁️</span></div>
-<button class="btn green" onclick="login(event)">LOGIN</button>
-<button class="btn outline" onclick="showScreen('welcome')">BACK</button></div>
-<div id="home" class="screen"><h2>📍 Gigs Near You</h2>
-<div class="tab-container"><button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN</button><button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button></div>
-<div id="gigsList"></div>
-<button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
-<button class="btn outline" onclick="logout()">LOGOUT</button></div>
-<div id="postGig" class="screen"><h2>Post a Gig</h2>
-<input type="text" id="gigTitle" placeholder="Title *">
-<input type="text" id="gigSkill" placeholder="Skill *">
-<input type="text" id="gigLocation" placeholder="Location *">
-<select id="gigUrgency"><option value="Normal">Normal</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option></select>
-<input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)">
-<input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)">
-<textarea id="gigDesc" placeholder="Description"></textarea>
-<button class="btn green" onclick="postGig(event)">POST GIG</button>
-<button class="btn outline" onclick="showScreen('home')">BACK</button></div>
-<div id="chat" class="screen"><h2>💬 Chat</h2>
-<div id="chatMessages" class="chat-messages"></div>
-<input type="hidden" id="chatGigId">
-<div style="display:flex;gap:5px;"><input type="text" id="chatInput" placeholder="Type message..." style="flex:1;"><button class="btn green" onclick="sendMessage(event)" style="width:auto;padding:14px 20px;">SEND</button></div>
-<button class="btn outline" onclick="showScreen('home')">BACK</button></div>
-<div id="profile" class="screen"><h2>👤 Profile</h2>
-<div style="text-align:center;"><img id="profilePhoto" src="https://via.placeholder.com/100" style="width:100px;height:100px;border-radius:50%;">
-<h3 id="profileName"></h3><p id="profilePhone"></p><p id="profileLocation"></p><p id="profileProfession"></p><p id="profileSkills"></p><p id="profileStatus"></p>
-<hr style="margin:20px 0;">
-<button class="btn outline" onclick="showScreen('companyRegister')">🏢 Register Business</button>
-<button class="btn outline" onclick="showScreen('companyDashboard')">📊 My Business</button>
-<button class="btn outline" onclick="showScreen('marketplace')">🛒 Marketplace</button>
-<div id="adminAccessBtn" style="display:none;margin-top:10px;"><button class="btn outline" onclick="window.open('admin.html','_blank')" style="background:#FFD700;color:#006400;border:2px solid #FFD700;">🔐 Admin</button></div>
-<button class="btn red" onclick="logout()">LOGOUT</button></div></div>
-<div id="companyRegister" class="screen"><h2>🏢 Register Business</h2>
-<input type="text" id="compName" placeholder="Business Name *">
-<select id="compType"><option value="">-- Type --</option><option value="School">School</option><option value="Shop">Shop</option><option value="Church">Church</option><option value="Government">Government</option><option value="Other">Other</option></select>
-<input type="text" id="compRegNo" placeholder="Registration No *">
-<input type="text" id="compLocation" placeholder="Location *">
-<input type="tel" id="compPhone" placeholder="Phone *">
-<button class="btn green" onclick="registerCompany(event)">REGISTER</button>
-<button class="btn outline" onclick="showScreen('home')">BACK</button></div>
-<div id="companyDashboard" class="screen"><h2>🏢 My Business</h2>
-<div id="compInfo"></div>
-<button class="btn green" onclick="showScreen('addProduct')">➕ ADD PRODUCT</button>
-<button class="btn outline" onclick="showScreen('home')">BACK</button></div>
-<div id="addProduct" class="screen"><h2>📦 Add Product</h2>
-<input type="text" id="prodName" placeholder="Product Name *">
-<select id="prodCategory"></select>
-<input type="text" id="prodUnit" placeholder="Unit (kg, piece, etc) *">
-<input type="number" id="prodPrice" placeholder="Price (Ksh) *" step="0.01">
-<input type="number" id="prodStock" placeholder="Stock *">
-<button class="btn green" onclick="addProduct(event)">ADD</button>
-<button class="btn outline" onclick="showScreen('companyDashboard')">BACK</button></div>
-<div id="marketplace" class="screen"><h2>🛒 Marketplace</h2>
-<select id="marketCategory" onchange="loadMarketplace()"><option value="All">All</option></select>
-<div id="marketplaceList"></div>
-<button class="btn outline" onclick="showScreen('home')">BACK</button></div>
-<div id="bottomNav" class="bottom-nav">
-<button onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
-<button onclick="showScreen('postGig')"><span class="icon">➕</span>Post</button>
-<button onclick="showScreen('marketplace')"><span class="icon">🛒</span>Shop</button>
-<button onclick="showScreen('profile')"><span class="icon">👤</span>You</button>
-</div>
-<script src="security.js"></script>
-<script>var U=null,T='open';function get(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return[]}}function set(key,data){localStorage.setItem(key,JSON.stringify(data))}function getU(){return get('gkode_users')}function setU(u){set('gkode_users',u)}function getG(){return get('gkode_gigs')}function setG(g){set('gkode_gigs',g)}function getC(){return get('gkode_companies')}function setC(c){set('gkode_companies',c)}function getP(){return get('gkode_products')}function setP(p){set('gkode_products',p)}function getProf(){return get('gkode_professions')}function setProf(p){set('gkode_professions',p)}function getCat(){return get('gkode_categories')}function setCat(c){set('gkode_categories',c)}function toast(msg,t){t=t||'info';var c=document.getElementById('toast-container');if(!c){c=document.createElement('div');c.id='toast-container';c.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;';document.body.appendChild(c)}var el=document.createElement('div');var colors={success:'#006400',error:'#cc0000',info:'#2196F3',warning:'#ff9800'};el.style.cssText='padding:12px 18px;border-radius:8px;color:#fff;margin-bottom:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:'+(colors[t]||'#333')+';pointer-events:auto;font-size:14px;';el.textContent=msg;c.appendChild(el);setTimeout(function(){el.style.opacity='0';el.style.transition='opacity 0.5s';setTimeout(function(){if(el.parentNode)el.remove()},500)},3000)}
-function showScreen(id){var s=document.querySelectorAll('.screen');for(var i=0;i<s.length;i++){s[i].classList.remove('active')}var el=document.getElementById(id);if(el)el.classList.add('active');var nav=document.getElementById('bottomNav');if(U&&['home','postGig','profile','chat','companyRegister','companyDashboard','addProduct','marketplace'].indexOf(id)!==-1){nav.classList.remove('hidden')}else{nav.classList.add('hidden')}if(id==='home')loadGigs();if(id==='profile')loadProfile();if(id==='companyDashboard')loadCompanyDashboard();if(id==='marketplace')loadMarketplace()}
-function logout(){U=null;localStorage.removeItem('gkode_currentUser');toast('Logged out.','info');showScreen('welcome');var nav=document.getElementById('bottomNav');if(nav)nav.classList.add('hidden')}
-function isAdmin(){if(!U)return false;var A=['0703428192','0711991467'];for(var i=0;i<A.length;i++){if(U.phone===A[i])return true}return false}
-function checkAdminAccess(){var btn=document.getElementById('adminAccessBtn');if(!btn)return;if(isAdmin()){btn.style.display='block'}else{btn.style.display='none'}}
-function emergencyCall(){if(confirm('🚨 EMERGENCY?\n\nOpen emergency contacts?')){window.location.href='emergency.html'}}
-function togglePassword(fid,icon){var f=document.getElementById(fid);if(!f)return;if(f.type==='password'){f.type='text';icon.textContent='🙈'}else{f.type='password';icon.textContent='👁️'}}
-function switchTab(tab){T=tab;var o=document.getElementById('tabOpen');var tk=document.getElementById('tabTaken');if(tab==='open'){o.className='active';tk.className=''}else{o.className='';tk.className='active'}loadGigs()}
-function loadGigs(){var c=document.getElementById('gigsList');if(!c)return;var gigs=getG();var f=[];for(var i=0;i<gigs.length;i++){if(T==='open'&&gigs[i].status==='Open')f.push(gigs[i]);if(T==='taken'&&gigs[i].status==='Assigned')f.push(gigs[i])}if(f.length===0){c.innerHTML='<div style="padding:40px 0;color:#666;text-align:center;"><p>No gigs.</p></div>';return}var h='';for(var i=0;i<f.length;i++){var g=f[i];var open=g.status==='Open';h+='<div class="gig-card"><div class="gig-title">'+g.title+'</div>';h+='<span class="badge '+(open?'badge-open':'badge-taken')+'">'+(open?'🟢 OPEN':'🔴 TAKEN')+'</span>';h+='<div class="gig-meta">👤 '+g.client+' | 🛠️ '+g.skill+'</div>';h+='<div class="gig-meta">📍 '+g.location+'</div>';h+='<div class="gig-budget">💰 Ksh '+g.budgetMin+' - '+g.budgetMax+'</div>';if(open){h+='<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\''+g.id+'\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:700;cursor:pointer;">✅ ACCEPT</button></div>'}h+='</div>'}c.innerHTML=h}
-function acceptGig(id){if(!U){toast('Login first.','error');return}var gigs=getG();for(var i=0;i<gigs.length;i++){if(gigs[i].id===id&&gigs[i].status==='Open'){gigs[i].status='Assigned';gigs[i].worker=U.name;gigs[i].workerPhone=U.phone;setG(gigs);toast('✅ Gig accepted!','success');loadGigs();return}}toast('Gig not available.','error')}
-function register(e){e.preventDefault();var btn=document.getElementById('registerBtn');btn.disabled=true;btn.textContent='⏳...';var name=document.getElementById('regName').value.trim();var phone=document.getElementById('regPhone').value.trim();var email=document.getElementById('regEmail').value.trim();var id=document.getElementById('regID').value.trim();var password=document.getElementById('regPassword').value.trim();var loc=document.getElementById('regLocation').value.trim();var prof=document.getElementById('regProfession').value;if(!name||!phone||!email||!id||!password||!loc||!prof){toast('Fill all fields.','error');btn.disabled=false;btn.textContent='REGISTER';return}var users=getU();for(var i=0;i<users.length;i++){if(users[i].phone===phone){toast('Phone already registered.','warning');showScreen('login');btn.disabled=false;btn.textContent='REGISTER';return}}var vCode=Math.floor(100000+Math.random()*900000).toString();toast('📧 Code sent to '+email,'success');var userCode=prompt('📱 Enter 6-digit code:');if(!userCode||userCode!==vCode){toast('❌ Invalid code.','error');btn.disabled=false;btn.textContent='REGISTER';return}var user={name:name,phone:phone,email:email,id:id,password:btoa(password),location:loc,profession:prof,skills:'',status:'Active',verified:true,strikes:0,rating:0,registeredAt:new Date().toISOString()};users.push(user);setU(users);U=user;localStorage.setItem('gkode_currentUser',JSON.stringify(user));toast('✅ Welcome, '+name+'!','success');showScreen('home');btn.disabled=false;btn.textContent='REGISTER'}
-function login(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='⏳...';var phone=document.getElementById('loginPhone').value.trim();var password=document.getElementById('loginPassword').value.trim();if(!phone||!password){toast('Enter phone and password.','error');btn.disabled=false;btn.textContent='LOGIN';return}var users=getU();var found=null;for(var i=0;i<users.length;i++){if(users[i].phone===phone&&atob(users[i].password)===password){found=users[i];break}}if(!found){toast('Wrong credentials.','error');btn.disabled=false;btn.textContent='LOGIN';return}U=found;localStorage.setItem('gkode_currentUser',JSON.stringify(found));toast('Welcome back, '+found.name+'!','success');showScreen('home');btn.disabled=false;btn.textContent='LOGIN'}
-function postGig(e){e.preventDefault();if(!U){toast('Login first.','error');return}var btn=document.getElementById('postGigBtn');btn.disabled=true;btn.textContent='⏳...';var title=document.getElementById('gigTitle').value.trim();var skill=document.getElementById('gigSkill').value.trim();var loc=document.getElementById('gigLocation').value.trim();var urgency=document.getElementById('gigUrgency').value;var min=parseInt(document.getElementById('gigBudgetMin').value);var max=parseInt(document.getElementById('gigBudgetMax').value);var desc=document.getElementById('gigDesc').value.trim();if(!title||!skill||!loc){toast('Fill title, skill, location.','error');btn.disabled=false;btn.textContent='POST GIG';return}var gigs=getG();gigs.push({id:Date.now().toString(),title:title,skill:skill,location:loc,urgency:urgency,budgetMin:min,budgetMax:max,desc:desc,client:U.name,clientPhone:U.phone,status:'Open',worker:'',createdAt:new Date().toISOString()});setG(gigs);toast('✅ Gig posted!','success');showScreen('home');btn.disabled=false;btn.textContent='POST GIG'}
-function loadProfile(){if(!U)return;document.getElementById('profileName').textContent=U.name;document.getElementById('profilePhone').textContent='📞 '+U.phone;document.getElementById('profileLocation').textContent='📍 '+U.location;document.getElementById('profileProfession').textContent='👔 '+U.profession;document.getElementById('profileSkills').textContent='🛠️ '+(U.skills||'None');document.getElementById('profilePhoto').src=U.photo||'https://via.placeholder.com/100';document.getElementById('profileStatus').innerHTML='⭐ '+(U.rating||0);checkAdminAccess()}
-function loadMarketplace(){var c=document.getElementById('marketplaceList');if(!c)return;var products=getP();if(products.length===0){c.innerHTML='<div style="padding:40px 0;color:#666;text-align:center;"><p>No products.</p></div>';return}var h='';for(var i=0;i<products.length;i++){var p=products[i];h+='<div class="gig-card"><h3>'+p.name+'</h3>';h+='<p>🏢 '+p.companyName+' | '+p.category+'</p>';h+='<p>💰 Ksh '+p.price+'/'+p.unit+'</p>';h+='<p>📦 Stock: '+p.stock+'</p>';h+='<button onclick="buyProduct(\''+p.id+'\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:700;cursor:pointer;">🛒 BUY</button></div>'}c.innerHTML=h}
-function buyProduct(id){if(!U){toast('Login first.','error');return}var products=getP();for(var i=0;i<products.length;i++){if(products[i].id===id&&products[i].stock>0){products[i].stock--;setP(products);toast('✅ Purchased!','success');loadMarketplace();return}}toast('Product not available.','error')}
-function registerCompany(e){e.preventDefault();if(!U){toast('Login first.','error');return}var btn=document.getElementById('compRegisterBtn');btn.disabled=true;btn.textContent='⏳...';var name=document.getElementById('compName').value.trim();var type=document.getElementById('compType').value;var regNo=document.getElementById('compRegNo').value.trim();var loc=document.getElementById('compLocation').value.trim();var phone=document.getElementById('compPhone').value.trim();if(!name||!type||!regNo||!loc||!phone){toast('Fill all fields.','error');btn.disabled=false;btn.textContent='REGISTER BUSINESS';return}var companies=getC();companies.push({id:Date.now().toString(),name:name,type:type,regNo:regNo,location:loc,phone:phone,owner:U.name,ownerPhone:U.phone,registeredAt:new Date().toISOString(),totalSales:0});setC(companies);toast('✅ Business registered!','success');showScreen('companyDashboard');loadCompanyDashboard();btn.disabled=false;btn.textContent='REGISTER BUSINESS'}
-function loadCompanyDashboard(){if(!U)return;var companies=getC();var myComp=null;for(var i=0;i<companies.length;i++){if(companies[i].ownerPhone===U.phone){myComp=companies[i];break}}if(!myComp){document.getElementById('compInfo').innerHTML='<p>No business. <a href="#" onclick="showScreen(\'companyRegister\')" style="color:#006400;">Register now</a></p>';return}document.getElementById('compInfo').innerHTML='<h3>'+myComp.name+'</h3><p>🏢 '+myComp.type+' | 📍 '+myComp.location+'</p><p>📞 '+myComp.phone+'</p><p>📜 Reg No: '+myComp.regNo+'</p>'}
-function addProduct(e){e.preventDefault();if(!U){toast('Login first.','error');return}var btn=document.getElementById('addProductBtn');btn.disabled=true;btn.textContent='⏳...';var name=document.getElementById('prodName').value.trim();var cat=document.getElementById('prodCategory').value;var unit=document.getElementById('prodUnit').value.trim();var price=parseFloat(document.getElementById('prodPrice').value);var stock=parseInt(document.getElementById('prodStock').value);if(!name||!cat||!unit||!price||!stock){toast('Fill all fields.','error');btn.disabled=false;btn.textContent='ADD PRODUCT';return}var companies=getC();var myComp=null;for(var i=0;i<companies.length;i++){if(companies[i].ownerPhone===U.phone){myComp=companies[i];break}}if(!myComp){toast('Register a business first.','error');btn.disabled=false;btn.textContent='ADD PRODUCT';return}var products=getP();products.push({id:Date.now().toString(),companyId:myComp.id,companyName:myComp.name,name:name,category:cat,unit:unit,price:price,stock:stock,desc:''});setP(products);toast('✅ Product added!','success');showScreen('companyDashboard');loadCompanyDashboard();btn.disabled=false;btn.textContent='ADD PRODUCT'}
-var defaultProfessions=['Plumber','Electrician','Carpenter','Painter','Mechanic','Hairdresser','Tailor','Chef','Driver','Teacher','Nurse'];function populateProfessionDropdown(){var d=document.getElementById('regProfession');if(!d)return;while(d.options.length>1){d.remove(1)}var all=defaultProfessions.slice();var saved=getProf();for(var i=0;i<saved.length;i++){if(all.indexOf(saved[i])===-1){all.push(saved[i])}}all.sort();for(var i=0;i<all.length;i++){var opt=document.createElement('option');opt.value=all[i];opt.textContent=all[i];d.appendChild(opt)}var other=document.createElement('option');other.value='Other';other.textContent='Other (Add New)';d.appendChild(other)}
-function checkProfession(){var p=document.getElementById('regProfession').value;document.getElementById('otherProfessionBox').style.display=p==='Other'?'block':'none'}
-function saveNewProfession(name){if(!name||name.trim().length<3){toast('Enter valid profession.','error');return null}var formatted=name.trim().split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()}).join(' ');var all=defaultProfessions.slice();var saved=getProf();for(var i=0;i<saved.length;i++){if(all.indexOf(saved[i])===-1){all.push(saved[i])}}for(var i=0;i<all.length;i++){if(all[i].toLowerCase()===formatted.toLowerCase()){return all[i]}}saved.push(formatted);setProf(saved);populateProfessionDropdown();toast('✅ New profession saved!','success');return formatted}
-var defaultCategories=['Cement','Pipes','Taps','Electrical','Paint','Timber','Steel','Tiles','Roofing','Tools'];function populateCategoryDropdown(){var d=document.getElementById('marketCategory');if(!d)return;while(d.options.length>1){d.remove(1)}var all=defaultCategories.slice();var saved=getCat();for(var i=0;i<saved.length;i++){if(all.indexOf(saved[i])===-1){all.push(saved[i])}}all.sort();for(var i=0;i<all.length;i++){var opt=document.createElement('option');opt.value=all[i];opt.textContent=all[i];d.appendChild(opt)}}
-function populateProductCategoryDropdown(){var d=document.getElementById('prodCategory');if(!d)return;while(d.options.length>1){d.remove(1)}var all=defaultCategories.slice();var saved=getCat();for(var i=0;i<saved.length;i++){if(all.indexOf(saved[i])===-1){all.push(saved[i])}}all.sort();for(var i=0;i<all.length;i++){var opt=document.createElement('option');opt.value=all[i];opt.textContent=all[i];d.appendChild(opt)}}
-function addNewCategory(name){if(!name||name.trim().length<3){toast('Enter valid category.','error');return null}var formatted=name.trim().split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()}).join(' ');var all=defaultCategories.slice();var saved=getCat();for(var i=0;i<saved.length;i++){if(all.indexOf(saved[i])===-1){all.push(saved[i])}}for(var i=0;i<all.length;i++){if(all[i].toLowerCase()===formatted.toLowerCase()){return all[i]}}saved.push(formatted);setCat(saved);populateCategoryDropdown();populateProductCategoryDropdown();toast('✅ New category saved!','success');return formatted}
-var saved=localStorage.getItem('gkode_currentUser');if(saved){try{U=JSON.parse(saved);if(U){toast('Welcome back, '+U.name+'!','success');showScreen('home');checkAdminAccess()}}catch(e){showScreen('welcome')}}else{showScreen('welcome')}
-populateProfessionDropdown();populateCategoryDropdown();populateProductCategoryDropdown();
-console.log('🚀 G-KODE ULTRA LIGHTWEIGHT - 50M Users Ready');
-</script>
+    <div class="perf-container">
+        <h1>⚡ System Performance</h1>
+        <p style="text-align:center; color:#888; margin-bottom:20px;">G-KODE — Kenya Helping Kenya</p>
+
+        <div id="performanceMetrics">
+            <div class="metric">
+                <span class="label">👥 Total Users</span>
+                <span class="value" id="totalUsers">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">📋 Total Gigs</span>
+                <span class="value" id="totalGigs">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">💰 Revenue Generated</span>
+                <span class="value" id="totalRevenue">Ksh 0</span>
+            </div>
+            <div class="metric">
+                <span class="label">✅ Paid Users</span>
+                <span class="value" id="paidUsers">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">📊 Active Gigs</span>
+                <span class="value" id="activeGigs">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">💾 Storage Used</span>
+                <span class="value" id="storageUsed">0 KB</span>
+            </div>
+            <div class="metric">
+                <span class="label">⚡ Response Time</span>
+                <span class="value good" id="responseTime">0 ms</span>
+            </div>
+            <div class="metric">
+                <span class="label">📅 Last Updated</span>
+                <span class="value" id="lastUpdated">-</span>
+            </div>
+        </div>
+
+        <button class="btn green refresh-btn" onclick="refreshPerformance()">🔄 Refresh</button>
+    </div>
+
+    <a href="index.html" class="back-link">← Back to G-KODE</a>
+
+    <script>
+        function getData(key) {
+            try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+        }
+
+        function refreshPerformance() {
+            const users = getData('gkode_users');
+            const gigs = getData('gkode_gigs');
+            const payments = getData('gkode_payments');
+            
+            let totalRevenue = 0;
+            let paidUsers = 0;
+            payments.forEach(p => {
+                if (p.verified) {
+                    totalRevenue += p.amount;
+                }
+            });
+            
+            users.forEach(u => {
+                if (u.isPaid) paidUsers++;
+            });
+            
+            const activeGigs = gigs.filter(g => g.status === 'Open').length;
+            
+            // Calculate storage used
+            let storageSize = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    storageSize += localStorage[key].length;
+                }
+            }
+            
+            // Calculate response time (simulated)
+            const start = performance.now();
+            setTimeout(() => {
+                const end = performance.now();
+                const responseTime = Math.round(end - start);
+                
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalGigs').textContent = gigs.length;
+                document.getElementById('totalRevenue').textContent = 'Ksh ' + totalRevenue.toLocaleString();
+                document.getElementById('paidUsers').textContent = paidUsers;
+                document.getElementById('activeGigs').textContent = activeGigs;
+                document.getElementById('storageUsed').textContent = (storageSize / 1024).toFixed(2) + ' KB';
+                document.getElementById('responseTime').textContent = responseTime + ' ms';
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+            }, 100);
+        }
+
+        // Auto-refresh on load
+        document.addEventListener('DOMContentLoaded', refreshPerformance);
+    </script>
 </body>
 </html>

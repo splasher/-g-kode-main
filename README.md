@@ -1,43 +1,42 @@
-# G-KODE 🔧
+# G-KODE — Kenya Helping Kenya 🇰🇪
 
-**Skill is Currency. Trust is the Bank. Community is the Network.**
+## About
 
-G-KODE is Kenya's trusted marketplace connecting skilled workers to clients nearby.
+G-KODE is a community-based gig economy platform connecting workers, clients, and businesses in Kenya.
 
-## 🚀 Live App
+**Tagline**: Skill is Currency. Trust is the Bank. Community is the Network.
 
-**[Open G-KODE Now](https://splasher.github.io/-g-kode/)**
+## Features
 
-## 👤 Founder
+- ✅ User Registration & Authentication
+- ✅ Gig Posting & Acceptance
+- ✅ Real-time Chat
+- ✅ GPS Location Sharing
+- ✅ Reviews & Ratings
+- ✅ Strike System (6 strikes = disqualification)
+- ✅ Marketplace with 3% Commission
+- ✅ Business Registration
+- ✅ Payment Integration (M-Pesa)
+- ✅ Emergency Services
+- ✅ Kabambe (USSD for non-smartphone users)
+- ✅ Admin Panel
 
-**Splasher** — Solo Founder & Creator
+## Technology Stack
 
-## 📋 Features
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
+- **Cache**: Redis (via Upstash)
+- **Hosting**: GitHub Pages / Vercel / Cloudflare
 
-- 🔐 Registration with National ID, photo, and ID scan
-- 📝 Post gigs with skill categories, urgency, and budget
-- ✅ Accept gigs — instant chat between worker and client
-- 📍 Live GPS location sharing (stored in admin logs)
-- 🚨 Emergency button (Police 999, Fire 999, Ambulance 999)
-- ⚠️ Strike system: 6 strikes = disqualification (Ksh 1,500 re-entry)
-- 🔑 Password reset with identity verification
-- 🛡️ Admin panel for fraud prevention and emergency response
-- 🇰🇪 Bill of Rights integration (Constitution of Kenya, 2010)
-- 📱 Kabambe version for non-smartphone users
-- 🖼️ Rotating Kenyan landscape backgrounds
+## Getting Started
 
-## 📄 Documentation
+### Prerequisites
+- A modern web browser
+- (Optional) Node.js for local development
 
-- [Authenticity Certificate](AUTHENTICITY.md)
-- [License](LICENSE.md)
-- [Founder's Declaration](FOUNDER-DECLARATION.md)
+### Installation
 
-## 📜 Legal
-
-G-KODE is protected under the Constitution of Kenya, 2010, Kenya Copyright Act, 2001, and Data Protection Act, 2019.
-
-© 2026 Splasher. All Rights Reserved.
-
----
-
-**Ji-Code. Ji-Build. Ji-Earn. Jiokoe.**
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/splasher/g-kode.git
+   cd g-kode

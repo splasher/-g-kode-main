@@ -2,618 +2,435 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-KODE — Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #000; color: #fff; padding: 20px; max-width: 600px; margin: 0 auto; }
-        h1 { color: #FFD700; text-align: center; margin-bottom: 5px; }
-        .sub { color: #888; text-align: center; font-size: 12px; margin-bottom: 20px; }
-        input { width: 100%; padding: 14px; margin-bottom: 10px; border: 1px solid #333; border-radius: 8px; background: #111; color: #fff; font-size: 16px; }
-        .btn { width: 100%; padding: 14px; background: #006400; color: #FFD700; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 16px; transition: all 0.3s; }
-        .btn:hover { transform: scale(1.02); }
-        .btn:active { transform: scale(0.98); }
-        .btn.red { background: #cc0000; color: #fff; }
-        .btn.orange { background: #ff9800; color: #000; }
-        .btn.blue { background: #2196F3; color: #fff; }
-        .btn.purple { background: #9c27b0; color: #fff; }
-        .btn.green { background: #006400; color: #FFD700; }
-        .hidden { display: none; }
-        .card { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
-        .card h3 { color: #FFD700; margin-bottom: 5px; }
-        .card p { font-size: 13px; margin-bottom: 3px; color: #ccc; }
-        .log { background: #111; padding: 8px; border-left: 3px solid #FFD700; margin-bottom: 5px; font-size: 11px; color: #aaa; }
-        .stats { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .stats-item { background: #1a1a1a; padding: 10px; border-radius: 5px; }
-        .stats-item .number { font-size: 24px; color: #FFD700; font-weight: bold; }
-        .stats-item .label { font-size: 11px; color: #888; }
-        .section-title { color: #FFD700; font-size: 14px; margin: 15px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-        .status-badge.on { background: #006400; color: #FFD700; }
-        .status-badge.off { background: #cc0000; color: #fff; }
-        .back { display: block; text-align: center; margin-top: 20px; color: #666; text-decoration: none; font-size: 12px; }
-        .back:hover { color: #FFD700; }
-        .flex { display: flex; gap: 5px; flex-wrap: wrap; }
-        .flex .btn { flex: 1; font-size: 13px; padding: 10px; min-width: 80px; }
-        .flex .btn.full { flex: 1 1 100%; }
-        .health-report { background: #0a0a0a; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #0f0; white-space: pre-wrap; border: 1px solid #006400; max-height: 500px; overflow-y: auto; }
-        #output { margin-top: 20px; max-height: 400px; overflow-y: auto; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 3px; }
-        .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat-card { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; text-align: center; }
-        .stat-card .label { color: #888; font-size: 11px; margin-bottom: 5px; }
-        .stat-card .value { font-size: 28px; font-weight: bold; color: #FFD700; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .chart-container { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-        .chart-container h4 { color: #FFD700; font-size: 12px; text-align: center; margin-bottom: 10px; }
+        body {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .admin-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .admin-card h3 {
+            color: #006400;
+            margin-bottom: 10px;
+        }
+        .admin-card .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .admin-card .stat {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .admin-card .stat .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #006400;
+        }
+        .admin-card .stat .label {
+            font-size: 12px;
+            color: #888;
+        }
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 13px;
+            width: auto;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .user-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        .user-item .name {
+            font-weight: bold;
+        }
+        .user-item .phone {
+            color: #888;
+            font-size: 13px;
+        }
+        .user-item .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-paid {
+            background: #006400;
+            color: #FFD700;
+        }
+        .badge-unpaid {
+            background: #ff9800;
+            color: #000;
+        }
+        .badge-banned {
+            background: #cc0000;
+            color: #fff;
+        }
+        .badge-active {
+            background: #2196F3;
+            color: #fff;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .login-box input {
+            text-align: center;
+        }
+        #output {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #006400;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ===== LOGIN BOX ===== -->
-    <div id="loginBox">
-        <h1>🔐 ADMIN PANEL</h1>
-        <p class="sub">Founder Access Only — Splasher</p>
-        <input type="password" id="adminPass" placeholder="Enter Admin Key" onkeydown="if(event.key==='Enter') adminLogin()">
-        <button class="btn" onclick="adminLogin()">AUTHENTICATE</button>
-        <a href="index.html" class="back">← Back to G-KODE</a>
+    <!-- ===== LOGIN ===== -->
+    <div id="loginBox" class="login-box">
+        <h1>🔐 Admin Panel</h1>
+        <p style="color:#888; margin-bottom:20px;">Founder Access Only</p>
+        <input type="password" id="adminKey" placeholder="Enter Admin Key" style="max-width:300px; margin:0 auto;">
+        <button class="btn green" onclick="adminLogin()">AUTHENTICATE</button>
+        <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
     <!-- ===== ADMIN PANEL ===== -->
-    <div id="adminPanel" class="hidden">
-        <h1>🚨 ADMIN PANEL</h1>
-        <p class="sub">All data stored locally. Download backups regularly.</p>
+    <div id="adminPanel" style="display:none;">
+        <h1>🚨 Admin Panel</h1>
+        <p style="color:#888; margin-bottom:20px;">G-KODE — Kenya Helping Kenya</p>
 
-        <!-- ===== STATS DASHBOARD ===== -->
-        <div class="stats" id="statsBox">
-            <div class="stats-grid">
-                <div class="stats-item">
+        <!-- Stats -->
+        <div class="admin-card">
+            <h3>📊 Dashboard</h3>
+            <div class="stats">
+                <div class="stat">
                     <div class="number" id="statUsers">0</div>
                     <div class="label">👥 Users</div>
                 </div>
-                <div class="stats-item">
+                <div class="stat">
                     <div class="number" id="statGigs">0</div>
                     <div class="label">📋 Gigs</div>
                 </div>
-                <div class="stats-item">
+                <div class="stat">
                     <div class="number" id="statRevenue">Ksh 0</div>
                     <div class="label">💰 Revenue</div>
                 </div>
-                <div class="stats-item">
-                    <div class="number" id="statPaid">0</div>
-                    <div class="label">✅ Paid Users</div>
-                </div>
-                <div class="stats-item">
-                    <div class="number" id="statBusiness">0</div>
-                    <div class="label">🏢 Businesses</div>
-                </div>
-                <div class="stats-item">
-                    <div class="number" id="statOrders">0</div>
-                    <div class="label">📦 Orders</div>
-                </div>
             </div>
         </div>
 
-        <!-- ===== CHARTS DASHBOARD ===== -->
-        <div class="section-title">📊 ANALYTICS DASHBOARD</div>
-        
-        <div class="dashboard-stats">
-            <div class="stat-card"><div class="value" id="dashboardTotalUsers">0</div><div class="label">👥 Users</div></div>
-            <div class="stat-card"><div class="value" id="dashboardTotalGigs">0</div><div class="label">📋 Gigs</div></div>
-            <div class="stat-card"><div class="value" id="dashboardTotalBusinesses">0</div><div class="label">🏢 Businesses</div></div>
-            <div class="stat-card"><div class="value" id="dashboardTotalRevenue">Ksh 0</div><div class="label">💰 Revenue</div></div>
-        </div>
-        
-        <div class="charts-grid">
-            <div class="chart-container">
-                <h4>📈 User Growth</h4>
-                <canvas id="userGrowthChart" style="height:150px; width:100%;"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4>💰 Revenue</h4>
-                <canvas id="revenueChart" style="height:150px; width:100%;"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4>📋 Gig Status</h4>
-                <canvas id="gigStatusChart" style="height:150px; width:100%;"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4>🏢 Business Growth</h4>
-                <canvas id="businessGrowthChart" style="height:150px; width:100%;"></canvas>
-            </div>
+        <!-- Actions -->
+        <div class="admin-card">
+            <h3>🔧 Actions</h3>
+            <button class="btn green btn-small" onclick="viewUsers()">👥 View Users</button>
+            <button class="btn green btn-small" onclick="viewGigs()">📋 View Gigs</button>
+            <button class="btn green btn-small" onclick="viewComplaints()">🚩 Complaints</button>
+            <button class="btn green btn-small" onclick="downloadBackup()">💾 Backup</button>
+            <button class="btn red btn-small" onclick="clearAllData()">🔥 Reset All</button>
         </div>
 
-        <!-- ===== PAYMENT KILL SWITCH ===== -->
-        <div class="section-title">💳 PAYMENT SYSTEM</div>
-        <div style="background:#1a1a1a; padding:15px; border-radius:8px; margin-bottom:10px; text-align:center;">
-            <p style="margin-bottom:5px;">Status: <span id="paymentStatus" class="status-badge on">🔒 ON</span></p>
-            <p style="font-size:11px; color:#888; margin-bottom:10px;">User Fee: Ksh 300 | Commission: 3%</p>
-            <button class="btn orange" onclick="togglePaymentSystem()" id="paymentToggleBtn">🔒 TURN PAYMENT OFF</button>
-        </div>
-
-        <!-- ===== ADMIN ACTIONS ===== -->
-        <div class="section-title">🔧 ADMIN ACTIONS</div>
-        <div class="flex">
-            <button class="btn" onclick="viewUsers()">👥 Users</button>
-            <button class="btn" onclick="viewGigs()">📋 Gigs</button>
-            <button class="btn" onclick="viewCompanies()">🏢 Businesses</button>
-        </div>
-        <div class="flex">
-            <button class="btn blue" onclick="downloadBackup()">💾 Backup</button>
-            <button class="btn blue" onclick="viewFinancialReport()">📊 Report</button>
-            <button class="btn blue" onclick="viewLogs()">📜 Logs</button>
-        </div>
-
-        <!-- ===== SECURITY ACTIONS ===== -->
-        <div class="section-title">🛡️ SECURITY</div>
-        <div class="flex">
-            <button class="btn blue" onclick="systemHealthCheck()">🏥 Health</button>
-            <button class="btn orange" onclick="emergencyRecovery()">🚨 Recovery</button>
-            <button class="btn blue" onclick="detectFraud()">🛡️ Fraud</button>
-        </div>
-        <div class="flex">
-            <button class="btn blue" onclick="legalComplianceCheck()">⚖️ Legal</button>
-            <button class="btn blue" onclick="generateDailyLegalLog()">📋 Daily Log</button>
-            <button class="btn blue" onclick="viewAllBackups()">📂 Backups</button>
-        </div>
-
-        <!-- ===== SYSTEM HEALTH MIRROR ===== -->
-        <div class="section-title">🪞 SYSTEM HEALTH MIRROR</div>
-        <div class="flex">
-            <button class="btn purple" onclick="viewSystemHealth()">🪞 View Health Mirror</button>
-        </div>
-
-        <!-- ===== DANGER ZONE ===== -->
-        <div class="section-title" style="border-bottom-color:#cc0000;">⚠️ DANGER ZONE</div>
-        <button class="btn red" onclick="clearAll()">🔥 RESET ALL DATA</button>
-
-        <!-- ===== OUTPUT ===== -->
+        <!-- Output -->
         <div id="output"></div>
 
-        <!-- ===== LOGOUT ===== -->
-        <button class="btn" onclick="logoutAdmin()" style="background:#333; margin-top:20px;">🚪 Logout</button>
-        <a href="index.html" class="back">← Back to G-KODE</a>
+        <!-- Logout -->
+        <button class="btn outline" onclick="adminLogout()">🚪 Logout</button>
+        <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <script src="app.js"></script>
     <script>
-        // ============================================
-        // ADMIN AUTHENTICATION
-        // ============================================
-        var ADMIN_KEY = 'MAYA';
-        
+        // ===== ADMIN CONFIG =====
+        const ADMIN_KEY = 'MAYA';
+        let adminLoggedIn = false;
+
+        // ===== LOGIN =====
         function adminLogin() {
-            var pass = document.getElementById('adminPass').value;
-            if (pass === ADMIN_KEY) {
-                document.getElementById('loginBox').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
+            const key = document.getElementById('adminKey').value;
+            if (key === ADMIN_KEY) {
+                adminLoggedIn = true;
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
                 loadStats();
-                updatePaymentStatus();
-                renderAllCharts();
                 showToast('✅ Welcome Admin!', 'success');
             } else {
-                alert('❌ Access denied.');
+                showToast('❌ Access denied', 'error');
             }
         }
 
-        function logoutAdmin() {
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('loginBox').classList.remove('hidden');
-            document.getElementById('adminPass').value = '';
-            showToast('✅ Logged out.', 'info');
+        function adminLogout() {
+            adminLoggedIn = false;
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminKey').value = '';
+            showToast('Logged out', 'info');
         }
 
-        // ============================================
-        // DATA HELPERS
-        // ============================================
+        // ===== DATA HELPERS =====
         function getData(key) {
-            try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; }
+            try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
         }
-        function setData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
         function getUsers() { return getData('gkode_users'); }
         function getGigs() { return getData('gkode_gigs'); }
-        function getCompanies() { return getData('gkode_companies'); }
-        function getProducts() { return getData('gkode_products'); }
-        function getOrders() { return getData('gkode_orders'); }
+        function getComplaints() { return getData('gkode_complaints'); }
         function getPayments() { return getData('gkode_payments'); }
-        function getLogs() { return getData('gkode_adminLogs'); }
-        function setLogs(l) { setData('gkode_adminLogs', l); }
-        function getSystemState() {
-            try { return JSON.parse(localStorage.getItem('gkode_systemState') || '{}'); } catch(e) { return {}; }
-        }
-        function setSystemState(s) { localStorage.setItem('gkode_systemState', JSON.stringify(s)); }
 
-        // ============================================
-        // TOAST
-        // ============================================
-        function showToast(msg, type) {
-            type = type || 'info';
-            var container = document.getElementById('toast-container') || (function() {
-                var c = document.createElement('div');
-                c.id = 'toast-container';
-                c.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;';
-                document.body.appendChild(c);
-                return c;
-            })();
-            var t = document.createElement('div');
-            var colors = { success: '#006400', error: '#cc0000', info: '#2196F3', warning: '#ff9800' };
-            t.style.cssText = 'padding:15px 20px;border-radius:10px;color:#fff;margin-bottom:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);animation:slideDown 0.4s ease;background:' + (colors[type] || '#333') + ';pointer-events:auto;';
-            t.textContent = msg;
-            container.appendChild(t);
-            setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; setTimeout(function() { if (t.parentNode) t.remove(); }, 500); }, 3000);
-        }
-
-        // ============================================
-        // LOAD STATS
-        // ============================================
+        // ===== LOAD STATS =====
         function loadStats() {
-            var users = getUsers();
-            var gigs = getGigs();
-            var companies = getCompanies();
-            var orders = getOrders();
-            var payments = getPayments();
+            const users = getUsers();
+            const gigs = getGigs();
+            const payments = getPayments();
             
-            var totalRevenue = 0;
-            var paidUsers = 0;
-            for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus === 'PAID' || users[i].paymentStatus === 'FREE_MODE') paidUsers++;
-            }
-            for (var i = 0; i < payments.length; i++) {
-                if (payments[i].verified) totalRevenue += payments[i].amount;
-            }
+            let totalRevenue = 0;
+            payments.forEach(p => { if (p.verified) totalRevenue += p.amount; });
             
             document.getElementById('statUsers').textContent = users.length;
             document.getElementById('statGigs').textContent = gigs.length;
             document.getElementById('statRevenue').textContent = 'Ksh ' + totalRevenue.toLocaleString();
-            document.getElementById('statPaid').textContent = paidUsers;
-            document.getElementById('statBusiness').textContent = companies.length;
-            document.getElementById('statOrders').textContent = orders.length;
-            updatePaymentStatus();
         }
 
-        // ============================================
-        // PAYMENT KILL SWITCH
-        // ============================================
-        function getPaymentEnabled() {
-            var state = getSystemState();
-            if (state.paymentEnabled === undefined) return true;
-            return state.paymentEnabled;
-        }
-
-        function updatePaymentStatus() {
-            var enabled = getPaymentEnabled();
-            var status = document.getElementById('paymentStatus');
-            var btn = document.getElementById('paymentToggleBtn');
-            if (enabled) {
-                status.textContent = '🔒 ON';
-                status.className = 'status-badge on';
-                btn.textContent = '🔒 TURN PAYMENT OFF';
-                btn.className = 'btn orange';
-            } else {
-                status.textContent = '🔓 OFF (Testing)';
-                status.className = 'status-badge off';
-                btn.textContent = '🔓 TURN PAYMENT ON';
-                btn.className = 'btn green';
-            }
-        }
-
-        function togglePaymentSystem() {
-            var state = getSystemState();
-            state.paymentEnabled = !state.paymentEnabled;
-            state.paymentToggledAt = new Date().toISOString();
-            setSystemState(state);
-            updatePaymentStatus();
-            showToast('✅ Payment: ' + (state.paymentEnabled ? 'ON' : 'OFF'), 'success');
+        // ===== VIEW USERS =====
+        function viewUsers() {
+            const users = getUsers();
+            const output = document.getElementById('output');
             
-            var logs = getLogs();
-            logs.push({ type: 'PAYMENT_TOGGLED', status: state.paymentEnabled ? 'ON' : 'OFF', time: new Date().toISOString() });
-            setLogs(logs);
+            if (users.length === 0) {
+                output.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+            
+            let html = '<h3>👥 All Users (' + users.length + ')</h3>';
+            users.forEach((u, i) => {
+                const status = u.isBanned ? 'banned' : (u.isPaid ? 'paid' : 'unpaid');
+                const statusClass = u.isBanned ? 'badge-banned' : (u.isPaid ? 'badge-paid' : 'badge-unpaid');
+                const statusText = u.isBanned ? '🚫 Banned' : (u.isPaid ? '✅ Paid' : '🟡 Unpaid');
+                
+                html += `
+                    <div class="user-item">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone} | 🆔 ${u.id}</div>
+                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
+                        <div>⭐ ${u.rating || 0} (${u.reviewCount || 0} reviews) | ⚠️ ${u.strikes || 0} strikes</div>
+                        <div><span class="badge ${statusClass}">${statusText}</span></div>
+                        ${!u.isBanned ? `<button class="btn red btn-small" onclick="banUser('${u.phone}')">🚫 Ban</button>` : 
+                                        `<button class="btn green btn-small" onclick="unbanUser('${u.phone}')">✅ Unban</button>`}
+                        <button class="btn red btn-small" onclick="deleteUser('${u.phone}')">🗑️ Delete</button>
+                        <hr>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        // ===== VIEW GIGS =====
+        function viewGigs() {
+            const gigs = getGigs();
+            const output = document.getElementById('output');
+            
+            if (gigs.length === 0) {
+                output.innerHTML = '<p>No gigs found.</p>';
+                return;
+            }
+            
+            let html = '<h3>📋 All Gigs (' + gigs.length + ')</h3>';
+            gigs.forEach(g => {
+                html += `
+                    <div class="user-item">
+                        <div><strong>${g.title}</strong> — ${g.status}</div>
+                        <div>👤 ${g.client} | 🛠️ ${g.skill}</div>
+                        <div>📍 ${g.location} | 💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
+                        ${g.worker ? `<div>👷 Worker: ${g.worker}</div>` : ''}
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(g.createdAt).toLocaleString()}</div>
+                        <button class="btn red btn-small" onclick="deleteGig('${g.id}')">🗑️ Delete</button>
+                        <hr>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        // ===== VIEW COMPLAINTS =====
+        function viewComplaints() {
+            const complaints = getComplaints();
+            const output = document.getElementById('output');
+            
+            if (complaints.length === 0) {
+                output.innerHTML = '<p>No complaints found.</p>';
+                return;
+            }
+            
+            let html = '<h3>🚩 Complaints (' + complaints.length + ')</h3>';
+            complaints.forEach(c => {
+                html += `
+                    <div class="user-item">
+                        <div><strong>${c.reason}</strong> — ${c.resolved ? '✅ Resolved' : '🟡 Pending'}</div>
+                        <div>📝 ${c.details}</div>
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(c.date).toLocaleString()}</div>
+                        <button class="btn green btn-small" onclick="resolveComplaint('${c.id}')">✅ Resolve</button>
+                        <hr>
+                    </div>
+                `;
+            });
+            output.innerHTML = html;
+        }
+
+        // ===== ADMIN ACTIONS =====
+        function banUser(phone) {
+            if (!confirm(`Ban user ${phone}?`)) return;
+            let users = getUsers();
+            users = users.map(u => {
+                if (u.phone === phone) u.isBanned = true;
+                return u;
+            });
+            localStorage.setItem('gkode_users', JSON.stringify(users));
+            showToast('✅ User banned', 'success');
+            viewUsers();
             loadStats();
         }
 
-        // ============================================
-        // VIEW FUNCTIONS
-        // ============================================
-        function viewUsers() {
-            var users = getUsers();
-            var h = '<h3>👥 All Users (' + users.length + ')</h3>';
-            if (users.length === 0) { document.getElementById('output').innerHTML = h + '<p>No users.</p>'; return; }
-            for (var i = 0; i < users.length; i++) {
-                var u = users[i];
-                h += '<div class="card"><h3>' + (u.name || 'Unknown') + '</h3>';
-                h += '<p>📞 ' + (u.phone || 'N/A') + ' | 🆔 ' + (u.id || 'N/A') + '</p>';
-                h += '<p>📍 ' + (u.location || 'N/A') + ' | 👔 ' + (u.profession || 'N/A') + '</p>';
-                h += '<p>📧 ' + (u.email || 'N/A') + '</p>';
-                h += '<p>💳 ' + (u.paymentStatus === 'PAID' ? '✅ Paid' : u.paymentStatus === 'FREE_MODE' ? '🔓 Free' : '❌ Unpaid') + '</p>';
-                h += '<p>⭐ ' + (u.rating || 0) + ' | ⚠️ ' + (u.strikes || 0) + ' strikes</p>';
-                h += '<p>🏷️ Skill: ' + (u.skillLevel || 'Unverified') + ' ' + (u.skillIcon || '❓') + '</p>';
-                h += '<p>📅 Joined: ' + new Date(u.registeredAt).toLocaleDateString() + '</p>';
-                h += '</div>';
-            }
-            document.getElementById('output').innerHTML = h;
+        function unbanUser(phone) {
+            if (!confirm(`Unban user ${phone}?`)) return;
+            let users = getUsers();
+            users = users.map(u => {
+                if (u.phone === phone) u.isBanned = false;
+                return u;
+            });
+            localStorage.setItem('gkode_users', JSON.stringify(users));
+            showToast('✅ User unbanned', 'success');
+            viewUsers();
+            loadStats();
         }
 
-        function viewGigs() {
-            var gigs = getGigs();
-            var h = '<h3>📋 All Gigs (' + gigs.length + ')</h3>';
-            if (gigs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No gigs.</p>'; return; }
-            for (var i = 0; i < gigs.length; i++) {
-                var g = gigs[i];
-                h += '<div class="card"><h3>' + (g.title || 'Untitled') + '</h3>';
-                h += '<p>Status: ' + (g.status || 'Unknown') + ' | Client: ' + (g.client || 'N/A') + '</p>';
-                h += '<p>Skill: ' + (g.skill || 'N/A') + ' | 📍 ' + (g.location || 'N/A') + '</p>';
-                h += '<p>💰 Ksh ' + (g.budgetMin || 0) + ' - ' + (g.budgetMax || 0) + '</p>';
-                if (g.worker) h += '<p>👷 Worker: ' + g.worker + '</p>';
-                h += '<p>📅 Posted: ' + new Date(g.createdAt).toLocaleDateString() + '</p>';
-                h += '</div>';
-            }
-            document.getElementById('output').innerHTML = h;
+        function deleteUser(phone) {
+            if (!confirm(`⚠️ Delete user ${phone} permanently? This cannot be undone!`)) return;
+            let users = getUsers();
+            users = users.filter(u => u.phone !== phone);
+            localStorage.setItem('gkode_users', JSON.stringify(users));
+            showToast('🗑️ User deleted', 'info');
+            viewUsers();
+            loadStats();
         }
 
-        function viewCompanies() {
-            var companies = getCompanies();
-            var h = '<h3>🏢 Businesses (' + companies.length + ')</h3>';
-            if (companies.length === 0) { document.getElementById('output').innerHTML = h + '<p>No businesses.</p>'; return; }
-            for (var i = 0; i < companies.length; i++) {
-                var c = companies[i];
-                h += '<div class="card"><h3>' + (c.verificationBadge || '🟡') + ' ' + (c.name || 'Unnamed') + '</h3>';
-                h += '<p>Type: ' + (c.type || 'N/A') + ' | 📍 ' + (c.location || 'N/A') + '</p>';
-                h += '<p>📞 ' + (c.phone || 'N/A') + '</p>';
-                h += '<p>📜 Reg No: ' + (c.regNo || 'N/A') + '</p>';
-                h += '<p>🔐 Verification: ' + (c.verificationLevel || 'Unverified') + '</p>';
-                h += '<p>💰 Sales: Ksh ' + (c.totalSales || 0).toLocaleString() + '</p>';
-                h += '<p>💳 Commission: Ksh ' + (c.totalCommission || 0).toLocaleString() + '</p>';
-                h += '</div>';
-            }
-            document.getElementById('output').innerHTML = h;
+        function deleteGig(id) {
+            if (!confirm('Delete this gig?')) return;
+            let gigs = getGigs();
+            gigs = gigs.filter(g => g.id !== id);
+            localStorage.setItem('gkode_gigs', JSON.stringify(gigs));
+            showToast('🗑️ Gig deleted', 'info');
+            viewGigs();
+            loadStats();
         }
 
-        function viewLogs() {
-            var logs = getLogs();
-            var h = '<h3>📜 Activity Logs (' + logs.length + ')</h3>';
-            if (logs.length === 0) { document.getElementById('output').innerHTML = h + '<p>No logs.</p>'; return; }
-            var count = 0;
-            for (var i = logs.length - 1; i >= 0 && count < 50; i--, count++) {
-                var l = logs[i];
-                h += '<div class="log"><b>' + (l.type || 'Unknown') + '</b> | ' + (l.user || l.userName || l.phone || 'System') + ' | ' + new Date(l.time || l.timestamp).toLocaleString() + '</div>';
-            }
-            if (logs.length > 50) h += '<p style="color:#888;font-size:11px;text-align:center;">... showing last 50 of ' + logs.length + '</p>';
-            document.getElementById('output').innerHTML = h;
+        function resolveComplaint(id) {
+            let complaints = getComplaints();
+            complaints = complaints.map(c => {
+                if (c.id === id) c.resolved = true;
+                return c;
+            });
+            localStorage.setItem('gkode_complaints', JSON.stringify(complaints));
+            showToast('✅ Complaint resolved', 'success');
+            viewComplaints();
         }
 
-        function viewFinancialReport() {
-            var users = getUsers();
-            var gigs = getGigs();
-            var companies = getCompanies();
-            var orders = getOrders();
-            var payments = getPayments();
-            
-            var paidUsers = 0;
-            for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus === 'PAID' || users[i].paymentStatus === 'FREE_MODE') paidUsers++;
-            }
-            
-            var totalRevenue = 0;
-            var userFees = 0;
-            var businessFees = 0;
-            var listingFees = 0;
-            for (var i = 0; i < payments.length; i++) {
-                if (payments[i].verified) {
-                    totalRevenue += payments[i].amount;
-                    if (payments[i].type === 'user_fee') userFees += payments[i].amount;
-                    else if (payments[i].type === 'business_fee') businessFees += payments[i].amount;
-                    else if (payments[i].type === 'listing_fee') listingFees += payments[i].amount;
-                }
-            }
-            
-            var totalSales = 0;
-            var totalCommission = 0;
-            for (var i = 0; i < orders.length; i++) {
-                totalSales += orders[i].subtotal || 0;
-                totalCommission += orders[i].commission || 0;
-            }
-            
-            var h = '<h3>📊 FINANCIAL REPORT</h3>';
-            h += '<div class="card"><h3>👥 Users</h3><p>Total: ' + users.length + ' | Paid: ' + paidUsers + '</p></div>';
-            h += '<div class="card"><h3>📋 Gigs</h3><p>Total: ' + gigs.length + '</p></div>';
-            h += '<div class="card"><h3>🏢 Businesses</h3><p>Total: ' + companies.length + '</p></div>';
-            h += '<div class="card"><h3>💰 Revenue</h3>';
-            h += '<p>Total: Ksh ' + totalRevenue.toLocaleString() + '</p>';
-            h += '<p>User Fees: Ksh ' + userFees.toLocaleString() + '</p>';
-            h += '<p>Business Fees: Ksh ' + businessFees.toLocaleString() + '</p>';
-            h += '<p>Listing Fees: Ksh ' + listingFees.toLocaleString() + '</p>';
-            h += '<p>Commission (3%): Ksh ' + totalCommission.toLocaleString() + '</p>';
-            h += '<p>Sales: Ksh ' + totalSales.toLocaleString() + '</p></div>';
-            document.getElementById('output').innerHTML = h;
-        }
-
-        // ============================================
-        // BACKUP SYSTEM
-        // ============================================
+        // ===== BACKUP =====
         function downloadBackup() {
-            var data = {
-                app: 'G-KODE',
-                version: '3.0',
+            const data = {
                 exportedAt: new Date().toISOString(),
-                systemState: getSystemState(),
                 users: getUsers(),
                 gigs: getGigs(),
-                companies: getCompanies(),
-                products: getProducts(),
-                orders: getOrders(),
-                payments: getPayments(),
-                logs: getLogs()
+                complaints: getComplaints(),
+                payments: getPayments()
             };
-            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            var a = document.createElement('a');
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = 'gkode-backup-' + new Date().toISOString().split('T')[0] + '.json';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showToast('✅ Backup downloaded!', 'success');
+            showToast('✅ Backup downloaded', 'success');
         }
 
-        function viewAllBackups() {
-            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            var h = '<h3>📂 Backups (' + backups.length + ')</h3>';
-            if (backups.length === 0) { document.getElementById('output').innerHTML = h + '<p>No backups.</p>'; return; }
-            for (var i = backups.length - 1; i >= 0; i--) {
-                var b = backups[i];
-                h += '<div class="log">📅 ' + new Date(b.timestamp).toLocaleString() + ' | ID: ' + b.id.slice(-6) + '</div>';
-            }
-            document.getElementById('output').innerHTML = h;
-        }
-
-        // ============================================
-        // SECURITY FUNCTIONS
-        // ============================================
-        function systemHealthCheck() {
-            var users = getUsers();
-            var gigs = getGigs();
-            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            var payments = getPayments();
-            var totalRevenue = 0;
-            for (var i = 0; i < payments.length; i++) {
-                if (payments[i].verified) totalRevenue += payments[i].amount;
-            }
-            var msg = '🏥 SYSTEM HEALTH\n\n';
-            msg += '👥 Users: ' + users.length + '\n';
-            msg += '📋 Gigs: ' + gigs.length + '\n';
-            msg += '📂 Backups: ' + backups.length + '\n';
-            msg += '💰 Revenue: Ksh ' + totalRevenue.toLocaleString() + '\n';
-            msg += '💾 Storage: ' + Math.round(JSON.stringify(localStorage).length / 1024) + ' KB\n';
-            msg += '✅ System is healthy.';
-            alert(msg);
-        }
-
-        function emergencyRecovery() {
-            if (!confirm('🚨 EMERGENCY RECOVERY\n\nThis will restore from latest backup. Continue?')) return;
-            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            if (backups.length === 0) { alert('❌ No backups found.'); return; }
-            var latest = backups[backups.length - 1];
-            if (!confirm('Restore from backup dated: ' + new Date(latest.timestamp).toLocaleString())) return;
+        // ===== CLEAR ALL =====
+        function clearAllData() {
+            if (!confirm('🔥 WARNING: This will DELETE ALL data! Continue?')) return;
+            if (!confirm('FINAL WARNING: This cannot be undone! Continue?')) return;
             
-            var data = latest.data;
-            localStorage.setItem('gkode_users', JSON.stringify(data.users || []));
-            localStorage.setItem('gkode_gigs', JSON.stringify(data.gigs || []));
-            localStorage.setItem('gkode_companies', JSON.stringify(data.companies || []));
-            localStorage.setItem('gkode_products', JSON.stringify(data.products || []));
-            localStorage.setItem('gkode_orders', JSON.stringify(data.orders || []));
-            localStorage.setItem('gkode_payments', JSON.stringify(data.payments || []));
-            localStorage.setItem('gkode_adminLogs', JSON.stringify(data.logs || []));
+            // Save backup first
+            downloadBackup();
             
-            alert('✅ System restored from backup!');
-            location.reload();
-        }
-
-        function detectFraud() {
-            var users = getUsers();
-            var warnings = [];
-            for (var i = 0; i < users.length; i++) {
-                if (users[i].strikes >= 4) {
-                    warnings.push('⚠️ ' + users[i].name + ' has ' + users[i].strikes + ' strikes');
-                }
-                if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE' && users[i].status === 'Active') {
-                    warnings.push('⚠️ ' + users[i].name + ' is active but unpaid');
-                }
-                if (!users[i].isVerified) {
-                    warnings.push('⚠️ ' + users[i].name + ' is not verified');
-                }
-            }
-            if (warnings.length === 0) {
-                alert('✅ No fraud warnings detected.');
-            } else {
-                alert('🚨 FRAUD WARNINGS:\n\n' + warnings.join('\n'));
-            }
-        }
-
-        function legalComplianceCheck() {
-            var users = getUsers();
-            var issues = [];
-            for (var i = 0; i < users.length; i++) {
-                if (!users[i].userAgreementAccepted) {
-                    issues.push('⚠️ ' + users[i].name + ' has not accepted user agreement');
-                }
-            }
-            if (issues.length === 0) {
-                alert('✅ All users are compliant.');
-            } else {
-                alert('⚖️ COMPLIANCE ISSUES:\n\n' + issues.join('\n'));
-            }
-        }
-
-        function generateDailyLegalLog() {
-            var users = getUsers();
-            var today = new Date().toISOString().split('T')[0];
-            var log = {
-                date: today,
-                totalUsers: users.length,
-                unpaidUsers: 0,
-                unverifiedUsers: 0,
-                agreementsAccepted: 0
-            };
-            for (var i = 0; i < users.length; i++) {
-                if (users[i].paymentStatus !== 'PAID' && users[i].paymentStatus !== 'FREE_MODE') log.unpaidUsers++;
-                if (!users[i].isVerified) log.unverifiedUsers++;
-                if (users[i].userAgreementAccepted) log.agreementsAccepted++;
-            }
-            var msg = '📋 DAILY LEGAL LOG - ' + today + '\n\n';
-            msg += '👥 Total Users: ' + log.totalUsers + '\n';
-            msg += '❌ Unpaid Users: ' + log.unpaidUsers + '\n';
-            msg += '❌ Unverified Users: ' + log.unverifiedUsers + '\n';
-            msg += '📜 Agreements Accepted: ' + log.agreementsAccepted + '\n';
-            msg += '✅ Log generated successfully.';
-            alert(msg);
-            
-            var logs = getLogs();
-            logs.push({ type: 'DAILY_LEGAL_LOG', data: log, time: new Date().toISOString() });
-            setLogs(logs);
-        }
-
-        // ============================================
-        // DANGER ZONE
-        // ============================================
-        function clearAll() {
-            if (!confirm('🔥 WARNING: This will DELETE ALL data!\n\nAre you sure?')) return;
-            if (!confirm('FINAL WARNING: This CANNOT be undone! Continue?')) return;
-            
-            var backupData = {
-                app: 'G-KODE',
-                version: '3.0',
-                exportedAt: new Date().toISOString(),
-                users: getUsers(),
-                gigs: getGigs(),
-                companies: getCompanies(),
-                products: getProducts(),
-                orders: getOrders(),
-                payments: getPayments(),
-                logs: getLogs()
-            };
-            var backups = JSON.parse(localStorage.getItem('gkode_backups') || '[]');
-            backups.push({ id: Date.now().toString(), timestamp: new Date().toISOString(), data: backupData });
-            localStorage.setItem('gkode_backups', JSON.stringify(backups));
-            
+            // Clear all
             localStorage.removeItem('gkode_users');
             localStorage.removeItem('gkode_gigs');
-            localStorage.removeItem('gkode_companies');
-            localStorage.removeItem('gkode_products');
-            localStorage.removeItem('gkode_orders');
+            localStorage.removeItem('gkode_complaints');
             localStorage.removeItem('gkode_payments');
-            localStorage.removeItem('gkode_adminLogs');
+            localStorage.removeItem('gkode_professions');
+            localStorage.removeItem('gkode_categories');
             
-            alert('✅ All data cleared. Backup saved.');
-            location.reload();
+            showToast('✅ All data cleared. Backup saved.', 'success');
+            loadStats();
         }
 
-        // ============================================
-        // INIT
-        // ============================================
-        console.log('🔐 G-KODE Admin Panel loaded.');
-        console.log('📊 Use ADMIN_KEY: MAYA');
+        // ===== TOAST =====
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container') || (() => {
+                const c = document.createElement('div');
+                c.id = 'toast-container';
+                c.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;';
+                document.body.appendChild(c);
+                return c;
+            })();
+            
+            const colors = {
+                success: '#006400',
+                error: '#cc0000',
+                info: '#2196F3',
+                warning: '#ff9800'
+            };
+            
+            const toast = document.createElement('div');
+            toast.style.cssText = `background:${colors[type] || '#333'};color:#fff;padding:12px 20px;border-radius:10px;margin-bottom:8px;animation:slideDown 0.3s ease;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        // ===== INIT =====
+        console.log('🔐 G-KODE Admin Panel loaded');
+        console.log('📊 Admin Key: MAYA');
     </script>
 </body>
 </html>
