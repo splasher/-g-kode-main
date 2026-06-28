@@ -630,3 +630,67 @@ select {
 ::-webkit-scrollbar-thumb:hover {
     background: #004d00;
 }
+/* ===== NEW: ROTATING BACKGROUND IMAGES ===== */
+/* These styles add the background feature without changing your existing design */
+
+.background-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -2; /* Places it behind everything */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: bgRotate 45s infinite; /* Smoother, 45-second cycle */
+    opacity: 0.8; /* Ensures it's not too bright */
+}
+
+/* Gentle overlay for readability */
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8); /* White with 80% opacity */
+    z-index: -1; /* Sits between the images and your content */
+}
+
+/* The image rotation animation */
+@keyframes bgRotate {
+    0%   { background-image: url('images/bg-main-1.jpg'); }
+    8%   { background-image: url('images/bg-main-1.jpg'); }
+    10%  { background-image: url('images/bg-main-2.jpg'); }
+    18%  { background-image: url('images/bg-main-2.jpg'); }
+    20%  { background-image: url('images/bg-main-3.jpg'); }
+    28%  { background-image: url('images/bg-main-3.jpg'); }
+    30%  { background-image: url('images/bg-main-4.jpg'); }
+    38%  { background-image: url('images/bg-main-4.jpg'); }
+    40%  { background-image: url('images/bg-main-5.jpg'); }
+    48%  { background-image: url('images/bg-main-5.jpg'); }
+    50%  { background-image: url('images/bg-main-6.jpg'); }
+    58%  { background-image: url('images/bg-main-6.jpg'); }
+    60%  { background-image: url('images/bg-main-7.jpg'); }
+    68%  { background-image: url('images/bg-main-7.jpg'); }
+    70%  { background-image: url('images/bg-main-8.jpg'); }
+    78%  { background-image: url('images/bg-main-8.jpg'); }
+    80%  { background-image: url('images/bg-main-9.jpg'); }
+    88%  { background-image: url('images/bg-main-9.jpg'); }
+    90%  { background-image: url('images/bg-main-10.jpg'); }
+    98%  { background-image: url('images/bg-main-10.jpg'); }
+    100% { background-image: url('images/bg-main-1.jpg'); }
+}
+
+/* Fallback if images don't load */
+.background-wrapper::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f5f5f5; /* Matches your body background */
+    z-index: -1;
+}
