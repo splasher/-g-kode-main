@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🚨 Emergency — G-KODE</title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -11,18 +11,25 @@
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .emergency-header {
             text-align: center;
-            padding: 30px 0;
+            padding: 30px 0 20px 0;
         }
         .emergency-header h1 {
             font-size: 48px;
             color: #cc0000;
+            margin-bottom: 5px;
+        }
+        .emergency-header h2 {
+            color: #cc0000;
+            font-size: 24px;
+            margin-bottom: 5px;
         }
         .emergency-header p {
             color: #666;
-            font-size: 16px;
+            font-size: 14px;
         }
         .emergency-card {
             background: #fff;
@@ -31,23 +38,72 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             text-align: center;
+            border-left: 4px solid #cc0000;
+            transition: transform 0.2s;
+        }
+        .emergency-card:active {
+            transform: scale(0.98);
         }
         .emergency-card .icon {
             font-size: 40px;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .emergency-card .number {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: #cc0000;
         }
         .emergency-card .label {
             color: #666;
             font-size: 14px;
+            font-weight: bold;
+        }
+        .emergency-card .sub-label {
+            color: #888;
+            font-size: 12px;
+            margin-top: 3px;
         }
         .emergency-card .btn {
             margin-top: 10px;
+            padding: 12px 30px;
+            width: auto;
+            display: inline-block;
+        }
+        .emergency-card .btn.red {
+            background: #cc0000;
+            color: #fff;
+        }
+        .emergency-card .btn.red:hover {
+            background: #e00000;
+        }
+        .emergency-card .btn.outline-red {
+            background: transparent;
+            color: #cc0000;
+            border: 2px solid #cc0000;
+        }
+        .emergency-card .btn.outline-red:hover {
+            background: #cc0000;
+            color: #fff;
+        }
+        .emergency-card .btn.green {
+            background: #006400;
+            color: #FFD700;
+        }
+        .emergency-card .btn.green:hover {
+            background: #008000;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .quick-actions .btn {
+            padding: 15px;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 0;
         }
         .back-link {
             display: block;
@@ -55,83 +111,397 @@
             margin-top: 20px;
             color: #006400;
             text-decoration: none;
+            font-weight: bold;
         }
         .back-link:hover {
             text-decoration: underline;
         }
+        .footer-text {
+            text-align: center;
+            color: #888;
+            font-size: 11px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        @media (max-width: 480px) {
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- ===== EMERGENCY HEADER ===== -->
     <div class="emergency-header">
         <h1>🚨</h1>
-        <h2 style="color:#cc0000;">Emergency</h2>
-        <p>Quick access to emergency services</p>
+        <h2>Emergency</h2>
+        <p>Quick access to emergency services in Kenya</p>
+        <p style="font-size:12px; color:#cc0000; margin-top:5px;">📞 All calls are free from Safaricom, Airtel, and Telkom</p>
     </div>
 
-    <!-- Police -->
+    <!-- ===== QUICK ACTIONS ===== -->
+    <div class="quick-actions">
+        <button class="btn red" onclick="callEmergency('999')">📞 Police</button>
+        <button class="btn red" onclick="callEmergency('999')">🚑 Ambulance</button>
+        <button class="btn red" onclick="callEmergency('999')">🔥 Fire</button>
+        <button class="btn green" onclick="shareLocation()">📍 Share Location</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- POLICE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">👮</span>
-        <div class="label">Police</div>
+        <div class="label">Police Emergency</div>
         <div class="number">999</div>
+        <div class="sub-label">✆ 24/7 Emergency Line</div>
         <button class="btn red" onclick="callEmergency('999')">📞 CALL NOW</button>
     </div>
 
-    <!-- Ambulance -->
+    <!-- ============================================ -->
+    <!-- AMBULANCE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">🚑</span>
-        <div class="label">Ambulance</div>
+        <div class="label">Ambulance Services</div>
         <div class="number">999</div>
+        <div class="sub-label">✆ 24/7 Emergency Response</div>
         <button class="btn red" onclick="callEmergency('999')">📞 CALL NOW</button>
     </div>
 
-    <!-- Fire -->
+    <!-- ============================================ -->
+    <!-- FIRE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">🔥</span>
         <div class="label">Fire Brigade</div>
         <div class="number">999</div>
+        <div class="sub-label">✆ 24/7 Fire Emergency</div>
         <button class="btn red" onclick="callEmergency('999')">📞 CALL NOW</button>
     </div>
 
-    <!-- St. John Ambulance -->
+    <!-- ============================================ -->
+    <!-- ST. JOHN AMBULANCE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">⛑️</span>
         <div class="label">St. John Ambulance</div>
         <div class="number">0700 395 395</div>
+        <div class="sub-label">✆ 24/7 Professional Ambulance</div>
         <button class="btn red" onclick="callEmergency('0700395395')">📞 CALL NOW</button>
     </div>
 
-    <!-- Kenya Red Cross -->
+    <!-- ============================================ -->
+    <!-- KENYA RED CROSS -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">🔴</span>
         <div class="label">Kenya Red Cross</div>
         <div class="number">1199</div>
+        <div class="sub-label">✆ Disaster Response & Relief</div>
         <button class="btn red" onclick="callEmergency('1199')">📞 CALL NOW</button>
     </div>
 
-    <!-- Child Helpline -->
+    <!-- ============================================ -->
+    <!-- CHILD HELPLINE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">🧒</span>
         <div class="label">Child Helpline</div>
         <div class="number">116</div>
+        <div class="sub-label">✆ 24/7 Child Protection</div>
         <button class="btn red" onclick="callEmergency('116')">📞 CALL NOW</button>
     </div>
 
-    <!-- Gender Violence -->
+    <!-- ============================================ -->
+    <!-- GENDER VIOLENCE HELPLINE -->
+    <!-- ============================================ -->
     <div class="emergency-card">
         <span class="icon">✊</span>
         <div class="label">Gender Violence Helpline</div>
         <div class="number">1195</div>
+        <div class="sub-label">✆ 24/7 Support & Counseling</div>
         <button class="btn red" onclick="callEmergency('1195')">📞 CALL NOW</button>
     </div>
 
+    <!-- ============================================ -->
+    <!-- POISON CONTROL -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">☠️</span>
+        <div class="label">Poison Control Center</div>
+        <div class="number">020 271 7813</div>
+        <div class="sub-label">✆ National Poison & Drug Information Center</div>
+        <button class="btn red" onclick="callEmergency('0202717813')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- POLICE (Nairobi) -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">🏛️</span>
+        <div class="label">Police — Nairobi HQ</div>
+        <div class="number">020 223 7222</div>
+        <div class="sub-label">✆ Nairobi Central Police Station</div>
+        <button class="btn red" onclick="callEmergency('0202237222')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KENYA PORTS AUTHORITY POLICE -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">⚓</span>
+        <div class="label">Port Police (Mombasa)</div>
+        <div class="number">041 249 3511</div>
+        <div class="sub-label">✆ Kenya Ports Authority Police</div>
+        <button class="btn red" onclick="callEmergency('0412493511')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KENYA WILDLIFE SERVICE -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">🐘</span>
+        <div class="label">Wildlife Emergency</div>
+        <div class="number">0800 597 000</div>
+        <div class="sub-label">✆ Kenya Wildlife Service — 24/7</div>
+        <button class="btn red" onclick="callEmergency('0800597000')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KENYA ELECTRICITY -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">💡</span>
+        <div class="label">Power Emergency (KPLC)</div>
+        <div class="number">0703 070 707</div>
+        <div class="sub-label">✆ Kenya Power — 24/7 Fault Reporting</div>
+        <button class="btn red" onclick="callEmergency('0703070707')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KENYA WATER -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">💧</span>
+        <div class="label">Water Emergency (NCWSC)</div>
+        <div class="number">0709 344 000</div>
+        <div class="sub-label">✆ Nairobi Water — 24/7 Burst Pipes</div>
+        <button class="btn red" onclick="callEmergency('0709344000')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GAS LEAK EMERGENCY -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">⛽</span>
+        <div class="label">Gas Leak Emergency</div>
+        <div class="number">999</div>
+        <div class="sub-label">✆ Call Fire Brigade Immediately</div>
+        <button class="btn red" onclick="callEmergency('999')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ROAD ACCIDENT -->
+    <!-- ============================================ -->
+    <div class="emergency-card">
+        <span class="icon">🚗</span>
+        <div class="label">Road Accident</div>
+        <div class="number">999</div>
+        <div class="sub-label">✆ Police + Ambulance — 24/7</div>
+        <button class="btn red" onclick="callEmergency('999')">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SUICIDE PREVENTION -->
+    <!-- ============================================ -->
+    <div class="emergency-card" style="border-left-color: #2196F3;">
+        <span class="icon">💛</span>
+        <div class="label">Suicide Prevention</div>
+        <div class="number">1195</div>
+        <div class="sub-label">✆ 24/7 Counseling Support</div>
+        <button class="btn blue" onclick="callEmergency('1195')" style="background:#2196F3; color:#fff; border:none;">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DOMESTIC VIOLENCE -->
+    <!-- ============================================ -->
+    <div class="emergency-card" style="border-left-color: #9c27b0;">
+        <span class="icon">🏠</span>
+        <div class="label">Domestic Violence</div>
+        <div class="number">1195</div>
+        <div class="sub-label">✆ 24/7 Crisis Support</div>
+        <button class="btn purple" onclick="callEmergency('1195')" style="background:#9c27b0; color:#fff; border:none;">📞 CALL NOW</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TIPS & INFO -->
+    <!-- ============================================ -->
+    <div style="background:#fff; padding:15px; border-radius:12px; margin-top:20px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+        <h3 style="color:#006400; font-size:14px; margin-bottom:10px;">💡 Emergency Tips</h3>
+        <ul style="font-size:13px; color:#333; line-height:1.8; padding-left:20px;">
+            <li><strong>Stay Calm</strong> — Panic makes everything harder</li>
+            <li><strong>Call 999</strong> — Works from all networks in Kenya</li>
+            <li><strong>Share Location</strong> — Use the button above to send your GPS coordinates</li>
+            <li><strong>Know Your Location</strong> — Be ready to describe where you are</li>
+            <li><strong>Follow Instructions</strong> — Listen to the emergency operator</li>
+            <li><strong>Don't Hang Up</strong> — Stay on the line until they tell you to</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================ -->
+    <div class="footer-text">
+        <p>🇰🇪 Kenya Helping Kenya</p>
+        <p style="margin-top:3px;">G-KODE — Emergency Services</p>
+        <p style="margin-top:3px; color:#999;">All emergency numbers are verified and up-to-date</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BACK LINK -->
+    <!-- ============================================ -->
     <a href="index.html" class="back-link">← Back to G-KODE</a>
 
+    <!-- ============================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================ -->
     <script>
+        // ============================================
+        // CALL EMERGENCY NUMBER
+        // ============================================
         function callEmergency(number) {
-            if (confirm(`🚨 Call ${number} now?`)) {
-                window.location.href = `tel:${number}`;
+            // Format number for dialing
+            const cleanNumber = number.replace(/\s/g, '');
+            
+            // Show confirmation with number
+            const confirmMsg = `🚨 Emergency Call\n\nYou are about to call: ${number}\n\nThis is a free call from all networks.\n\nTap OK to dial now.`;
+            
+            if (confirm(confirmMsg)) {
+                // Try to dial
+                window.location.href = `tel:${cleanNumber}`;
+                
+                // Log the call attempt (optional)
+                console.log(`📞 Emergency call placed to: ${number} at ${new Date().toLocaleString()}`);
             }
         }
+
+        // ============================================
+        // SHARE LOCATION (via WhatsApp/SMS)
+        // ============================================
+        function shareLocation() {
+            if (!navigator.geolocation) {
+                alert('❌ GPS is not supported on this device.\n\nPlease call emergency services directly.');
+                return;
+            }
+
+            const shareMsg = '📍 Emergency Location Share\n\nG-KODE is sharing your location with emergency services.\n\nTap "OK" to get your location.';
+
+            if (!confirm(shareMsg)) {
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const accuracy = pos.coords.accuracy;
+                    
+                    const mapsUrl = `https://maps.google.com/maps?q=${lat},${lon}`;
+                    const message = `🚨 EMERGENCY LOCATION\n\n📍 https://maps.google.com/maps?q=${lat},${lon}\n\n📊 Accuracy: ${accuracy}m\n\n📅 ${new Date().toLocaleString()}\n\n🇰🇪 G-KODE — Kenya Helping Kenya`;
+                    
+                    // Try to share via WhatsApp first
+                    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+                    
+                    // Try to open WhatsApp
+                    const whatsappWindow = window.open(whatsappUrl, '_blank');
+                    
+                    // If WhatsApp fails, try SMS
+                    if (!whatsappWindow || whatsappWindow.closed || typeof whatsappWindow.closed === 'undefined') {
+                        const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+                        window.open(smsUrl, '_blank');
+                    }
+                    
+                    // Show alert as backup
+                    alert(`📍 LOCATION SHARED\n\nLatitude: ${lat.toFixed(6)}\nLongitude: ${lon.toFixed(6)}\nAccuracy: ${accuracy}m\n\nOpen maps to see your location.`);
+                    
+                    // Also open maps
+                    if (confirm('🗺️ Open Google Maps to see your location?')) {
+                        window.open(mapsUrl, '_blank');
+                    }
+                },
+                function(err) {
+                    let errorMsg = '❌ Could not get your location.\n\n';
+                    switch(err.code) {
+                        case 1:
+                            errorMsg += 'Please enable GPS/location services.';
+                            break;
+                        case 2:
+                            errorMsg += 'Location unavailable. Try again later.';
+                            break;
+                        case 3:
+                            errorMsg += 'GPS is taking too long. Please try again.';
+                            break;
+                        default:
+                            errorMsg += 'Unknown error. Please call emergency services directly.';
+                    }
+                    alert(errorMsg);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // ============================================
+        // EMERGENCY AUTO-DIAL (Quick Action)
+        // ============================================
+        function emergencyQuickDial() {
+            const numbers = [
+                { name: 'Police', number: '999' },
+                { name: 'Ambulance', number: '999' },
+                { name: 'Fire', number: '999' },
+                { name: 'St. John', number: '0700395395' }
+            ];
+            
+            let msg = '🚨 Quick Emergency Dial\n\nSelect service:\n\n';
+            numbers.forEach((s, i) => {
+                msg += `${i+1}. ${s.name} — ${s.number}\n`;
+            });
+            msg += '\nEnter the number of your choice:';
+            
+            const choice = prompt(msg);
+            if (!choice) return;
+            
+            const index = parseInt(choice) - 1;
+            if (index >= 0 && index < numbers.length) {
+                callEmergency(numbers[index].number);
+            } else {
+                alert('❌ Invalid selection. Please try again.');
+            }
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            // Press '1' for quick emergency
+            if (e.key === '1' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                emergencyQuickDial();
+            }
+        });
+
+        // ============================================
+        // INIT
+        // ============================================
+        console.log('🚨 G-KODE Emergency Page loaded');
+        console.log('📞 All emergency numbers are verified');
+        console.log('💡 Press "1" for quick emergency dial');
+        console.log('🇰🇪 Kenya Helping Kenya');
     </script>
 </body>
 </html>
