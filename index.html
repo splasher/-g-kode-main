@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>G-KODE — Kenya Helping Kenya</title>
     
-    <!-- ===== GOOGLE MAPS API ===== -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places,geometry"></script>
-    
-    <!-- ===== SUPABASE ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- ===== EMAILJS ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://your-api.com">
+    <link rel="preconnect" href="https://your-supabase.com">
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -25,7 +20,7 @@
     <div id="toast-container"></div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: WELCOME -->
+    <!-- SCREEN: WELCOME (RESET BUTTON REMOVED) -->
     <!-- ============================================ -->
     <div id="welcome" class="screen active">
         <img src="https://i.postimg.cc/zfQY4nKc/GKODE-2.png" alt="G-KODE" style="width:180px; display:block; margin:50px auto 5px auto;">
@@ -42,60 +37,93 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER (FIXED) -->
+    <!-- SCREEN: REGISTER (WITH OTP + CAMERA) -->
     <!-- ============================================ -->
     <div id="register" class="screen">
-        <h2>📝 Create Account</h2>
+        <h2>Create Account</h2>
         <p style="color:#666; font-size:14px; margin-bottom:15px;">Join G-KODE — Kenya Helping Kenya 🇰🇪</p>
         
         <form id="registerForm" onsubmit="register(event)">
-            <input type="text" id="regName" placeholder="Full Name (as on ID) *" required>
-            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required>
-            <input type="text" id="regID" placeholder="National ID Number (8 digits) *" required pattern="[0-9]{8}">
-            <input type="email" id="regEmail" placeholder="Email Address *" required>
-            
+            <!-- Full Name -->
+            <label for="regName" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Full Name *</label>
+            <input type="text" id="regName" placeholder="Full Name *" required />
+
+            <!-- Phone -->
+            <label for="regPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Phone Number *</label>
+            <input type="tel" id="regPhone" placeholder="Phone Number (07XX XXX XXX) *" required />
+
+            <!-- Email -->
+            <label for="regEmail" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Email Address *</label>
+            <input type="email" id="regEmail" placeholder="Email Address *" required />
+
+            <!-- ID -->
+            <label for="regID" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Number *</label>
+            <input type="text" id="regID" placeholder="National ID Number (8 digits) *" required pattern="[0-9]{8}" />
+
+            <!-- Password -->
+            <label for="regPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Password *</label>
             <div style="position:relative;">
-                <input type="password" id="regPassword" placeholder="Password (6+ chars, mix letters & numbers) *" minlength="6" style="padding-right:50px;" required>
+                <input type="password" id="regPassword" placeholder="Password (6+ chars, mix letters & numbers) *" required minlength="6" style="padding-right:50px;" />
                 <span onclick="togglePassword('regPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
             </div>
+            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 6+ characters with both letters and numbers</small>
+
+            <!-- Confirm Password -->
+            <label for="regConfirmPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Confirm Password *</label>
             <div style="position:relative;">
-                <input type="password" id="regConfirmPassword" placeholder="Confirm Password *" minlength="6" style="padding-right:50px;" required>
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password *" required minlength="6" style="padding-right:50px;" />
                 <span onclick="togglePassword('regConfirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
             </div>
-            <small style="color:#cc0000; display:block; margin-top:-10px; margin-bottom:10px;">⚠️ Required: 6+ characters with both letters and numbers</small>
-            
-            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required>
-            
-            <select id="regProfession" onchange="checkProfession()" style="width:100%; padding:14px; margin-bottom:5px; border:2px solid #ddd; border-radius:10px; font-size:16px;" required>
-                <option value="">-- Select Your Profession * --</option>
+
+            <!-- Location -->
+            <label for="regLocation" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Location *</label>
+            <input type="text" id="regLocation" placeholder="Location (e.g., Kayole, Nairobi) *" required />
+
+            <!-- Profession -->
+            <label for="regProfession" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profession *</label>
+            <select id="regProfession" required onchange="checkProfession()">
+                <option value="">-- Select Profession * --</option>
             </select>
-            
             <div id="otherProfessionBox" style="display:none;">
-                <input type="text" id="regOtherProfession" placeholder="Please specify your profession *">
+                <label for="regOtherProfession" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Specify Profession *</label>
+                <input type="text" id="regOtherProfession" placeholder="Specify profession *" />
                 <small style="color:#006400; display:block; margin-top:-10px; margin-bottom:10px;">Your new profession will be saved for future users</small>
             </div>
-            
-            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)">
+
+            <!-- Skills -->
+            <label for="regSkills" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Additional Skills (optional)</label>
+            <input type="text" id="regSkills" placeholder="Additional skills (comma separated, optional)" />
             <small style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">Optional — add other skills you have</small>
-            
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">📸 Profile Photo *</label>
-            <input type="file" id="regPhoto" accept="image/*" style="padding:10px;" required>
+
+            <!-- Profile Photo with Camera -->
+            <label for="regPhoto" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profile Photo *</label>
+            <div style="display:flex;gap:5px;margin-bottom:10px;">
+                <input type="file" id="regPhoto" accept="image/*" style="flex:1;padding:10px;" required capture="environment" />
+                <button type="button" onclick="openCamera('regPhoto')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;white-space:nowrap;">📸 Camera</button>
+            </div>
             <small style="color:#888; display:block; margin-top:-10px; margin-bottom:10px;">Take a clear photo of your face</small>
-            
-            <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">🆔 Scan National ID (Front) *</label>
-            <input type="file" id="regIDScan" accept="image/*" style="padding:10px;" required>
+
+            <!-- ID Scan with Camera -->
+            <label for="regIDScan" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID Scan (Front) *</label>
+            <div style="display:flex;gap:5px;margin-bottom:10px;">
+                <input type="file" id="regIDScan" accept="image/*" style="flex:1;padding:10px;" required capture="environment" />
+                <button type="button" onclick="openCamera('regIDScan')" style="background:#006400;color:#FFD700;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;white-space:nowrap;">📸 Camera</button>
+            </div>
             <small style="color:#888; display:block; margin-top:-10px; margin-bottom:10px;">Upload a clear photo of your ID</small>
-            
+
+            <!-- Email Verification Notice -->
             <div style="background:#e8f5e9; padding:15px; border-radius:10px; margin-bottom:15px;">
                 <p style="font-size:13px; color:#006400; margin-bottom:8px;">📧 Email Verification</p>
-                <p style="font-size:12px; color:#666;">We'll send a verification code to your email.</p>
+                <p style="font-size:12px; color:#666;">We'll send a verification code to your email. You'll need to enter it to complete registration.</p>
             </div>
-            
+
+            <!-- Terms Checkbox -->
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
                 <input type="checkbox" id="regTerms" required style="width:auto; margin:0;">
                 <label for="regTerms" style="font-size:13px; color:#666;">I agree to the <a href="#" onclick="showScreen('terms'); return false;" style="color:#006400;">Terms of Use</a> and <a href="#" onclick="showScreen('privacy'); return false;" style="color:#006400;">Privacy Policy</a></label>
             </div>
-            
+
+            <!-- OTP Section -->
             <div id="otpSection" style="display:none; background:#fff3e0; padding:15px; border-radius:10px; margin-bottom:15px;">
                 <p style="font-weight:bold; color:#006400;">📧 Verification Code Sent</p>
                 <p style="font-size:13px; color:#666; margin-bottom:10px;">Enter the 6-digit code sent to your email:</p>
@@ -104,87 +132,100 @@
                     <button type="button" class="btn green" onclick="verifyOtp()" style="width:auto; padding:14px 20px; margin:0;">VERIFY</button>
                 </div>
                 <button type="button" class="btn outline" onclick="resendOtp()" style="font-size:12px; padding:8px; margin-top:5px;">🔄 Resend Code</button>
+                <small style="color:#888; display:block; margin-top:5px;">Check your spam folder if you don't see the email</small>
             </div>
-            
+
             <button type="submit" class="btn green" id="registerBtn">REGISTER</button>
+            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
         </form>
-        
-        <p class="form-link" onclick="showScreen('login')">Already have an account? <span>Login</span></p>
-        <p class="back-link" onclick="showScreen('welcome')">← Back</p>
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: LOGIN (FIXED) -->
+    <!-- SCREEN: LOGIN (SHARED PHONE BUTTON REMOVED) -->
     <!-- ============================================ -->
     <div id="login" class="screen">
-        <h2>🔐 Login</h2>
+        <h2>Login</h2>
         <p style="color:#666; font-size:14px; margin-bottom:15px;">Welcome back! 🇰🇪</p>
         
         <form id="loginForm" onsubmit="login(event)">
-            <input type="tel" id="loginPhone" placeholder="Phone Number" required>
-            
+            <label for="loginPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Phone Number *</label>
+            <input type="tel" id="loginPhone" placeholder="Phone Number" required />
+
+            <label for="loginPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Password *</label>
             <div style="position:relative;">
-                <input type="password" id="loginPassword" placeholder="Password" style="padding-right:50px;" required>
+                <input type="password" id="loginPassword" placeholder="Password" required style="padding-right:50px;" />
                 <span onclick="togglePassword('loginPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
             </div>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" id="rememberMe" style="width:auto; margin:0;">
-                    <label for="rememberMe" style="font-size:13px; color:#666;">Remember me</label>
-                </div>
+
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+                <input type="checkbox" id="rememberMe" style="width:auto; margin:0;">
+                <label for="rememberMe" style="font-size:13px; color:#666;">Remember me</label>
             </div>
-            
+
+            <button type="button" class="btn outline" onclick="showScreen('resetPassword')" style="background:none; color:#cc0000; border:none; font-size:14px; margin-bottom:10px;">Forgot Password?</button>
             <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
+            <button type="button" class="btn outline" onclick="showScreen('welcome')">BACK</button>
         </form>
-        
-        <p class="form-link" onclick="showScreen('register')">Don't have an account? <span>Register</span></p>
-        <p class="form-link" onclick="showScreen('resetPassword')" style="color:#cc0000;">🔑 Forgot Password?</p>
-        <button class="btn outline" onclick="showScreen('welcome')" style="margin-top:5px;">BACK</button>
-        <button class="btn outline" onclick="startFresh()" style="background:none; color:#cc0000; border:1px solid #cc0000; font-size:12px; margin-top:10px;">🆕 New User on Shared Phone? Tap Here</button>
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: RESET PASSWORD -->
+    <!-- SCREEN: RESET PASSWORD (WITH EMAIL OTP) -->
     <!-- ============================================ -->
     <div id="resetPassword" class="screen">
         <h2>🔑 Reset Password</h2>
         <p style="font-size:14px; color:#666; margin-bottom:15px;">Forgot your password? Verify your identity to reset it.</p>
         
         <form id="resetForm" onsubmit="sendResetCode(event)">
+            <!-- Step 1: Email Verification -->
             <div id="resetStep1">
                 <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 1: Verify Your Email</p>
-                <input type="email" id="resetEmail" placeholder="Registered Email Address *" required>
+                <label for="resetEmail" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Email Address *</label>
+                <input type="email" id="resetEmail" placeholder="Registered Email Address *" required />
                 <p style="font-size:12px; color:#888; margin-bottom:10px;">We'll send a reset code to your registered email</p>
                 <button type="submit" class="btn green" id="sendResetBtn">📧 SEND RESET CODE</button>
             </div>
             
+            <!-- Step 2: Identity Verification -->
             <div id="resetStep2" style="display:none;">
                 <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 2: Verify Your Identity</p>
                 <div style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:10px;">
                     <p style="font-size:12px; color:#006400;">✅ Reset code sent to <span id="resetEmailDisplay"></span></p>
                 </div>
-                <input type="text" id="resetOtp" placeholder="Enter 6-digit reset code *" maxlength="6" required>
-                <input type="tel" id="resetPhone" placeholder="Registered Phone Number *" required>
-                <input type="text" id="resetID" placeholder="National ID Number *" required>
-                <input type="text" id="resetProfession" placeholder="Your Registered Profession *" required>
-                <input type="text" id="resetLocation" placeholder="Your Registered Location *" required>
+                <label for="resetOtp" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Reset Code *</label>
+                <input type="text" id="resetOtp" placeholder="Enter 6-digit reset code *" maxlength="6" required />
+                
+                <label for="resetPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Registered Phone *</label>
+                <input type="tel" id="resetPhone" placeholder="Registered Phone Number *" required />
+                
+                <label for="resetID" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">National ID *</label>
+                <input type="text" id="resetID" placeholder="National ID Number *" required />
+                
+                <label for="resetProfession" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Profession *</label>
+                <input type="text" id="resetProfession" placeholder="Your Registered Profession *" required />
+                
+                <label for="resetLocation" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Location *</label>
+                <input type="text" id="resetLocation" placeholder="Your Registered Location *" required />
+                
                 <small style="color:#cc0000; display:block; margin-bottom:10px;">⚠️ All fields must match your registration details exactly.</small>
                 <button type="button" class="btn green" onclick="verifyResetIdentity()">VERIFY IDENTITY</button>
                 <button type="button" class="btn outline" onclick="resendResetCode()" style="font-size:12px; padding:8px; margin-top:5px;">🔄 Resend Code</button>
             </div>
             
+            <!-- Step 3: New Password -->
             <div id="resetStep3" style="display:none;">
                 <p style="font-size:13px; color:#006400; font-weight:bold; margin-bottom:8px;">Step 3: Set New Password</p>
                 <div style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:10px;">
                     <p style="font-size:12px; color:#006400;">✅ Identity Verified</p>
                 </div>
+                <label for="newPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">New Password *</label>
                 <div style="position:relative;">
-                    <input type="password" id="newPassword" placeholder="New Password (6+ chars, letters & numbers) *" minlength="6" style="padding-right:50px;" required>
+                    <input type="password" id="newPassword" placeholder="New Password (6+ chars, letters & numbers) *" minlength="6" style="padding-right:50px;" required />
                     <span onclick="togglePassword('newPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
                 </div>
+                
+                <label for="confirmPassword" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Confirm Password *</label>
                 <div style="position:relative;">
-                    <input type="password" id="confirmPassword" placeholder="Confirm New Password *" style="padding-right:50px;" required>
+                    <input type="password" id="confirmPassword" placeholder="Confirm New Password *" style="padding-right:50px;" required />
                     <span onclick="togglePassword('confirmPassword', this)" style="position:absolute; right:15px; top:14px; cursor:pointer; font-size:20px;">👁️</span>
                 </div>
                 <button type="button" class="btn green" onclick="resetPassword()">RESET PASSWORD</button>
@@ -215,29 +256,12 @@
     <!-- SCREEN: HOME -->
     <!-- ============================================ -->
     <div id="home" class="screen">
-        <div class="header">
-            <h2>📍 Gigs Near You</h2>
-            <button class="btn" style="padding:5px 12px; font-size:11px; width:auto; background:#2196F3; color:#fff;" onclick="updateWorkerLocation()">📡 Update Location</button>
+        <h2>📍 Gigs Near You</h2>
+        <div class="tab-container">
+            <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN</button>
+            <button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button>
         </div>
-        
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <button id="tabOpen" onclick="switchTab('open')" style="flex:1; padding:10px; background:#006400; color:#FFD700; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🟢 OPEN</button>
-            <button id="tabTaken" onclick="switchTab('taken')" style="flex:1; padding:10px; background:#ddd; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🔴 TAKEN</button>
-        </div>
-        
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <select id="proximityRadius" onchange="loadGigs()" style="flex:1; padding:8px; border:2px solid #ddd; border-radius:8px; font-size:13px;">
-                <option value="5">📍 Within 5km</option>
-                <option value="10" selected>📍 Within 10km</option>
-                <option value="20">📍 Within 20km</option>
-                <option value="50">📍 Within 50km</option>
-                <option value="0">📍 Anywhere</option>
-            </select>
-            <button class="btn" style="padding:8px 15px; width:auto; background:#2196F3; color:#fff;" onclick="showOnMap()">🗺️ Map</button>
-        </div>
-        
-        <div id="gigsList"></div>
-        
+        <div id="gigsList"><div style="padding:40px 0;text-align:center;color:#666;">Loading gigs...</div></div>
         <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
         <button class="btn outline" onclick="logout()">LOGOUT</button>
     </div>
@@ -246,48 +270,60 @@
     <!-- SCREEN: POST GIG -->
     <!-- ============================================ -->
     <div id="postGig" class="screen">
-        <h2>📋 Post a Gig</h2>
-        <input type="text" id="gigTitle" placeholder="Title (e.g., Leaking Sink)" required>
-        <input type="text" id="gigSkill" placeholder="Skill Needed (e.g., Plumbing)" required>
-        <input type="text" id="gigLocation" placeholder="Location" required>
-        
-        <label style="color:#006400; font-weight:bold; display:block; margin-bottom:5px;">📍 Share Your Exact Location</label>
-        <button type="button" class="btn outline" onclick="captureGigLocation()" style="margin-bottom:10px;">📍 CAPTURE MY LOCATION</button>
-        <input type="text" id="gigGPSLat" style="display:none;">
-        <input type="text" id="gigGPSLon" style="display:none;">
-        <small id="gigLocationStatus" style="color:#666; display:block; margin-top:-10px; margin-bottom:10px;">No location captured yet</small>
-        
-        <select id="gigUrgency">
-            <option value="Normal">Normal</option>
-            <option value="Urgent">Urgent</option>
-            <option value="Emergency">🚨 Emergency</option>
-        </select>
-        
-        <input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)" required>
-        <input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)" required>
-        <textarea id="gigDesc" placeholder="Describe the job..."></textarea>
-        
-        <button class="btn green" onclick="postGig()">POST GIG</button>
-        <button class="btn outline" onclick="showScreen('home')">BACK</button>
+        <h2>Post a Gig</h2>
+        <form id="postGigForm" onsubmit="postGig(event)">
+            <label for="gigTitle" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Title *</label>
+            <input type="text" id="gigTitle" placeholder="Title *" required />
+
+            <label for="gigSkill" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Skill Needed *</label>
+            <input type="text" id="gigSkill" placeholder="Skill Needed *" required />
+
+            <label for="gigLocation" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Location *</label>
+            <input type="text" id="gigLocation" placeholder="Location *" required />
+
+            <button type="button" class="btn outline" onclick="captureGigLocation()">📍 CAPTURE MY LOCATION</button>
+            <input type="hidden" id="gigGPSLat" />
+            <input type="hidden" id="gigGPSLon" />
+            <small id="gigLocationStatus" style="color:#666;display:block;margin-top:-10px;margin-bottom:10px;">No location captured</small>
+
+            <label for="gigUrgency" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Urgency *</label>
+            <select id="gigUrgency" required>
+                <option value="Normal">Normal</option>
+                <option value="Urgent">Urgent</option>
+                <option value="Emergency">Emergency</option>
+            </select>
+
+            <label for="gigBudgetMin" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Budget Min (Ksh) *</label>
+            <input type="number" id="gigBudgetMin" placeholder="Budget Min (Ksh)" required min="1" />
+
+            <label for="gigBudgetMax" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Budget Max (Ksh) *</label>
+            <input type="number" id="gigBudgetMax" placeholder="Budget Max (Ksh)" required min="1" />
+
+            <label for="gigDesc" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Description *</label>
+            <textarea id="gigDesc" placeholder="Description..." required></textarea>
+
+            <button type="submit" class="btn green" id="postGigBtn">POST GIG</button>
+            <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
+        </form>
     </div>
 
     <!-- ============================================ -->
     <!-- SCREEN: CHAT -->
     <!-- ============================================ -->
     <div id="chat" class="screen">
-        <div class="chat-header">
-            <h3>💬 Chat</h3>
-            <button class="btn green" style="padding:5px 10px; font-size:11px; width:auto;" onclick="shareLiveLocation()">📍 Share Location</button>
-            <button class="btn green" style="padding:5px 10px; font-size:11px; width:auto; background:#2196F3; color:#fff;" onclick="navigateToClient()">🧭 Navigate</button>
-            <button class="btn" style="padding:5px 10px; font-size:11px; width:auto; background:#ddd; color:#000;" onclick="showScreen('home')">✕</button>
-        </div>
-        <div id="chatMessages" style="background:#f5f5f5; border-radius:10px; padding:10px; height:250px; overflow-y:auto; margin-bottom:10px;"></div>
-        <input type="text" id="chatGigId" style="display:none;">
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="chatInput" placeholder="Type your message..." style="flex:1;">
-            <button class="btn green" onclick="sendMessage()" style="width:auto; padding:14px 20px;">SEND</button>
-        </div>
-        <button class="btn outline" onclick="showScreen('home')" style="margin-top:5px;">BACK TO HOME</button>
+        <h2>💬 Chat</h2>
+        <p id="chatPartner" style="color:#006400;font-weight:bold;margin-bottom:10px;"></p>
+        <div id="chatMessages" class="chat-messages"></div>
+        <input type="hidden" id="chatGigId" />
+        <form id="chatForm" onsubmit="sendMessage(event)">
+            <div style="display:flex;gap:5px;">
+                <input type="text" id="chatInput" placeholder="Type message..." required style="flex:1;" />
+                <button type="submit" class="btn green" style="width:auto;padding:14px 20px;">SEND</button>
+            </div>
+        </form>
+        <button type="button" class="btn outline" onclick="shareLiveLocation()">📍 SHARE LOCATION</button>
+        <button type="button" class="btn green" onclick="navigateToClient()">🧭 NAVIGATE TO CLIENT</button>
+        <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
     <!-- ============================================ -->
@@ -295,14 +331,18 @@
     <!-- ============================================ -->
     <div id="review" class="screen">
         <h2>⭐ Rate & Review</h2>
-        <select id="reviewRating">
+        <label for="reviewRating" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Rating *</label>
+        <select id="reviewRating" required>
             <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
             <option value="4">⭐⭐⭐⭐ (Good)</option>
             <option value="3">⭐⭐⭐ (Okay)</option>
             <option value="2">⭐⭐ (Poor)</option>
             <option value="1">⭐ (Terrible)</option>
         </select>
+        
+        <label for="reviewText" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Review</label>
         <textarea id="reviewText" placeholder="Write your review..."></textarea>
+        
         <button class="btn green" onclick="submitReview()">SUBMIT REVIEW</button>
         <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
@@ -313,8 +353,9 @@
     <div id="complaint" class="screen">
         <h2>🚩 File a Complaint</h2>
         <p style="font-size:14px; color:#666;">This adds a strike to the user's account. 6 strikes = disqualification.</p>
-        <input type="text" id="complaintUserId" style="display:none;">
-        <select id="complaintReason">
+        <input type="text" id="complaintUserId" style="display:none;" />
+        <label for="complaintReason" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Reason *</label>
+        <select id="complaintReason" required>
             <option value="">Select reason...</option>
             <option value="No-show">No-show — Worker didn't arrive</option>
             <option value="Poor quality">Poor quality work</option>
@@ -327,8 +368,11 @@
             <option value="Off-platform deal">Tried to take deal off G-KODE</option>
             <option value="Other">Other</option>
         </select>
-        <textarea id="complaintDetails" placeholder="Describe what happened in detail..."></textarea>
-        <label style="font-size:12px; color:#cc0000;">⚠️ False complaints will result in a strike against YOU.</label>
+        
+        <label for="complaintDetails" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Details *</label>
+        <textarea id="complaintDetails" placeholder="Describe what happened in detail..." required></textarea>
+        
+        <small style="color:#cc0000; display:block; margin-bottom:10px;">⚠️ False complaints will result in a strike against YOU.</small>
         <button class="btn green" onclick="submitComplaint()">SUBMIT COMPLAINT</button>
         <button class="btn outline" onclick="showScreen('home')">CANCEL</button>
     </div>
@@ -338,20 +382,18 @@
     <!-- ============================================ -->
     <div id="profile" class="screen">
         <h2>👤 My Profile</h2>
-        <div style="text-align:center;">
-            <img id="profilePhoto" src="https://via.placeholder.com/100" style="width:100px; height:100px; border-radius:50%; margin-bottom:10px;">
+        <div class="text-center">
+            <img id="profilePhoto" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23006400'/%3E%3Ctext x='50' y='55' text-anchor='middle' fill='%23FFD700' font-size='30' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E" style="width:100px;height:100px;border-radius:50%;margin-bottom:10px;object-fit:cover;" />
             <h3 id="profileName"></h3>
             <p id="profilePhone"></p>
             <p id="profileLocation"></p>
             <p id="profileProfession"></p>
             <p id="profileSkills"></p>
             <p id="profileStatus"></p>
-            <hr style="margin:20px 0;">
+            <hr style="margin:20px 0;" />
             <h3 style="color:#006400;">My Gigs</h3>
             <div id="myGigsList"></div>
-            <hr style="margin:20px 0;">
-            <button class="btn outline" onclick="updateWorkerLocation()">📍 Update My Location</button>
-            <button class="btn outline" onclick="showProximityProfile()">📊 My Proximity Profile</button>
+            <hr style="margin:20px 0;" />
             <button class="btn outline" onclick="showPaymentScreen()">💳 Pay Ksh 300 (One-Time)</button>
             <button class="btn outline" onclick="showScreen('companyRegister')">🏢 Register Business</button>
             <button class="btn outline" onclick="showScreen('companyDashboard')">📊 My Business</button>
@@ -359,8 +401,13 @@
             <button class="btn outline" onclick="showScreen('terms')">📄 Terms of Use</button>
             <button class="btn outline" onclick="showScreen('privacy')">🔒 Privacy Policy</button>
             <button class="btn outline" onclick="showScreen('guide')">📖 How It Works</button>
-            <button class="btn outline" onclick="window.open('admin.html','_blank')">🔐 Admin Panel</button>
-            <button class="btn red" onclick="logout()">LOGOUT</button>
+            <hr style="margin:20px 0;" />
+            <button class="btn outline" onclick="exportUserData()" style="font-size:12px;">📤 Export Data</button>
+            <button class="btn red" onclick="deleteAccount()" style="font-size:12px;">🗑️ Delete Account</button>
+            <div id="adminAccessBtn" style="display:none;margin-top:10px;">
+                <button class="btn outline" onclick="openAdminPanel()" style="background:#FFD700;color:#006400;border:2px solid #FFD700;font-weight:bold;">🔐 Admin</button>
+            </div>
+            <button class="btn red" onclick="logout()" style="margin-top:10px;">LOGOUT</button>
         </div>
     </div>
 
@@ -369,32 +416,41 @@
     <!-- ============================================ -->
     <div id="companyRegister" class="screen">
         <h2>🏢 Register Business</h2>
-        <input type="text" id="compName" placeholder="Business Name *">
-        <select id="compType" style="width:100%; padding:14px; margin-bottom:15px; border:2px solid #ddd; border-radius:10px; font-size:16px;">
-            <option value="">-- Business Type * --</option>
-            <option value="School">School</option>
-            <option value="Church">Church / Religious</option>
-            <option value="Government">Government Office</option>
-            <option value="Construction">Construction Project</option>
-            <option value="Hardware">Hardware Shop</option>
-            <option value="Beauty Supply">Beauty Supply Shop</option>
-            <option value="Food Supply">Food / Catering Supply</option>
-            <option value="Electronics">Electronics Shop</option>
-            <option value="Agrovet">Agrovet / Farm Supply</option>
-            <option value="Auto Parts">Auto Parts / Garage</option>
-            <option value="Retail">Retail Shop</option>
-            <option value="Wholesale">Wholesale Supplier</option>
-            <option value="Hospital">Hospital / Clinic</option>
-            <option value="Hotel">Hotel / Restaurant</option>
-            <option value="Other">Other Business</option>
-        </select>
-        <input type="text" id="compRegNo" placeholder="Business Registration No. (Optional)">
-        <input type="text" id="compLocation" placeholder="Business Location *">
-        <input type="tel" id="compPhone" placeholder="Business Phone *">
-        <input type="text" id="compEmail" placeholder="Business Email (Optional)">
-        <textarea id="compDesc" placeholder="Describe your business..."></textarea>
-        <button class="btn green" onclick="registerCompany()">REGISTER BUSINESS</button>
-        <button class="btn outline" onclick="showScreen('home')">BACK</button>
+        <form id="companyForm" onsubmit="registerCompany(event)">
+            <label for="compName" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Business Name *</label>
+            <input type="text" id="compName" placeholder="Business Name *" required />
+
+            <label for="compType" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Business Type *</label>
+            <select id="compType" required>
+                <option value="">-- Business Type --</option>
+                <option value="School">School</option>
+                <option value="Church">Church</option>
+                <option value="Government">Government</option>
+                <option value="Hardware">Hardware</option>
+                <option value="Retail">Retail</option>
+                <option value="Hospital">Hospital</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="compRegNo" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Registration No *</label>
+            <input type="text" id="compRegNo" placeholder="Registration No *" required />
+
+            <label for="compLocation" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Location *</label>
+            <input type="text" id="compLocation" placeholder="Location *" required />
+
+            <label for="compPhone" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Phone *</label>
+            <input type="tel" id="compPhone" placeholder="Phone *" required />
+
+            <label for="compEmail" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Email (optional)</label>
+            <input type="email" id="compEmail" placeholder="Email" />
+
+            <label for="compDesc" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Description</label>
+            <textarea id="compDesc" placeholder="Description"></textarea>
+
+            <button type="submit" class="btn green" id="compRegisterBtn">REGISTER</button>
+            <button type="button" class="btn outline" onclick="showScreen('home')">BACK</button>
+        </form>
     </div>
 
     <!-- ============================================ -->
@@ -402,15 +458,15 @@
     <!-- ============================================ -->
     <div id="companyDashboard" class="screen">
         <h2>🏢 My Business</h2>
-        <div id="compInfo" style="background:#e8f5e9; padding:15px; border-radius:10px; margin-bottom:15px;"></div>
-        <div style="display:flex; gap:5px; margin-bottom:15px;">
-            <button onclick="showCompTab('products')" id="tabProducts" style="flex:1; padding:10px; background:#006400; color:#FFD700; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">📦 Products</button>
-            <button onclick="showCompTab('orders')" id="tabOrders" style="flex:1; padding:10px; background:#ddd; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">📋 Orders</button>
-            <button onclick="showCompTab('sales')" id="tabSales" style="flex:1; padding:10px; background:#ddd; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">💰 Sales</button>
+        <div id="compInfo" style="background:#e8f5e9;padding:15px;border-radius:10px;margin-bottom:15px;"></div>
+        <div class="tab-container">
+            <button onclick="showCompTab('products')" id="tabProducts" class="active">📦 Products</button>
+            <button onclick="showCompTab('orders')" id="tabOrders">📋 Orders</button>
+            <button onclick="showCompTab('sales')" id="tabSales">💰 Sales</button>
         </div>
         <div id="compTabContent"></div>
         <button class="btn green" onclick="showScreen('addProduct')">➕ ADD PRODUCT</button>
-        <button class="btn outline" onclick="showScreen('home')">BACK TO HOME</button>
+        <button class="btn outline" onclick="showScreen('home')">BACK</button>
     </div>
 
     <!-- ============================================ -->
@@ -418,31 +474,42 @@
     <!-- ============================================ -->
     <div id="addProduct" class="screen">
         <h2>📦 Add Product</h2>
-        <input type="text" id="prodName" placeholder="Product Name *">
-        <select id="prodCategory" style="width:100%; padding:14px; margin-bottom:15px; border:2px solid #ddd; border-radius:10px; font-size:16px;">
-            <option value="">-- Category * --</option>
-            <option value="Cement">Cement</option>
-            <option value="Pipes">Pipes & Fittings</option>
-            <option value="Taps">Taps & Valves</option>
-            <option value="Electrical">Electrical (Wires, Sockets, Bulbs)</option>
-            <option value="Paint">Paint & Brushes</option>
-            <option value="Timber">Timber & Wood</option>
-            <option value="Steel">Steel & Metal</option>
-            <option value="Tiles">Tiles & Flooring</option>
-            <option value="Roofing">Roofing Materials</option>
-            <option value="Tools">Tools & Equipment</option>
-            <option value="Beauty">Beauty Products</option>
-            <option value="Food">Food Supplies</option>
-            <option value="Seeds">Seeds & Fertilizer</option>
-            <option value="Auto">Auto Parts</option>
-            <option value="Other">Other</option>
-        </select>
-        <input type="text" id="prodUnit" placeholder="Unit (e.g., kg, piece, bag, litre) *">
-        <input type="number" id="prodPrice" placeholder="Price per unit (Ksh) *" step="0.01" min="1">
-        <input type="number" id="prodStock" placeholder="Quantity in stock *" min="1">
-        <textarea id="prodDesc" placeholder="Product description..."></textarea>
-        <button class="btn green" onclick="addProduct()">ADD PRODUCT</button>
-        <button class="btn outline" onclick="showScreen('companyDashboard')">BACK</button>
+        <form id="productForm" onsubmit="addProduct(event)">
+            <label for="prodName" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Product Name *</label>
+            <input type="text" id="prodName" placeholder="Product Name *" required />
+
+            <label for="prodCategory" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Category *</label>
+            <select id="prodCategory" required>
+                <option value="">-- Category --</option>
+                <option value="Cement">Cement</option>
+                <option value="Pipes">Pipes</option>
+                <option value="Taps">Taps</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Paint">Paint</option>
+                <option value="Timber">Timber</option>
+                <option value="Steel">Steel</option>
+                <option value="Tiles">Tiles</option>
+                <option value="Tools">Tools</option>
+                <option value="Beauty">Beauty</option>
+                <option value="Food">Food</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="prodUnit" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Unit *</label>
+            <input type="text" id="prodUnit" placeholder="Unit (kg, piece, etc) *" required />
+
+            <label for="prodPrice" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Price (Ksh) *</label>
+            <input type="number" id="prodPrice" placeholder="Price (Ksh) *" required step="0.01" min="1" />
+
+            <label for="prodStock" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Stock *</label>
+            <input type="number" id="prodStock" placeholder="Stock *" required min="1" />
+
+            <label for="prodDesc" style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">Description</label>
+            <textarea id="prodDesc" placeholder="Description"></textarea>
+
+            <button type="submit" class="btn green" id="addProductBtn">ADD</button>
+            <button type="button" class="btn outline" onclick="showScreen('companyDashboard')">BACK</button>
+        </form>
     </div>
 
     <!-- ============================================ -->
@@ -450,22 +517,8 @@
     <!-- ============================================ -->
     <div id="marketplace" class="screen">
         <h2>🛒 Marketplace</h2>
-        <select id="marketCategory" onchange="loadMarketplace()" style="width:100%; padding:14px; margin-bottom:15px; border:2px solid #ddd; border-radius:10px; font-size:16px;">
+        <select id="marketCategory" onchange="loadMarketplace()">
             <option value="All">All Categories</option>
-            <option value="Cement">Cement</option>
-            <option value="Pipes">Pipes & Fittings</option>
-            <option value="Taps">Taps & Valves</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Paint">Paint</option>
-            <option value="Timber">Timber</option>
-            <option value="Steel">Steel</option>
-            <option value="Tiles">Tiles</option>
-            <option value="Roofing">Roofing</option>
-            <option value="Tools">Tools</option>
-            <option value="Beauty">Beauty</option>
-            <option value="Food">Food</option>
-            <option value="Seeds">Seeds</option>
-            <option value="Auto">Auto Parts</option>
         </select>
         <div id="marketplaceList"></div>
         <button class="btn outline" onclick="showScreen('home')">BACK</button>
@@ -523,32 +576,14 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: MAP VIEW -->
-    <!-- ============================================ -->
-    <div id="mapView" class="screen">
-        <div class="header">
-            <h2>🗺️ Map View</h2>
-            <button class="btn" style="padding:5px 12px; font-size:11px; width:auto; background:#ddd; color:#000;" onclick="showScreen('home')">✕</button>
-        </div>
-        <div id="mapContainer" style="height:70vh; border-radius:10px; overflow:hidden; background:#e8e8e8; position:relative;">
-            <div id="map" style="height:100%; width:100%;"></div>
-            <div id="mapLoading" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#888;">
-                <div class="loader"></div>
-                <p style="margin-top:10px;">Loading map...</p>
-            </div>
-        </div>
-        <button class="btn outline" onclick="showScreen('home')" style="margin-top:10px;">BACK TO GIGS</button>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- BOTTOM NAVIGATION -->
+    <!-- BOTTOM NAV -->
     <!-- ============================================ -->
     <div id="bottomNav" class="bottom-nav hidden">
-        <button onclick="showScreen('home')">🏠 Home</button>
-        <button onclick="showScreen('postGig')">➕ Post</button>
-        <button onclick="showScreen('marketplace')">🛒 Shop</button>
-        <button onclick="showScreen('complaint')">⚠️</button>
-        <button onclick="showScreen('profile')">👤 You</button>
+        <button onclick="showScreen('home')"><span class="icon">🏠</span>Home</button>
+        <button onclick="showScreen('postGig')"><span class="icon">➕</span>Post</button>
+        <button onclick="showScreen('marketplace')"><span class="icon">🛒</span>Shop</button>
+        <button onclick="showScreen('complaint')"><span class="icon">⚠️</span>Report</button>
+        <button onclick="showScreen('profile')"><span class="icon">👤</span>You</button>
     </div>
 
     <!-- ============================================ -->
