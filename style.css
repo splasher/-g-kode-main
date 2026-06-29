@@ -624,3 +624,91 @@ select {
     max-height: 70vh;
   }
 }
+/* ===== BUSINESS SECTION ===== */
+.business-doc-upload {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+}
+
+.business-doc-upload label {
+  font-weight: bold;
+  color: #006400;
+}
+
+.verification-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.verification-badge.pending {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.verification-badge.verified {
+  background: #e8f5e9;
+  color: #006400;
+}
+
+.verification-badge.rejected {
+  background: #ffebee;
+  color: #cc0000;
+}
+
+.verification-badge.expired {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.business-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.business-stats .stat {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.business-stats .stat .number {
+  font-size: 20px;
+  font-weight: bold;
+  color: #006400;
+}
+
+.business-stats .stat .label {
+  font-size: 11px;
+  color: #888;
+}
+
+.business-documents {
+  margin: 10px 0;
+}
+
+.business-documents .doc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.business-documents .doc-item .status {
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .business-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

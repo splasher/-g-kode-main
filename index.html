@@ -1390,11 +1390,16 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: COMPANY REGISTER -->
+    <!-- SCREEN: COMPANY REGISTER (COMPLETE) -->
     <!-- ============================================ -->
     <div id="companyRegister" class="screen">
       <h2>🏢 Register Business</h2>
-      <form id="companyForm" onsubmit="registerCompany(event)">
+      <p style="color: #666; font-size: 14px; margin-bottom: 15px">
+        Register your business to sell on G-KODE Marketplace
+      </p>
+
+      <form id="companyForm" onsubmit="registerBusiness(event)">
+        <!-- ===== BASIC BUSINESS INFO ===== -->
         <label
           for="compName"
           style="
@@ -1423,15 +1428,22 @@
           >Business Type *</label
         >
         <select id="compType" required>
-          <option value="">-- Business Type --</option>
-          <option value="School">School</option>
-          <option value="Church">Church</option>
-          <option value="Government">Government</option>
-          <option value="Hardware">Hardware</option>
-          <option value="Retail">Retail</option>
-          <option value="Hospital">Hospital</option>
-          <option value="Hotel">Hotel</option>
-          <option value="Other">Other</option>
+          <option value="">-- Select Business Type --</option>
+          <option value="sole_proprietor">Sole Proprietor</option>
+          <option value="partnership">Partnership</option>
+          <option value="private_ltd">Private Limited Company (LTD)</option>
+          <option value="public_ltd">Public Limited Company (PLC)</option>
+          <option value="llp">Limited Liability Partnership (LLP)</option>
+          <option value="sacco">Co-operative Society (SACCO)</option>
+          <option value="ngo">Non-Governmental Organization (NGO)</option>
+          <option value="school">School</option>
+          <option value="church">Church / Religious</option>
+          <option value="government">Government Office</option>
+          <option value="hardware">Hardware Shop</option>
+          <option value="retail">Retail Shop</option>
+          <option value="hospital">Hospital / Clinic</option>
+          <option value="hotel">Hotel / Restaurant</option>
+          <option value="other">Other Business</option>
         </select>
 
         <label
@@ -1442,12 +1454,12 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Registration No *</label
+          >Registration Number *</label
         >
         <input
           type="text"
           id="compRegNo"
-          placeholder="Registration No *"
+          placeholder="Registration Number (e.g., C/12345/2024) *"
           required
         />
 
@@ -1459,15 +1471,47 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Location *</label
+          >Business Location *</label
         >
         <input
           type="text"
           id="compLocation"
-          placeholder="Location *"
+          placeholder="Business Location (e.g., Nairobi CBD) *"
           required
         />
 
+        <!-- ===== BUSINESS GPS LOCATION ===== -->
+        <label
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >📍 Business GPS Location</label
+        >
+        <button
+          type="button"
+          class="btn outline"
+          onclick="captureBusinessLocation()"
+          style="margin-bottom: 10px"
+        >
+          📍 CAPTURE LOCATION
+        </button>
+        <input type="hidden" id="compGPSLat" />
+        <input type="hidden" id="compGPSLon" />
+        <small
+          id="compLocationStatus"
+          style="
+            color: #666;
+            display: block;
+            margin-top: -10px;
+            margin-bottom: 10px;
+          "
+          >No location captured yet</small
+        >
+
+        <!-- ===== CONTACT DETAILS ===== -->
         <label
           for="compPhone"
           style="
@@ -1476,9 +1520,14 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Phone *</label
+          >Business Phone *</label
         >
-        <input type="tel" id="compPhone" placeholder="Phone *" required />
+        <input
+          type="tel"
+          id="compPhone"
+          placeholder="Business Phone *"
+          required
+        />
 
         <label
           for="compEmail"
@@ -1488,10 +1537,424 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Email (optional)</label
+          >Business Email *</label
         >
-        <input type="email" id="compEmail" placeholder="Email" />
+        <input
+          type="email"
+          id="compEmail"
+          placeholder="Business Email *"
+          required
+        />
 
+        <label
+          for="compWebsite"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Business Website (optional)</label
+        >
+        <input
+          type="url"
+          id="compWebsite"
+          placeholder="https://yourbusiness.com"
+        />
+
+        <!-- ===== BUSINESS STATS ===== -->
+        <label
+          for="compYears"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Years in Operation *</label
+        >
+        <input
+          type="number"
+          id="compYears"
+          placeholder="Years in Operation *"
+          required
+          min="0"
+          step="1"
+        />
+
+        <label
+          for="compEmployees"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Number of Employees</label
+        >
+        <input
+          type="number"
+          id="compEmployees"
+          placeholder="Number of Employees (optional)"
+          min="0"
+          step="1"
+        />
+
+        <!-- ===== BUSINESS LOGO ===== -->
+        <label
+          for="compLogo"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Business Logo *</label
+        >
+        <div style="display: flex; gap: 5px; margin-bottom: 5px">
+          <input
+            type="file"
+            id="compLogo"
+            accept="image/*"
+            style="flex: 1; padding: 10px"
+            required
+          />
+          <button
+            type="button"
+            onclick="openCamera('compLogo')"
+            style="
+              background: #006400;
+              color: #ffd700;
+              border: none;
+              padding: 10px 15px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: bold;
+              white-space: nowrap;
+            "
+          >
+            📸 Camera
+          </button>
+        </div>
+        <div
+          id="logoPreviewContainer"
+          style="display: none; margin-bottom: 10px"
+        >
+          <img
+            id="logoPreview"
+            style="
+              width: 60px;
+              height: 60px;
+              border-radius: 8px;
+              object-fit: cover;
+              border: 2px solid #006400;
+            "
+          />
+          <button
+            type="button"
+            onclick="
+              clearImage('compLogo', 'logoPreview', 'logoPreviewContainer')
+            "
+            style="
+              background: #cc0000;
+              color: #fff;
+              border: none;
+              padding: 2px 10px;
+              border-radius: 50%;
+              cursor: pointer;
+              margin-left: 5px;
+            "
+          >
+            ✕
+          </button>
+        </div>
+        <small style="color: #888; display: block; margin-bottom: 10px"
+          >Upload a clear business logo</small
+        >
+
+        <!-- ===== DOCUMENT UPLOADS ===== -->
+        <div
+          style="
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+          "
+        >
+          <p style="font-weight: bold; color: #006400">📄 Required Documents</p>
+          <p style="font-size: 12px; color: #666; margin-bottom: 10px">
+            Upload clear photos or PDFs of each document
+          </p>
+
+          <!-- Certificate of Incorporation -->
+          <label
+            for="compCertificate"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Certificate of Incorporation/Registration *</label
+          >
+          <div style="display: flex; gap: 5px; margin-bottom: 5px">
+            <input
+              type="file"
+              id="compCertificate"
+              accept="image/*,.pdf"
+              style="flex: 1; padding: 10px"
+              required
+            />
+            <button
+              type="button"
+              onclick="openCamera('compCertificate')"
+              style="
+                background: #006400;
+                color: #ffd700;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                white-space: nowrap;
+              "
+            >
+              📸 Camera
+            </button>
+          </div>
+          <div
+            id="certPreviewContainer"
+            style="display: none; margin-bottom: 10px"
+          >
+            <img
+              id="certPreview"
+              style="
+                width: 60px;
+                height: 60px;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 2px solid #006400;
+              "
+            />
+            <button
+              type="button"
+              onclick="
+                clearImage(
+                  'compCertificate',
+                  'certPreview',
+                  'certPreviewContainer',
+                )
+              "
+              style="
+                background: #cc0000;
+                color: #fff;
+                border: none;
+                padding: 2px 10px;
+                border-radius: 50%;
+                cursor: pointer;
+                margin-left: 5px;
+              "
+            >
+              ✕
+            </button>
+          </div>
+          <small style="color: #888; display: block; margin-bottom: 10px"
+            >Upload your business registration certificate</small
+          >
+
+          <!-- KRA PIN Certificate -->
+          <label
+            for="compKRA"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >KRA PIN Certificate *</label
+          >
+          <div style="display: flex; gap: 5px; margin-bottom: 5px">
+            <input
+              type="file"
+              id="compKRA"
+              accept="image/*,.pdf"
+              style="flex: 1; padding: 10px"
+              required
+            />
+            <button
+              type="button"
+              onclick="openCamera('compKRA')"
+              style="
+                background: #006400;
+                color: #ffd700;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                white-space: nowrap;
+              "
+            >
+              📸 Camera
+            </button>
+          </div>
+          <div
+            id="kraPreviewContainer"
+            style="display: none; margin-bottom: 10px"
+          >
+            <img
+              id="kraPreview"
+              style="
+                width: 60px;
+                height: 60px;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 2px solid #006400;
+              "
+            />
+            <button
+              type="button"
+              onclick="
+                clearImage('compKRA', 'kraPreview', 'kraPreviewContainer')
+              "
+              style="
+                background: #cc0000;
+                color: #fff;
+                border: none;
+                padding: 2px 10px;
+                border-radius: 50%;
+                cursor: pointer;
+                margin-left: 5px;
+              "
+            >
+              ✕
+            </button>
+          </div>
+          <small style="color: #888; display: block; margin-bottom: 10px"
+            >Upload your KRA PIN certificate</small
+          >
+
+          <!-- Single Business Permit -->
+          <label
+            for="compPermit"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Single Business Permit *</label
+          >
+          <div style="display: flex; gap: 5px; margin-bottom: 5px">
+            <input
+              type="file"
+              id="compPermit"
+              accept="image/*,.pdf"
+              style="flex: 1; padding: 10px"
+              required
+            />
+            <button
+              type="button"
+              onclick="openCamera('compPermit')"
+              style="
+                background: #006400;
+                color: #ffd700;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                white-space: nowrap;
+              "
+            >
+              📸 Camera
+            </button>
+          </div>
+          <div
+            id="permitPreviewContainer"
+            style="display: none; margin-bottom: 10px"
+          >
+            <img
+              id="permitPreview"
+              style="
+                width: 60px;
+                height: 60px;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 2px solid #006400;
+              "
+            />
+            <button
+              type="button"
+              onclick="
+                clearImage(
+                  'compPermit',
+                  'permitPreview',
+                  'permitPreviewContainer',
+                )
+              "
+              style="
+                background: #cc0000;
+                color: #fff;
+                border: none;
+                padding: 2px 10px;
+                border-radius: 50%;
+                cursor: pointer;
+                margin-left: 5px;
+              "
+            >
+              ✕
+            </button>
+          </div>
+          <small style="color: #888; display: block; margin-bottom: 10px"
+            >Upload your county business permit</small
+          >
+
+          <!-- Director IDs (only for companies) -->
+          <div id="directorIdsSection">
+            <label
+              for="compDirectorIds"
+              style="
+                color: #006400;
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+              "
+              >Director/Partner IDs *</label
+            >
+            <div style="display: flex; gap: 5px; margin-bottom: 5px">
+              <input
+                type="file"
+                id="compDirectorIds"
+                accept="image/*"
+                style="flex: 1; padding: 10px"
+                multiple
+              />
+              <button
+                type="button"
+                onclick="openCamera('compDirectorIds')"
+                style="
+                  background: #006400;
+                  color: #ffd700;
+                  border: none;
+                  padding: 10px 15px;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-weight: bold;
+                  white-space: nowrap;
+                "
+              >
+                📸 Camera
+              </button>
+            </div>
+            <small style="color: #888; display: block; margin-bottom: 10px"
+              >Upload IDs of all directors/partners (multiple files
+              allowed)</small
+            >
+          </div>
+        </div>
+
+        <!-- ===== BUSINESS DESCRIPTION ===== -->
         <label
           for="compDesc"
           style="
@@ -1500,19 +1963,131 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Description</label
+          >Business Description *</label
         >
-        <textarea id="compDesc" placeholder="Description"></textarea>
+        <textarea
+          id="compDesc"
+          placeholder="Describe your business, products, and services..."
+          required
+        ></textarea>
 
+        <!-- ===== BANK DETAILS ===== -->
+        <div
+          style="
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+          "
+        >
+          <p style="font-weight: bold; color: #006400">
+            🏦 Bank Details (For Payments)
+          </p>
+          <p style="font-size: 12px; color: #666; margin-bottom: 10px">
+            This is where your commission payments will be sent
+          </p>
+
+          <label
+            for="compBankName"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Bank Name *</label
+          >
+          <input
+            type="text"
+            id="compBankName"
+            placeholder="e.g., Equity Bank"
+            required
+          />
+
+          <label
+            for="compAccountName"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Account Name *</label
+          >
+          <input
+            type="text"
+            id="compAccountName"
+            placeholder="Account Name as per bank"
+            required
+          />
+
+          <label
+            for="compAccountNumber"
+            style="
+              color: #006400;
+              font-weight: bold;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Account Number *</label
+          >
+          <input
+            type="text"
+            id="compAccountNumber"
+            placeholder="Bank Account Number"
+            required
+          />
+        </div>
+
+        <!-- ===== TERMS ===== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+          "
+        >
+          <input
+            type="checkbox"
+            id="compTerms"
+            required
+            style="width: auto; margin: 0"
+          />
+          <label for="compTerms" style="font-size: 13px; color: #666"
+            >I confirm that all information provided is accurate and complete. I
+            agree to G-KODE's
+            <a
+              href="#"
+              onclick="
+                showScreen('terms');
+                return false;
+              "
+              style="color: #006400"
+              >Terms of Service</a
+            >
+            and
+            <a
+              href="#"
+              onclick="
+                showScreen('privacy');
+                return false;
+              "
+              style="color: #006400"
+              >Privacy Policy</a
+            ></label
+          >
+        </div>
+
+        <!-- ===== SUBMIT ===== -->
         <button type="submit" class="btn green" id="compRegisterBtn">
-          REGISTER
+          REGISTER BUSINESS
         </button>
         <button type="button" class="btn outline" onclick="showScreen('home')">
           BACK
         </button>
       </form>
     </div>
-
     <!-- ============================================ -->
     <!-- SCREEN: COMPANY DASHBOARD -->
     <!-- ============================================ -->

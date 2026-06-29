@@ -2139,3 +2139,408 @@ window.onerror = function (message, source, lineno, colno, error) {
   console.error("Global error:", { message, source, lineno, colno, error });
   showToast("An unexpected error occurred. Please try again.", "error");
 };
+// ============================================
+// 🏢 BUSINESS REGISTRATION - COMPLETE
+// ============================================
+
+// ===== CAPTURE BUSINESS LOCATION =====
+function captureBusinessLocation() {
+  if (!navigator.geolocation) {
+    showToast("GPS not supported.", "error");
+    return;
+  }
+  showToast("📍 Capturing business location...", "info");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById("compGPSLat").value = pos.coords.latitude;
+      document.getElementById("compGPSLon").value = pos.coords.longitude;
+      document.getElementById("compLocationStatus").textContent =
+        "✅ Location captured! (" + pos.coords.accuracy + "m accuracy)";
+      document.getElementById("compLocationStatus").style.color = "#006400";
+      showToast("✅ Business location captured!", "success");
+    },
+    () => showToast("❌ Enable GPS.", "error"),
+  );
+}
+
+// ===== BUSINESS DOCUMENT TYPES =====
+const BUSINESS_DOC_TYPES = {
+  CERTIFICATE: "certificate",
+  KRA: "kra",
+  PERMIT: "permit",
+  LOGO: "logo",
+  DIRECTOR_IDS: "director_ids",
+};
+
+// ===== VALIDATE BUSINESS FORM =====
+function validateBusinessForm() {
+  const name = document.getElementById("compName")?.value?.trim() || "";
+  const type = document.getElementById("compType")?.value || "";
+  const regNo = document.getElementById("compRegNo")?.value?.trim() || "";
+  const location = document.getElementById("compLocation")?.value?.trim() || "";
+  const phone = document.getElementById("compPhone")?.value?.trim() || "";
+  const email = document.getElementById("compEmail")?.value?.trim() || "";
+  const years = document.getElementById("compYears")?.value?.trim() || "";
+  const desc = document.getElementById("compDesc")?.value?.trim() || "";
+  const logoFile = document.getElementById("compLogo")?.files[0];
+  const certFile = document.getElementById("compCertificate")?.files[0];
+  const kraFile = document.getElementById("compKRA")?.files[0];
+  const permitFile = document.getElementById("compPermit")?.files[0];
+  const terms = document.getElementById("compTerms")?.checked || false;
+
+  if (!name) {
+    showToast("Please enter business name.", "error");
+    return false;
+  }
+  if (!type) {
+    showToast("Please select business type.", "error");
+    return false;
+  }
+  if (!regNo) {
+    showToast("Please enter registration number.", "error");
+    return false;
+  }
+  if (!location) {
+    showToast("Please enter business location.", "error");
+    return false;
+  }
+  if (!phone) {
+    showToast("Please enter business phone.", "error");
+    return false;
+  }
+  if (!email || !isValidEmail(email)) {
+    showToast("Please enter a valid email address.", "error");
+    return false;
+  }
+  if (!years || parseInt(years) < 0) {
+    showToast("Please enter years in operation.", "error");
+    return false;
+  }
+  if (!desc || desc.length < 20) {
+    showToast(
+      "Please provide a detailed business description (min 20 characters).",
+      "error",
+    );
+    return false;
+  }
+  if (!logoFile) {
+    showToast("Please upload a business logo.", "error");
+    return false;
+  }
+  if (!certFile) {
+    showToast("Please upload Certificate of Incorporation.", "error");
+    return false;
+  }
+  if (!kraFile) {
+    showToast("Please upload KRA PIN Certificate.", "error");
+    return false;
+  }
+  if (!permitFile) {
+    showToast("Please upload Single Business Permit.", "error");
+    return false;
+  }
+  if (!terms) {
+    showToast("Please agree to the Terms and Conditions.", "error");
+    return false;
+  }
+
+  return true;
+}
+
+// ===== REGISTER BUSINESS =====
+async function registerBusiness(e) {
+  if (e) e.preventDefault();
+
+  if (!currentUser) {
+    showToast("Please login first.", "error");
+    return;
+  }
+
+  const btn = document.getElementById("compRegisterBtn");
+  if (!btn || isProcessing) return;
+
+  if (!validateBusinessForm()) return;
+
+  isProcessing = true;
+  btn.disabled = true;
+  btn.textContent = "⏳ REGISTERING...";
+
+  try {
+    // Get form values
+    const name = sanitizeInput(
+      document.getElementById("compName")?.value?.trim() || "",
+    );
+    const type = sanitizeInput(
+      document.getElementById("compType")?.value || "",
+    );
+    const regNo = sanitizeInput(
+      document.getElementById("compRegNo")?.value?.trim() || "",
+    );
+    const location = sanitizeInput(
+      document.getElementById("compLocation")?.value?.trim() || "",
+    );
+    const phone = sanitizeInput(
+      document.getElementById("compPhone")?.value?.trim() || "",
+    );
+    const email = sanitizeInput(
+      document.getElementById("compEmail")?.value?.trim() || "",
+    );
+    const website = sanitizeInput(
+      document.getElementById("compWebsite")?.value?.trim() || "",
+    );
+    const years = parseInt(document.getElementById("compYears")?.value) || 0;
+    const employees =
+      parseInt(document.getElementById("compEmployees")?.value) || 0;
+    const desc = sanitizeInput(
+      document.getElementById("compDesc")?.value?.trim() || "",
+    );
+    const bankName = sanitizeInput(
+      document.getElementById("compBankName")?.value?.trim() || "",
+    );
+    const accountName = sanitizeInput(
+      document.getElementById("compAccountName")?.value?.trim() || "",
+    );
+    const accountNumber = sanitizeInput(
+      document.getElementById("compAccountNumber")?.value?.trim() || "",
+    );
+    const gpsLat = document.getElementById("compGPSLat")?.value || null;
+    const gpsLon = document.getElementById("compGPSLon")?.value || null;
+
+    // Get files
+    const logoFile = document.getElementById("compLogo")?.files[0];
+    const certFile = document.getElementById("compCertificate")?.files[0];
+    const kraFile = document.getElementById("compKRA")?.files[0];
+    const permitFile = document.getElementById("compPermit")?.files[0];
+    const directorFiles = document.getElementById("compDirectorIds")?.files;
+
+    // Upload files to Supabase Storage
+    btn.textContent = "⏳ UPLOADING DOCUMENTS...";
+
+    const businessId = Date.now().toString();
+    const logoUrl = await uploadToSupabase(
+      logoFile,
+      "business_logos",
+      `biz_${businessId}`,
+    );
+    const certUrl = await uploadToSupabase(
+      certFile,
+      "business_docs",
+      `biz_${businessId}/certificate`,
+    );
+    const kraUrl = await uploadToSupabase(
+      kraFile,
+      "business_docs",
+      `biz_${businessId}/kra`,
+    );
+    const permitUrl = await uploadToSupabase(
+      permitFile,
+      "business_docs",
+      `biz_${businessId}/permit`,
+    );
+
+    let directorUrls = [];
+    if (directorFiles) {
+      for (let i = 0; i < directorFiles.length; i++) {
+        const url = await uploadToSupabase(
+          directorFiles[i],
+          "business_docs",
+          `biz_${businessId}/director_${i + 1}`,
+        );
+        directorUrls.push(url);
+      }
+    }
+
+    // Create business object
+    const business = {
+      id: businessId,
+      ownerId: currentUser.id || currentUser.phone,
+      ownerName: currentUser.name,
+      ownerPhone: currentUser.phone,
+      name: name,
+      type: type,
+      regNo: regNo,
+      location: location,
+      gpsLat: gpsLat,
+      gpsLon: gpsLon,
+      phone: phone,
+      email: email,
+      website: website,
+      description: desc,
+      yearsInOperation: years,
+      employees: employees,
+      logo: logoUrl,
+      certificate: certUrl,
+      kra: kraUrl,
+      permit: permitUrl,
+      directorIds: directorUrls,
+      bankDetails: {
+        bankName: bankName,
+        accountName: accountName,
+        accountNumber: accountNumber,
+      },
+      verificationStatus: "pending",
+      verificationBadge: "🟡 Pending",
+      verifiedAt: null,
+      verifiedBy: null,
+      rejectionReason: null,
+      totalSales: 0,
+      totalCommission: 0,
+      registeredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Save to Supabase
+    let saved = false;
+    if (supabaseInitialized) {
+      try {
+        const { error } = await supabase.from("businesses").insert([
+          {
+            id: business.id,
+            owner_id: business.ownerId,
+            name: business.name,
+            type: business.type,
+            reg_no: business.regNo,
+            location: business.location,
+            gps_lat: business.gpsLat,
+            gps_lon: business.gpsLon,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            description: business.description,
+            years_in_operation: business.yearsInOperation,
+            employees: business.employees,
+            logo_url: business.logo,
+            certificate_url: business.certificate,
+            kra_url: business.kra,
+            permit_url: business.permit,
+            director_ids: business.directorIds,
+            bank_name: business.bankDetails.bankName,
+            account_name: business.bankDetails.accountName,
+            account_number: business.bankDetails.accountNumber,
+            verification_status: business.verificationStatus,
+            total_sales: business.totalSales,
+            total_commission: business.totalCommission,
+            created_at: business.registeredAt,
+            updated_at: business.updatedAt,
+          },
+        ]);
+        if (!error) saved = true;
+      } catch (e) {
+        console.log("Supabase save error:", e);
+      }
+    }
+
+    // Save locally as fallback
+    let businesses = getCompaniesLocal();
+    businesses.push(business);
+    setCompaniesLocal(businesses);
+
+    showToast(
+      saved ? "✅ Business saved to cloud!" : "✅ Business saved locally!",
+      "success",
+    );
+    showToast(
+      "🟡 Business verification pending. We'll notify you within 24-48 hours.",
+      "info",
+    );
+
+    // Reset form
+    document.getElementById("companyForm").reset();
+    document.getElementById("compLocationStatus").textContent =
+      "No location captured yet";
+
+    showScreen("companyDashboard");
+    loadCompanyDashboard();
+  } catch (error) {
+    console.error("Business registration error:", error);
+    showToast("Error: " + error.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "REGISTER BUSINESS";
+    isProcessing = false;
+  }
+}
+
+// ===== UPDATE COMPANY DASHBOARD (Enhanced) =====
+function loadCompanyDashboard() {
+  if (!currentUser) return;
+
+  const companies = getCompaniesLocal();
+  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
+
+  if (!myComp) {
+    document.getElementById("compInfo").innerHTML = `
+            <p style="text-align:center;color:#888;padding:20px;">No business registered yet.</p>
+            <button class="btn green" onclick="showScreen('companyRegister')">Register Business</button>
+        `;
+    return;
+  }
+
+  // Status badge
+  const statusBadges = {
+    pending: "🟡 Pending Verification",
+    verified: "✅ Verified",
+    rejected: "❌ Rejected",
+    expired: "🔴 Expired",
+  };
+  const statusColor = {
+    pending: "#ff9800",
+    verified: "#006400",
+    rejected: "#cc0000",
+    expired: "#cc0000",
+  };
+
+  document.getElementById("compInfo").innerHTML = `
+        <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+            ${myComp.logo ? `<img src="${myComp.logo}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:2px solid #006400;" />` : ""}
+            <div style="flex:1;">
+                <h3>${myComp.name}</h3>
+                <p>🏢 ${myComp.type} | 📍 ${myComp.location}</p>
+                <p>📞 ${myComp.phone} | 📧 ${myComp.email}</p>
+                <p>📜 Reg No: ${myComp.regNo}</p>
+                <p>⏳ ${myComp.yearsInOperation || 0} years in operation</p>
+                <p style="color:${statusColor[myComp.verificationStatus] || "#888"};font-weight:bold;font-size:14px;margin-top:5px;">
+                    ${statusBadges[myComp.verificationStatus] || "❓ Unknown"}
+                </p>
+                ${
+                  myComp.verificationStatus === "pending"
+                    ? `<p style="font-size:12px;color:#888;">⏳ We're reviewing your documents. You'll get an email within 24-48 hours.</p>`
+                    : ""
+                }
+                ${
+                  myComp.verificationStatus === "rejected"
+                    ? `<p style="font-size:12px;color:#cc0000;">❌ ${myComp.rejectionReason || "Please contact support for details."}</p>`
+                    : ""
+                }
+            </div>
+        </div>
+    `;
+
+  showCompTab("products");
+}
+
+// ===== CHECK VERIFICATION STATUS =====
+function checkVerificationStatus() {
+  const companies = getCompaniesLocal();
+  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
+
+  if (!myComp) {
+    showToast("No business found.", "error");
+    return;
+  }
+
+  const statusMessages = {
+    pending:
+      "Your business is pending verification. We'll notify you within 24-48 hours.",
+    verified:
+      "✅ Your business is verified and can now sell on the marketplace!",
+    rejected:
+      "❌ Your business verification was rejected. Please check your documents.",
+    expired: "🔴 Your business verification has expired. Please renew.",
+  };
+
+  showToast(
+    statusMessages[myComp.verificationStatus] || "Unknown status.",
+    "info",
+  );
+}
