@@ -913,6 +913,18 @@
     <!-- SCREEN: HOME -->
     <!-- ============================================ -->
     <div id="home" class="screen">
+        <!-- ===== 📢 AD BANNER - ADD THIS LINE ===== -->
+    <div id="adBannerContainer"></div>
+    
+    <h2>📍 Gigs Near You</h2>
+    <div class="tab-container">
+        <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN</button>
+        <button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button>
+    </div>
+    <div id="gigsList">Loading...</div>
+    <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
+    <button class="btn outline" onclick="logout()">LOGOUT</button>
+</div>
       <h2>📍 Gigs Near You</h2>
       <div class="tab-container">
         <button id="tabOpen" class="active" onclick="switchTab('open')">
@@ -1356,39 +1368,47 @@
       </button>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SCREEN: PAYMENT -->
-    <!-- ============================================ -->
-    <div id="payment" class="screen">
-      <h2>💳 Payment</h2>
-      <div
-        style="
-          background: #e8f5e9;
-          padding: 15px;
-          border-radius: 10px;
-          text-align: center;
-          margin-bottom: 15px;
-        "
-      >
+   <!-- ============================================ -->
+<!-- SCREEN: PAYMENT (WITH DYNAMIC NUMBERS)      -->
+<!-- ============================================ -->
+<div id="payment" class="screen">
+    <h2>💳 Payment</h2>
+    <div style="background:#e8f5e9; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px;">
         <h3>ONE-TIME FEE: KSH 300</h3>
         <p>For Life. No Subscriptions. No Hidden Charges.</p>
-      </div>
-      <p><strong>Till Number:</strong> <span id="displayTill">9876543</span></p>
-      <p><strong>Paybill:</strong> <span id="displayPaybill">247247</span></p>
-      <p><strong>Account:</strong> <span id="displayAccount">G-KODE</span></p>
-      <input
-        type="text"
-        id="mpesaCode"
-        placeholder="Enter M-Pesa Confirmation Code"
-      />
-      <button class="btn green" onclick="verifyMpesaPayment()">
-        VERIFY PAYMENT
-      </button>
-      <button class="btn outline" onclick="showScreen('home')">
-        PAY LATER
-      </button>
     </div>
 
+    <!-- ===== SECURE PAYMENT INFO ===== -->
+    <div style="background:#fff3e0; padding:15px; border-radius:10px; margin-bottom:15px;">
+        <p style="font-weight:bold; color:#006400;">🔒 Secure Payment</p>
+        <p style="font-size:12px; color:#666;">Payment held in escrow until delivery confirmed.</p>
+        <p style="font-size:12px; color:#666;">Commission (3%) deducted automatically.</p>
+    </div>
+
+    <p><strong>Till Number:</strong> <span id="displayTill">Loading...</span></p>
+    <p><strong>Paybill:</strong> <span id="displayPaybill">Loading...</span></p>
+    <p><strong>Account:</strong> <span id="displayAccount">Loading...</span></p>
+
+    <div style="background:#f5f5f5; padding:10px; border-radius:8px; margin:10px 0;">
+        <p style="font-size:12px; color:#888;">
+            💰 Commission: <span id="displayCommission">3%</span>
+            | 🏦 Bank: <span id="displayGkodeBank">Loading...</span>
+        </p>
+    </div>
+
+    <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">M-Pesa Confirmation Code *</label>
+    <input type="text" id="mpesaCode" placeholder="Enter M-Pesa Confirmation Code" required />
+
+    <div id="paymentBreakdown" style="background:#f5f5f5; padding:10px; border-radius:8px; margin:10px 0; display:none;">
+        <p style="font-weight:bold;">💳 Payment Breakdown</p>
+        <p>💰 Total: Ksh <span id="payBreakdownTotal">300</span></p>
+        <p>📊 Commission (3%): Ksh <span id="payBreakdownCommission">9</span></p>
+        <p>🏦 Seller Gets: Ksh <span id="payBreakdownSeller">291</span></p>
+    </div>
+
+    <button class="btn green" onclick="secureInitiatePayment()">💳 PAY NOW</button>
+    <button class="btn outline" onclick="showScreen('home')">PAY LATER</button>
+</div>
     <!-- ============================================ -->
     <!-- SCREEN: COMPANY REGISTER (COMPLETE) -->
     <!-- ============================================ -->

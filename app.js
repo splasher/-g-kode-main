@@ -466,6 +466,7 @@ function showScreen(id) {
   if (id === "profile") loadProfile();
   if (id === "marketplace") loadMarketplace();
   if (id === "companyDashboard") loadCompanyDashboard();
+  if (id === "payment") loadPaymentDetails();
 }
 
 function togglePassword(fieldId, icon) {
@@ -1313,6 +1314,10 @@ function switchTab(tab) {
 function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
+  const adContainer = document.getElementById("adBannerContainer");
+  if (adContainer) {
+    adContainer.innerHTML = renderAdBanner("home_banner");
+  }
 
   const gigs = getGigsLocal();
   const filtered = gigs.filter((g) => {
@@ -2543,4 +2548,395 @@ function checkVerificationStatus() {
     statusMessages[myComp.verificationStatus] || "Unknown status.",
     "info",
   );
+}
+// ============================================
+// 🎬 AD MEDIA TYPE TOGGLE
+// ============================================
+
+function toggleAdMediaType() {
+  const type = document.getElementById("adMediaType").value;
+  const imageUpload = document.getElementById("adImageUpload");
+  const videoUpload = document.getElementById("adVideoUpload");
+
+  if (type === "image" || type === "gif") {
+    imageUpload.style.display = "block";
+    videoUpload.style.display = "none";
+  } else {
+    imageUpload.style.display = "none";
+    videoUpload.style.display = "block";
+  }
+
+  // Clear previews
+  document.getElementById("adImagePreviewContainer").style.display = "none";
+  document.getElementById("adVideoPreviewContainer").style.display = "none";
+}
+
+function clearAdMedia() {
+  document.getElementById("adImage").value = "";
+  document.getElementById("adVideo").value = "";
+  document.getElementById("adImagePreviewContainer").style.display = "none";
+  document.getElementById("adVideoPreviewContainer").style.display = "none";
+}
+// ============================================
+// 📦 COMPLETE MEDIA COMPRESSION SYSTEM
+// ============================================
+
+// ===== IMAGE COMPRESSION =====
+function compressImage(file, maxWidth = 800, maxHeight = 600, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    // Check if it's a GIF
+    if (file.type === "image/gif") {
+      // GIFs - preserve but compress size
+      return compressGif(file).then(resolve).catch(reject);
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        // Calculate new dimensions
+        let width = img.width;
+        let height = img.height;
+
+        // For ad banners, use different sizing
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+
+        // Create canvas
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG (or PNG if needed)
+        const format = file.type === "image/png" ? "image/png" : "image/jpeg";
+        const compressedDataUrl = canvas.toDataURL(format, quality);
+
+        // Convert to file
+        fetch(compressedDataUrl)
+          .then((res) => res.blob())
+          .then((blob) => {
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.[^.]+$/, ".jpg"),
+              { type: format },
+            );
+            resolve(compressedFile);
+          })
+          .catch(reject);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== GIF COMPRESSION (Preserve animation) =====
+function compressGif(file) {
+  return new Promise((resolve, reject) => {
+    // For GIFs, we just resize and optimize
+    // Using canvas doesn't preserve animation, so we use the original
+    // But we can still compress the file size
+
+    // If GIF is small enough, keep as is
+    if (file.size < 2 * 1024 * 1024) {
+      // 2MB
+      return resolve(file);
+    }
+
+    // For large GIFs, convert to video (better compression)
+    // Or keep as GIF but warn user
+    showToast(
+      "GIFs over 2MB may be slow to load. Consider using a video instead.",
+      "warning",
+    );
+    resolve(file);
+  });
+}
+
+// ===== VIDEO COMPRESSION =====
+function compressVideo(file) {
+  return new Promise((resolve, reject) => {
+    // Check if video is already small enough
+    if (file.size < 5 * 1024 * 1024) {
+      // 5MB
+      return resolve(file);
+    }
+
+    // Create video element
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadedmetadata = function () {
+      // Compress using MediaRecorder API
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.min(video.videoWidth, 720);
+      canvas.height = Math.min(video.videoHeight, 480);
+      const ctx = canvas.getContext("2d");
+
+      const stream = canvas.captureStream(30); // 30fps
+
+      // Draw video frames to canvas
+      const drawFrame = () => {
+        if (!video.paused && !video.ended) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(drawFrame);
+        }
+      };
+
+      // Start recording
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "video/mp4",
+        videoBitsPerSecond: 1000000, // 1Mbps
+      });
+
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/mp4" });
+        const compressedFile = new File(
+          [blob],
+          file.name.replace(/\.[^.]+$/, ".mp4"),
+          { type: "video/mp4" },
+        );
+
+        URL.revokeObjectURL(url);
+
+        if (compressedFile.size < file.size) {
+          resolve(compressedFile);
+        } else {
+          // If compression didn't help, return original
+          resolve(file);
+        }
+      };
+
+      // Play and record
+      video.play();
+      video.onplay = function () {
+        mediaRecorder.start(1000);
+        drawFrame();
+
+        // Stop after video duration
+        setTimeout(
+          () => {
+            if (mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+            }
+            video.pause();
+          },
+          Math.min(video.duration * 1000 + 1000, 30000),
+        ); // Max 30 seconds
+      };
+
+      video.onended = function () {
+        if (mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+        }
+      };
+    };
+
+    video.onerror = function () {
+      // Fallback: just return original
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+
+    // Timeout fallback
+    setTimeout(() => {
+      if (video.src) {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      }
+    }, 10000);
+  });
+}
+
+// ===== COMPRESS AD MEDIA (Main function) =====
+async function compressAdMedia(file) {
+  const fileType = file.type;
+
+  try {
+    if (fileType.startsWith("image/")) {
+      if (fileType === "image/gif") {
+        return await compressGif(file);
+      }
+      // Determine quality based on file size
+      let quality = 0.7;
+      if (file.size > 5 * 1024 * 1024) quality = 0.5;
+      else if (file.size > 2 * 1024 * 1024) quality = 0.6;
+
+      return await compressImage(file, 800, 600, quality);
+    } else if (fileType.startsWith("video/")) {
+      return await compressVideo(file);
+    } else {
+      showToast("Unsupported file type.", "error");
+      return file;
+    }
+  } catch (e) {
+    console.error("Compression error:", e);
+    showToast("Compression failed. Using original file.", "warning");
+    return file;
+  }
+}
+
+// ===== PREVIEW AD MEDIA =====
+function previewAdMedia() {
+  const type = document.getElementById("adMediaType").value;
+
+  if (type === "image" || type === "gif") {
+    const file = document.getElementById("adImage").files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById("adImagePreview").src = e.target.result;
+        document.getElementById("adImagePreviewContainer").style.display =
+          "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  } else if (type === "video") {
+    const file = document.getElementById("adVideo").files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const video = document.getElementById("adVideoPreview");
+      video.src = url;
+      document.getElementById("adVideoPreviewContainer").style.display =
+        "block";
+    }
+  }
+}
+
+// ===== UPLOAD AD WITH COMPRESSION =====
+async function saveAd() {
+  // ... existing validation ...
+
+  const mediaType = document.getElementById("adMediaType").value;
+  let mediaFile = null;
+  let mediaUrl = "";
+
+  if (mediaType === "image" || mediaType === "gif") {
+    mediaFile = document.getElementById("adImage").files[0];
+    if (!mediaFile) {
+      showToast("Please upload an image.", "error");
+      return;
+    }
+
+    // Compress image
+    const compressed = await compressAdMedia(mediaFile);
+    mediaUrl = await uploadToSupabase(compressed, "ads", `ad_${Date.now()}`);
+  } else if (mediaType === "video") {
+    mediaFile = document.getElementById("adVideo").files[0];
+    if (!mediaFile) {
+      showToast("Please upload a video.", "error");
+      return;
+    }
+
+    // Compress video
+    const compressed = await compressAdMedia(mediaFile);
+    mediaUrl = await uploadToSupabase(compressed, "ads", `ad_${Date.now()}`);
+  }
+
+  // Create ad object with media data
+  const newAd = {
+    id: Date.now().toString(),
+    title: title,
+    description: description,
+    mediaType: mediaType,
+    mediaUrl: mediaUrl,
+    link: link,
+    placement: placement,
+    targetLocation: targetLocation || null,
+    targetProfession: targetProfession || null,
+    isActive: isActive,
+    autoPlay: document.getElementById("adAutoPlay").checked,
+    views: 0,
+    clicks: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  // ... rest of save logic
+}
+// ============================================
+// 📢 RENDER AD WITH MEDIA
+// ============================================
+
+function renderAdBanner(placement) {
+  const ads = getActiveAds(placement);
+  if (ads.length === 0) return "";
+
+  const ad = ads[Math.floor(Math.random() * ads.length)];
+  trackAdView(ad.id);
+
+  let mediaHtml = "";
+
+  if (ad.mediaType === "image" || ad.mediaType === "gif") {
+    mediaHtml = `
+            <img src="${ad.mediaUrl}" alt="${ad.title}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">
+        `;
+  } else if (ad.mediaType === "video") {
+    mediaHtml = `
+            <video 
+                src="${ad.mediaUrl}" 
+                ${ad.autoPlay ? "autoplay" : ""} 
+                muted 
+                loop 
+                playsinline 
+                style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;"
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='%23006400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23FFD700' font-size='16' font-family='Arial'%3E🎬 Loading...%3C/text%3E%3C/svg%3E"
+            ></video>
+        `;
+  }
+
+  return `
+        <div class="ad-banner" style="background:#1a1a1a;border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,215,0,0.2);">
+            <div style="position:relative;">
+                ${mediaHtml}
+                <span style="position:absolute;top:8px;left:8px;font-size:10px;color:#FFD700;font-weight:bold;background:rgba(0,0,0,0.7);padding:2px 8px;border-radius:4px;">📢 SPONSORED</span>
+                <button onclick="this.closest('.ad-banner').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;">✕</button>
+            </div>
+            <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold;color:#fff;font-size:14px;">${ad.title}</div>
+                    <div style="font-size:12px;color:#ccc;">${ad.description}</div>
+                </div>
+                <a href="${ad.link}" target="_blank" onclick="trackAdClick('${ad.id}')" style="background:#FFD700;color:#000;padding:8px 20px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">LEARN MORE →</a>
+            </div>
+        </div>
+    `;
+}
+// ============================================
+// 📊 FILE SIZE HELPER
+// ============================================
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+function validateFileSize(file, maxSize = 50 * 1024 * 1024) {
+  if (file.size > maxSize) {
+    showToast(`File too large. Max size: ${formatFileSize(maxSize)}`, "error");
+    return false;
+  }
+  return true;
 }
