@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>G-KODE — Admin Panel</title>
-    <link rel="stylesheet" href="style.css" />
     <style>
       * {
         margin: 0;
@@ -63,6 +62,39 @@
         display: inline-block;
         margin-right: 5px;
         margin-bottom: 5px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+      .btn-small:active {
+        transform: scale(0.95);
+      }
+      .btn-small.green {
+        background: #006400;
+        color: #ffd700;
+      }
+      .btn-small.blue {
+        background: #2196f3;
+        color: #fff;
+      }
+      .btn-small.red {
+        background: #cc0000;
+        color: #fff;
+      }
+      .btn-small.orange {
+        background: #ff9800;
+        color: #000;
+      }
+      .btn-small.purple {
+        background: #9c27b0;
+        color: #fff;
+      }
+      .btn-small.outline {
+        background: #fff;
+        color: #006400;
+        border: 2px solid #006400;
       }
       .flex-buttons {
         display: flex;
@@ -220,6 +252,18 @@
       label {
         font-size: 13px;
         color: #333;
+        display: block;
+        margin: 8px 0 4px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .ad-item {
+        background: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #eee;
       }
       #toast-container {
         position: fixed;
@@ -274,16 +318,6 @@
         border-bottom-color: #cc0000;
         color: #cc0000;
       }
-      .ad-item {
-        background: #fff;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid #eee;
-      }
-      .hidden {
-        display: none !important;
-      }
       @media (max-width: 480px) {
         .admin-card .stats {
           grid-template-columns: 1fr 1fr;
@@ -312,7 +346,6 @@
         type="password"
         id="adminKey"
         placeholder="Enter Admin Key"
-        style="max-width: 300px; margin: 0 auto"
         onkeydown="if (event.key === 'Enter') adminLogin();"
       />
       <button class="btn green" onclick="adminLogin()">AUTHENTICATE</button>
@@ -363,13 +396,13 @@
       <div class="section-title">👥 USER MANAGEMENT</div>
       <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="viewUsers()">
+          <button class="btn-small green" onclick="viewUsers()">
             👥 View Users
           </button>
-          <button class="btn green btn-small" onclick="viewBannedUsers()">
+          <button class="btn-small green" onclick="viewBannedUsers()">
             🚫 Banned
           </button>
-          <button class="btn green btn-small" onclick="viewPaidUsers()">
+          <button class="btn-small green" onclick="viewPaidUsers()">
             ✅ Paid
           </button>
         </div>
@@ -379,13 +412,13 @@
       <div class="section-title">📋 GIG MANAGEMENT</div>
       <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="viewGigs()">
+          <button class="btn-small green" onclick="viewGigs()">
             📋 All Gigs
           </button>
-          <button class="btn green btn-small" onclick="viewOpenGigs()">
+          <button class="btn-small green" onclick="viewOpenGigs()">
             🟢 Open
           </button>
-          <button class="btn green btn-small" onclick="viewCompletedGigs()">
+          <button class="btn-small green" onclick="viewCompletedGigs()">
             ✅ Completed
           </button>
         </div>
@@ -395,19 +428,16 @@
       <div class="section-title">🚩 COMPLAINTS & SECURITY</div>
       <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="viewComplaints()">
+          <button class="btn-small green" onclick="viewComplaints()">
             🚩 All
           </button>
-          <button class="btn green btn-small" onclick="viewPendingComplaints()">
+          <button class="btn-small green" onclick="viewPendingComplaints()">
             🟡 Pending
           </button>
-          <button
-            class="btn green btn-small"
-            onclick="viewResolvedComplaints()"
-          >
+          <button class="btn-small green" onclick="viewResolvedComplaints()">
             ✅ Resolved
           </button>
-          <button class="btn red btn-small" onclick="viewStrikes()">
+          <button class="btn-small red" onclick="viewStrikes()">
             ⚠️ Strikes
           </button>
         </div>
@@ -417,14 +447,14 @@
       <div class="section-title">💳 PAYMENT SYSTEM</div>
       <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="viewPayments()">
+          <button class="btn-small green" onclick="viewPayments()">
             💰 Payments
           </button>
-          <button class="btn green btn-small" onclick="viewRevenueReport()">
+          <button class="btn-small green" onclick="viewRevenueReport()">
             📊 Revenue
           </button>
           <button
-            class="btn orange btn-small"
+            class="btn-small orange"
             onclick="togglePaymentSystem()"
             id="paymentToggleBtn"
           >
@@ -456,9 +486,7 @@
 
       <div class="admin-card">
         <h4>💰 Commission & Bank</h4>
-        <label style="display: block; margin: 8px 0 4px"
-          >Commission Rate (%) *</label
-        >
+        <label>Commission Rate (%) *</label>
         <input
           type="number"
           id="commissionRate"
@@ -467,70 +495,118 @@
           min="0"
           max="100"
         />
-        <label style="display: block; margin: 8px 0 4px"
-          >G-KODE Bank Name</label
-        >
+        <label>G-KODE Bank Name</label>
         <input type="text" id="gkodeBankName" placeholder="Equity Bank" />
-        <label style="display: block; margin: 8px 0 4px"
-          >G-KODE Account Number</label
-        >
+        <label>G-KODE Account Number</label>
         <input type="text" id="gkodeAccountNumber" placeholder="1234567890" />
-        <button class="btn green btn-small" onclick="savePaymentSettings()">
+        <button class="btn-small green" onclick="savePaymentSettings()">
           💾 SAVE
         </button>
       </div>
 
       <div class="admin-card">
         <h4>📱 M-Pesa</h4>
-        <label style="display: block; margin: 8px 0 4px">Till Number *</label>
+        <label>Till Number *</label>
         <input type="text" id="mpesaTillNumber" placeholder="9876543" />
-        <label style="display: block; margin: 8px 0 4px"
-          >Paybill Number *</label
-        >
+        <label>Paybill Number *</label>
         <input type="text" id="mpesaPaybillNumber" placeholder="247247" />
-        <label style="display: block; margin: 8px 0 4px"
-          >Account Reference</label
-        >
+        <label>Account Reference</label>
         <input type="text" id="mpesaAccountNumber" placeholder="G-KODE" />
-        <button class="btn green btn-small" onclick="saveMpesaSettings()">
+        <button class="btn-small green" onclick="saveMpesaSettings()">
           💾 SAVE
         </button>
       </div>
 
       <div class="admin-card">
         <h4>📱 Kabambe (USSD)</h4>
-        <label style="display: block; margin: 8px 0 4px">USSD Code *</label>
+        <label>USSD Code *</label>
         <input type="text" id="ussdCode" placeholder="*384#" />
-        <label style="display: block; margin: 8px 0 4px"
-          >USSD Menu (one per line)</label
-        >
-        <textarea
-          id="ussdMenu"
-          placeholder="1. Register&#10;2. Login&#10;3. Post a Gig&#10;4. Find Gigs&#10;5. Chat with Client&#10;6. My Profile"
-          rows="6"
-        ></textarea>
-        <button class="btn green btn-small" onclick="saveUssdSettings()">
+        <label>USSD Menu (one per line)</label>
+        <textarea id="ussdMenu" rows="6"></textarea>
+        <button class="btn-small green" onclick="saveUssdSettings()">
           💾 SAVE
         </button>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- 📢 ADVERTISING                              -->
+      <!-- ============================================ -->
+      <div class="section-title">📢 ADVERTISING</div>
+      <div class="admin-card">
+        <div class="flex-buttons">
+          <button class="btn-small green" onclick="showAdForm()">
+            ➕ New Ad
+          </button>
+          <button class="btn-small green" onclick="viewAds()">
+            📋 View Ads
+          </button>
+          <button class="btn-small purple" onclick="viewAdStats()">
+            📊 Stats
+          </button>
+        </div>
+
+        <div
+          id="adFormContainer"
+          style="
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+          "
+        >
+          <h4>📢 Create Ad</h4>
+          <label>Ad Title *</label>
+          <input type="text" id="adTitle" placeholder="Ad Title *" />
+          <label>Description *</label>
+          <textarea
+            id="adDescription"
+            placeholder="Description *"
+            rows="3"
+          ></textarea>
+          <label>Link (URL) *</label>
+          <input type="url" id="adLink" placeholder="https://example.com" />
+          <label>Placement *</label>
+          <select id="adPlacement">
+            <option value="home_banner">🏠 Home Screen</option>
+            <option value="marketplace">🛒 Marketplace</option>
+          </select>
+          <div style="display: flex; gap: 10px; margin: 10px 0">
+            <label
+              style="display: flex; align-items: center; gap: 5px; margin: 0"
+            >
+              <input type="checkbox" id="adActive" checked /> Active
+            </label>
+          </div>
+          <button class="btn-small green" onclick="saveAd()">💾 SAVE</button>
+          <button
+            class="btn-small outline"
+            onclick="
+              document.getElementById('adFormContainer').style.display = 'none'
+            "
+          >
+            CANCEL
+          </button>
+        </div>
+
+        <div id="adsList" style="margin-top: 15px"></div>
       </div>
 
       <!-- ===== SYSTEM TOOLS ===== -->
       <div class="section-title">🔧 SYSTEM TOOLS</div>
       <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn blue btn-small" onclick="downloadBackup()">
+          <button class="btn-small blue" onclick="downloadBackup()">
             💾 Backup
           </button>
-          <button class="btn blue btn-small" onclick="viewBackups()">
+          <button class="btn-small blue" onclick="viewBackups()">
             📂 Backups
           </button>
-          <button class="btn blue btn-small" onclick="viewLogs()">
-            📜 Logs
-          </button>
-          <button class="btn blue btn-small" onclick="viewSystemHealth()">
+          <button class="btn-small blue" onclick="viewLogs()">📜 Logs</button>
+          <button class="btn-small blue" onclick="viewSystemHealth()">
             🏥 Health
           </button>
-          <button class="btn blue btn-small" onclick="exportUsersCSV()">
+          <button class="btn-small blue" onclick="exportUsersCSV()">
             📤 Export CSV
           </button>
         </div>
@@ -545,13 +621,13 @@
       </div>
       <div class="admin-card danger-zone">
         <div class="flex-buttons">
-          <button class="btn red btn-small" onclick="resetEverything()">
+          <button class="btn-small red" onclick="resetEverything()">
             🔄 Reset Data
           </button>
-          <button class="btn red btn-small" onclick="clearAllData()">
+          <button class="btn-small red" onclick="clearAllData()">
             🔥 Clear All
           </button>
-          <button class="btn red btn-small" onclick="resetApp()">
+          <button class="btn-small red" onclick="resetApp()">
             🔄 Full Reset
           </button>
         </div>
@@ -698,7 +774,7 @@
         const products = getProducts();
 
         let totalRevenue = 0;
-        payments.forEach((p) => {
+        payments.forEach(function (p) {
           if (p.verified) totalRevenue += p.amount;
         });
 
@@ -719,7 +795,7 @@
       function togglePaymentSystem() {
         paymentEnabled = !paymentEnabled;
         updatePaymentStatus();
-        const status = paymentEnabled ? "ENABLED" : "DISABLED";
+        var status = paymentEnabled ? "ENABLED" : "DISABLED";
         showToast(
           "💳 Payment system " + status,
           paymentEnabled ? "success" : "warning",
@@ -728,19 +804,19 @@
       }
 
       function updatePaymentStatus() {
-        const statusEl = document.getElementById("paymentStatus");
-        const toggleBtn = document.getElementById("paymentToggleBtn");
+        var statusEl = document.getElementById("paymentStatus");
+        var toggleBtn = document.getElementById("paymentToggleBtn");
 
         if (paymentEnabled) {
           statusEl.textContent = "✅ ACTIVE";
           statusEl.style.color = "#006400";
           toggleBtn.textContent = "🔒 Toggle Payment";
-          toggleBtn.className = "btn orange btn-small";
+          toggleBtn.className = "btn-small orange";
         } else {
           statusEl.textContent = "⛔ DISABLED (Testing)";
           statusEl.style.color = "#ff9800";
           toggleBtn.textContent = "🔓 Toggle Payment";
-          toggleBtn.className = "btn green btn-small";
+          toggleBtn.className = "btn-small green";
         }
       }
 
@@ -765,7 +841,7 @@
       }
 
       function savePaymentSettings() {
-        const settings = getPaymentSettings();
+        var settings = getPaymentSettings();
         settings.commissionRate =
           parseFloat(document.getElementById("commissionRate").value) || 3;
         settings.bankName = document
@@ -780,7 +856,7 @@
       }
 
       function saveMpesaSettings() {
-        const settings = getPaymentSettings();
+        var settings = getPaymentSettings();
         settings.tillNumber = document
           .getElementById("mpesaTillNumber")
           .value.trim();
@@ -796,7 +872,7 @@
       }
 
       function saveUssdSettings() {
-        const settings = getPaymentSettings();
+        var settings = getPaymentSettings();
         settings.ussdCode = document.getElementById("ussdCode").value.trim();
         settings.ussdMenu = document.getElementById("ussdMenu").value;
         setPaymentSettings(settings);
@@ -805,7 +881,7 @@
       }
 
       function loadPaymentSettings() {
-        const settings = getPaymentSettings();
+        var settings = getPaymentSettings();
         document.getElementById("commissionRate").value =
           settings.commissionRate || 3;
         document.getElementById("gkodeBankName").value =
@@ -826,52 +902,233 @@
       }
 
       // ============================================
+      // 📢 AD FUNCTIONS
+      // ============================================
+
+      function showAdForm() {
+        var container = document.getElementById("adFormContainer");
+        if (container) {
+          var isHidden = container.style.display === "none";
+          container.style.display = isHidden ? "block" : "none";
+          if (isHidden) {
+            document.getElementById("adTitle").value = "";
+            document.getElementById("adDescription").value = "";
+            document.getElementById("adLink").value = "";
+            document.getElementById("adActive").checked = true;
+          }
+        }
+      }
+
+      function saveAd() {
+        var title = document.getElementById("adTitle").value.trim();
+        var description = document.getElementById("adDescription").value.trim();
+        var link = document.getElementById("adLink").value.trim();
+        var placement = document.getElementById("adPlacement").value;
+        var isActive = document.getElementById("adActive").checked;
+
+        if (!title || !description || !link) {
+          showToast("Please fill all fields.", "error");
+          return;
+        }
+
+        var ads = getAds();
+        var newAd = {
+          id: Date.now().toString(),
+          title: title,
+          description: description,
+          link: link,
+          placement: placement,
+          isActive: isActive,
+          views: 0,
+          clicks: 0,
+          createdAt: new Date().toISOString(),
+        };
+
+        ads.push(newAd);
+        setAds(ads);
+        showToast("✅ Ad created!", "success");
+        document.getElementById("adFormContainer").style.display = "none";
+        viewAds();
+      }
+
+      function viewAds() {
+        var ads = getAds();
+        var container = document.getElementById("adsList");
+        if (!container) return;
+
+        if (ads.length === 0) {
+          container.innerHTML =
+            '<p style="color:#888;padding:10px;">No ads created yet.</p>';
+          return;
+        }
+
+        var html = "<h4>📢 All Ads</h4>";
+        ads.forEach(function (ad) {
+          html += '<div class="ad-item">';
+          html +=
+            '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">';
+          html += "<div><strong>" + ad.title + "</strong>";
+          html +=
+            ' <span style="font-size:12px;color:' +
+            (ad.isActive ? "#006400" : "#cc0000") +
+            ';">' +
+            (ad.isActive ? "🟢 Active" : "🔴 Inactive") +
+            "</span>";
+          html +=
+            '<div style="font-size:12px;color:#888;">📊 ' +
+            (ad.views || 0) +
+            " views | " +
+            (ad.clicks || 0) +
+            " clicks</div></div>";
+          html += "<div>";
+          html +=
+            "<button onclick=\"toggleAd('" +
+            ad.id +
+            '\')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">' +
+            (ad.isActive ? "⏸️" : "▶️") +
+            "</button>";
+          html +=
+            " <button onclick=\"deleteAd('" +
+            ad.id +
+            '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️</button>';
+          html += "</div></div></div>";
+        });
+        container.innerHTML = html;
+      }
+
+      function toggleAd(adId) {
+        var ads = getAds();
+        var ad = null;
+        for (var i = 0; i < ads.length; i++) {
+          if (ads[i].id === adId) {
+            ad = ads[i];
+            break;
+          }
+        }
+        if (ad) {
+          ad.isActive = !ad.isActive;
+          setAds(ads);
+          showToast(
+            "Ad " + (ad.isActive ? "activated" : "paused") + ".",
+            "success",
+          );
+          viewAds();
+        }
+      }
+
+      function deleteAd(adId) {
+        if (!confirm("Delete this ad?")) return;
+        var ads = getAds().filter(function (a) {
+          return a.id !== adId;
+        });
+        setAds(ads);
+        showToast("Ad deleted.", "info");
+        viewAds();
+      }
+
+      function viewAdStats() {
+        var ads = getAds();
+        if (ads.length === 0) {
+          showToast("No ads.", "info");
+          return;
+        }
+        var totalViews = 0,
+          totalClicks = 0,
+          activeAds = 0;
+        ads.forEach(function (ad) {
+          totalViews += ad.views || 0;
+          totalClicks += ad.clicks || 0;
+          if (ad.isActive) activeAds++;
+        });
+        var msg =
+          "📊 AD STATS\n\n📢 Total Ads: " +
+          ads.length +
+          "\n🟢 Active: " +
+          activeAds +
+          "\n👁️ Views: " +
+          totalViews +
+          "\n👆 Clicks: " +
+          totalClicks +
+          "\n📈 CTR: " +
+          (totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0) +
+          "%";
+        alert(msg);
+      }
+
+      // ============================================
       // VIEW USERS
       // ============================================
       function viewUsers() {
-        const users = getUsers();
-        const output = document.getElementById("output");
+        var users = getUsers();
+        var output = document.getElementById("output");
 
         if (users.length === 0) {
           output.innerHTML = "<p>No users found.</p>";
           return;
         }
 
-        let html = "<h3>👥 All Users (" + users.length + ")</h3>";
+        var html = "<h3>👥 All Users (" + users.length + ")</h3>";
         html +=
           '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
         html += '<div id="userList">';
 
-        users.forEach((u, i) => {
-          const statusClass = u.isBanned
+        users.forEach(function (u) {
+          var statusClass = u.isBanned
             ? "badge-banned"
             : u.isPaid
               ? "badge-paid"
               : "badge-unpaid";
-          const statusText = u.isBanned
+          var statusText = u.isBanned
             ? "🚫 Banned"
             : u.isPaid
               ? "✅ Paid"
               : "🟡 Unpaid";
 
-          html += `
-                    <div class="user-item" data-name="${u.name.toLowerCase()}" data-phone="${u.phone}">
-                        <div class="name">${u.name}</div>
-                        <div class="phone">📞 ${u.phone} | 🆔 ${u.id}</div>
-                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
-                        <div>⭐ ${u.rating || 0} (${u.reviewCount || 0} reviews) | ⚠️ ${u.strikes || 0} strikes</div>
-                        <div><span class="badge ${statusClass}">${statusText}</span></div>
-                        <div style="margin-top:5px;">
-                            ${
-                              !u.isBanned
-                                ? `<button class="btn red btn-small" onclick="banUser('${u.phone}')">🚫 Ban</button>`
-                                : `<button class="btn green btn-small" onclick="unbanUser('${u.phone}')">✅ Unban</button>`
-                            }
-                            <button class="btn red btn-small" onclick="deleteUser('${u.phone}')">🗑️ Delete</button>
-                            <button class="btn blue btn-small" onclick="viewUserDetails('${u.phone}')">📋 Details</button>
-                        </div>
-                    </div>
-                `;
+          html +=
+            '<div class="user-item" data-name="' +
+            u.name.toLowerCase() +
+            '" data-phone="' +
+            u.phone +
+            '">';
+          html += '<div class="name">' + u.name + "</div>";
+          html +=
+            '<div class="phone">📞 ' + u.phone + " | 🆔 " + u.id + "</div>";
+          html += "<div>📍 " + u.location + " | 👔 " + u.profession + "</div>";
+          html +=
+            "<div>⭐ " +
+            (u.rating || 0) +
+            " (" +
+            (u.reviewCount || 0) +
+            " reviews) | ⚠️ " +
+            (u.strikes || 0) +
+            " strikes</div>";
+          html +=
+            '<div><span class="badge ' +
+            statusClass +
+            '">' +
+            statusText +
+            "</span></div>";
+          html += '<div style="margin-top:5px;">';
+          if (!u.isBanned) {
+            html +=
+              '<button class="btn-small red" onclick="banUser(\'' +
+              u.phone +
+              "')\">🚫 Ban</button>";
+          } else {
+            html +=
+              '<button class="btn-small green" onclick="unbanUser(\'' +
+              u.phone +
+              "')\">✅ Unban</button>";
+          }
+          html +=
+            ' <button class="btn-small red" onclick="deleteUser(\'' +
+            u.phone +
+            "')\">🗑️ Delete</button>";
+          html +=
+            ' <button class="btn-small blue" onclick="viewUserDetails(\'' +
+            u.phone +
+            "')\">📋 Details</button>";
+          html += "</div></div>";
         });
 
         html += "</div>";
@@ -879,18 +1136,20 @@
       }
 
       function searchUsers() {
-        const query = document.getElementById("userSearch").value.toLowerCase();
-        const items = document.querySelectorAll(".user-item");
-        items.forEach((item) => {
-          const name = item.dataset.name || "";
-          const phone = item.dataset.phone || "";
-          const match = name.includes(query) || phone.includes(query);
+        var query = document.getElementById("userSearch").value.toLowerCase();
+        var items = document.querySelectorAll(".user-item");
+        items.forEach(function (item) {
+          var name = item.dataset.name || "";
+          var phone = item.dataset.phone || "";
+          var match = name.includes(query) || phone.includes(query);
           item.style.display = match ? "block" : "none";
         });
       }
 
       function viewBannedUsers() {
-        const users = getUsers().filter((u) => u.isBanned);
+        var users = getUsers().filter(function (u) {
+          return u.isBanned;
+        });
         if (users.length === 0) {
           showToast("No banned users", "info");
           return;
@@ -899,7 +1158,9 @@
       }
 
       function viewPaidUsers() {
-        const users = getUsers().filter((u) => u.isPaid);
+        var users = getUsers().filter(function (u) {
+          return u.isPaid;
+        });
         if (users.length === 0) {
           showToast("No paid users", "info");
           return;
@@ -908,54 +1169,94 @@
       }
 
       function displayUsers(users, title) {
-        let html = `<h3>${title} (${users.length})</h3>`;
-        users.forEach((u) => {
-          html += `
-                    <div class="user-item">
-                        <div class="name">${u.name}</div>
-                        <div class="phone">📞 ${u.phone}</div>
-                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
-                        <div>⭐ ${u.rating || 0} | ⚠️ ${u.strikes || 0} strikes</div>
-                    </div>
-                `;
+        var html = "<h3>" + title + " (" + users.length + ")</h3>";
+        users.forEach(function (u) {
+          html +=
+            '<div class="user-item"><div class="name">' + u.name + "</div>";
+          html += '<div class="phone">📞 ' + u.phone + "</div>";
+          html += "<div>📍 " + u.location + " | 👔 " + u.profession + "</div>";
+          html +=
+            "<div>⭐ " +
+            (u.rating || 0) +
+            " | ⚠️ " +
+            (u.strikes || 0) +
+            " strikes</div></div>";
         });
         document.getElementById("output").innerHTML = html;
       }
 
       function viewUserDetails(phone) {
-        const users = getUsers();
-        const user = users.find((u) => u.phone === phone);
+        var users = getUsers();
+        var user = null;
+        for (var i = 0; i < users.length; i++) {
+          if (users[i].phone === phone) {
+            user = users[i];
+            break;
+          }
+        }
         if (!user) {
           showToast("User not found", "error");
           return;
         }
 
-        const gigs = getGigs().filter(
-          (g) => g.clientPhone === phone || g.workerPhone === phone,
-        );
-        const complaints = getComplaints().filter(
-          (c) => c.userId === phone || c.reporterId === phone,
-        );
-
-        let html = `<h3>📋 User Details: ${user.name}</h3>`;
-        html += `<div class="admin-card"><p><strong>Phone:</strong> ${user.phone}</p>`;
-        html += `<p><strong>ID:</strong> ${user.id}</p>`;
-        html += `<p><strong>Location:</strong> ${user.location}</p>`;
-        html += `<p><strong>Profession:</strong> ${user.profession}</p>`;
-        html += `<p><strong>Skills:</strong> ${user.skills || "None"}</p>`;
-        html += `<p><strong>Rating:</strong> ⭐ ${user.rating || 0} (${user.reviewCount || 0} reviews)</p>`;
-        html += `<p><strong>Strikes:</strong> ⚠️ ${user.strikes || 0}</p>`;
-        html += `<p><strong>Status:</strong> ${user.isBanned ? "🚫 Banned" : user.isPaid ? "✅ Paid" : "🟡 Unpaid"}</p>`;
-        html += `<p><strong>Joined:</strong> ${new Date(user.registeredAt).toLocaleString()}</p></div>`;
-
-        html += `<h4>📋 Gigs (${gigs.length})</h4>`;
-        gigs.forEach((g) => {
-          html += `<div class="gig-item">${g.title} — ${g.status} (${g.location})</div>`;
+        var gigs = getGigs().filter(function (g) {
+          return g.clientPhone === phone || g.workerPhone === phone;
+        });
+        var complaints = getComplaints().filter(function (c) {
+          return c.userId === phone || c.reporterId === phone;
         });
 
-        html += `<h4>🚩 Complaints (${complaints.length})</h4>`;
-        complaints.forEach((c) => {
-          html += `<div class="complaint-item">${c.reason} — ${c.resolved ? "✅ Resolved" : "🟡 Pending"}</div>`;
+        var html = "<h3>📋 User Details: " + user.name + "</h3>";
+        html +=
+          '<div class="admin-card"><p><strong>Phone:</strong> ' +
+          user.phone +
+          "</p>";
+        html += "<p><strong>ID:</strong> " + user.id + "</p>";
+        html += "<p><strong>Location:</strong> " + user.location + "</p>";
+        html += "<p><strong>Profession:</strong> " + user.profession + "</p>";
+        html +=
+          "<p><strong>Skills:</strong> " + (user.skills || "None") + "</p>";
+        html +=
+          "<p><strong>Rating:</strong> ⭐ " +
+          (user.rating || 0) +
+          " (" +
+          (user.reviewCount || 0) +
+          " reviews)</p>";
+        html +=
+          "<p><strong>Strikes:</strong> ⚠️ " + (user.strikes || 0) + "</p>";
+        html +=
+          "<p><strong>Status:</strong> " +
+          (user.isBanned
+            ? "🚫 Banned"
+            : user.isPaid
+              ? "✅ Paid"
+              : "🟡 Unpaid") +
+          "</p>";
+        html +=
+          "<p><strong>Joined:</strong> " +
+          new Date(user.registeredAt).toLocaleString() +
+          "</p></div>";
+
+        html += "<h4>📋 Gigs (" + gigs.length + ")</h4>";
+        gigs.forEach(function (g) {
+          html +=
+            '<div class="user-item">' +
+            g.title +
+            " — " +
+            g.status +
+            " (" +
+            g.location +
+            ")</div>";
+        });
+
+        html += "<h4>🚩 Complaints (" + complaints.length + ")</h4>";
+        complaints.forEach(function (c) {
+          html +=
+            '<div class="user-item">' +
+            c.reason +
+            " — " +
+            (c.resolved ? "✅ Resolved" : "🟡 Pending") +
+            "</div>";
         });
 
         document.getElementById("output").innerHTML = html;
@@ -965,9 +1266,9 @@
       // USER ACTIONS
       // ============================================
       function banUser(phone) {
-        if (!confirm(`Ban user ${phone}? They will lose all access.`)) return;
-        let users = getUsers();
-        users = users.map((u) => {
+        if (!confirm("Ban user " + phone + "? They will lose all access."))
+          return;
+        var users = getUsers().map(function (u) {
           if (u.phone === phone) u.isBanned = true;
           return u;
         });
@@ -979,9 +1280,8 @@
       }
 
       function unbanUser(phone) {
-        if (!confirm(`Unban user ${phone}?`)) return;
-        let users = getUsers();
-        users = users.map((u) => {
+        if (!confirm("Unban user " + phone + "?")) return;
+        var users = getUsers().map(function (u) {
           if (u.phone === phone) u.isBanned = false;
           return u;
         });
@@ -995,12 +1295,13 @@
       function deleteUser(phone) {
         if (
           !confirm(
-            `⚠️ Delete user ${phone} permanently? This cannot be undone!`,
+            "⚠️ Delete user " + phone + " permanently? This cannot be undone!",
           )
         )
           return;
-        let users = getUsers();
-        users = users.filter((u) => u.phone !== phone);
+        var users = getUsers().filter(function (u) {
+          return u.phone !== phone;
+        });
         localStorage.setItem("gkode_users", JSON.stringify(users));
         showToast("🗑️ User deleted", "info");
         addLog("Deleted user: " + phone);
@@ -1012,12 +1313,14 @@
       // VIEW GIGS
       // ============================================
       function viewGigs() {
-        const gigs = getGigs();
+        var gigs = getGigs();
         displayGigs(gigs, "📋 All Gigs");
       }
 
       function viewOpenGigs() {
-        const gigs = getGigs().filter((g) => g.status === "Open");
+        var gigs = getGigs().filter(function (g) {
+          return g.status === "Open";
+        });
         if (gigs.length === 0) {
           showToast("No open gigs", "info");
           return;
@@ -1026,7 +1329,9 @@
       }
 
       function viewCompletedGigs() {
-        const gigs = getGigs().filter((g) => g.status === "Completed");
+        var gigs = getGigs().filter(function (g) {
+          return g.status === "Completed";
+        });
         if (gigs.length === 0) {
           showToast("No completed gigs", "info");
           return;
@@ -1035,63 +1340,110 @@
       }
 
       function displayGigs(gigs, title) {
-        const output = document.getElementById("output");
+        var output = document.getElementById("output");
         if (gigs.length === 0) {
           output.innerHTML = "<p>No gigs found.</p>";
           return;
         }
 
-        let html = `<h3>${title} (${gigs.length})</h3>`;
-        gigs.forEach((g) => {
-          html += `
-                    <div class="gig-item">
-                        <div><strong>${g.title}</strong> — ${g.status}</div>
-                        <div>👤 ${g.client} | 🛠️ ${g.skill}</div>
-                        <div>📍 ${g.location} | 💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
-                        ${g.worker ? `<div>👷 Worker: ${g.worker}</div>` : ""}
-                        <div style="font-size:11px; color:#888;">📅 ${new Date(g.createdAt).toLocaleString()}</div>
-                        <div style="margin-top:5px;">
-                            <button class="btn red btn-small" onclick="deleteGig('${g.id}')">🗑️ Delete</button>
-                            <button class="btn blue btn-small" onclick="viewGigDetails('${g.id}')">📋 Details</button>
-                        </div>
-                    </div>
-                `;
+        var html = "<h3>" + title + " (" + gigs.length + ")</h3>";
+        gigs.forEach(function (g) {
+          html += '<div class="user-item">';
+          html +=
+            "<div><strong>" + g.title + "</strong> — " + g.status + "</div>";
+          html += "<div>👤 " + g.client + " | 🛠️ " + g.skill + "</div>";
+          html +=
+            "<div>📍 " +
+            g.location +
+            " | 💰 Ksh " +
+            g.budgetMin +
+            " - " +
+            g.budgetMax +
+            "</div>";
+          if (g.worker) html += "<div>👷 Worker: " + g.worker + "</div>";
+          html +=
+            '<div style="font-size:11px; color:#888;">📅 ' +
+            new Date(g.createdAt).toLocaleString() +
+            "</div>";
+          html += '<div style="margin-top:5px;">';
+          html +=
+            '<button class="btn-small red" onclick="deleteGig(\'' +
+            g.id +
+            "')\">🗑️ Delete</button>";
+          html +=
+            ' <button class="btn-small blue" onclick="viewGigDetails(\'' +
+            g.id +
+            "')\">📋 Details</button>";
+          html += "</div></div>";
         });
         output.innerHTML = html;
       }
 
       function viewGigDetails(id) {
-        const gigs = getGigs();
-        const gig = gigs.find((g) => g.id === id);
+        var gigs = getGigs();
+        var gig = null;
+        for (var i = 0; i < gigs.length; i++) {
+          if (gigs[i].id === id) {
+            gig = gigs[i];
+            break;
+          }
+        }
         if (!gig) {
           showToast("Gig not found", "error");
           return;
         }
 
-        let html = `<h3>📋 Gig Details</h3>`;
-        html += `<div class="admin-card">`;
-        html += `<p><strong>Title:</strong> ${gig.title}</p>`;
-        html += `<p><strong>Skill:</strong> ${gig.skill}</p>`;
-        html += `<p><strong>Location:</strong> ${gig.location}</p>`;
-        html += `<p><strong>Budget:</strong> Ksh ${gig.budgetMin} - ${gig.budgetMax}</p>`;
-        html += `<p><strong>Urgency:</strong> ${gig.urgency}</p>`;
-        html += `<p><strong>Status:</strong> ${gig.status}</p>`;
-        html += `<p><strong>Client:</strong> ${gig.client} (${gig.clientPhone})</p>`;
+        var html = "<h3>📋 Gig Details</h3>";
+        html += '<div class="admin-card">';
+        html += "<p><strong>Title:</strong> " + gig.title + "</p>";
+        html += "<p><strong>Skill:</strong> " + gig.skill + "</p>";
+        html += "<p><strong>Location:</strong> " + gig.location + "</p>";
+        html +=
+          "<p><strong>Budget:</strong> Ksh " +
+          gig.budgetMin +
+          " - " +
+          gig.budgetMax +
+          "</p>";
+        html += "<p><strong>Urgency:</strong> " + gig.urgency + "</p>";
+        html += "<p><strong>Status:</strong> " + gig.status + "</p>";
+        html +=
+          "<p><strong>Client:</strong> " +
+          gig.client +
+          " (" +
+          gig.clientPhone +
+          ")</p>";
         if (gig.worker)
-          html += `<p><strong>Worker:</strong> ${gig.worker} (${gig.workerPhone})</p>`;
-        html += `<p><strong>Description:</strong> ${gig.description || "None"}</p>`;
+          html +=
+            "<p><strong>Worker:</strong> " +
+            gig.worker +
+            " (" +
+            gig.workerPhone +
+            ")</p>";
+        html +=
+          "<p><strong>Description:</strong> " +
+          (gig.description || "None") +
+          "</p>";
         if (gig.gpsLat && gig.gpsLon) {
-          html += `<p><strong>GPS:</strong> ${gig.gpsLat}, ${gig.gpsLon}</p>`;
+          html +=
+            "<p><strong>GPS:</strong> " +
+            gig.gpsLat +
+            ", " +
+            gig.gpsLon +
+            "</p>";
         }
-        html += `<p><strong>Posted:</strong> ${new Date(gig.createdAt).toLocaleString()}</p>`;
-        html += `</div>`;
+        html +=
+          "<p><strong>Posted:</strong> " +
+          new Date(gig.createdAt).toLocaleString() +
+          "</p>";
+        html += "</div>";
         document.getElementById("output").innerHTML = html;
       }
 
       function deleteGig(id) {
         if (!confirm("Delete this gig?")) return;
-        let gigs = getGigs();
-        gigs = gigs.filter((g) => g.id !== id);
+        var gigs = getGigs().filter(function (g) {
+          return g.id !== id;
+        });
         localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
         showToast("🗑️ Gig deleted", "info");
         addLog("Deleted gig: " + id);
@@ -1103,12 +1455,14 @@
       // VIEW COMPLAINTS
       // ============================================
       function viewComplaints() {
-        const complaints = getComplaints();
+        var complaints = getComplaints();
         displayComplaints(complaints, "🚩 All Complaints");
       }
 
       function viewPendingComplaints() {
-        const complaints = getComplaints().filter((c) => !c.resolved);
+        var complaints = getComplaints().filter(function (c) {
+          return !c.resolved;
+        });
         if (complaints.length === 0) {
           showToast("No pending complaints", "info");
           return;
@@ -1117,7 +1471,9 @@
       }
 
       function viewResolvedComplaints() {
-        const complaints = getComplaints().filter((c) => c.resolved);
+        var complaints = getComplaints().filter(function (c) {
+          return c.resolved;
+        });
         if (complaints.length === 0) {
           showToast("No resolved complaints", "info");
           return;
@@ -1126,33 +1482,53 @@
       }
 
       function displayComplaints(complaints, title) {
-        const output = document.getElementById("output");
+        var output = document.getElementById("output");
         if (complaints.length === 0) {
           output.innerHTML = "<p>No complaints found.</p>";
           return;
         }
 
-        let html = `<h3>${title} (${complaints.length})</h3>`;
-        complaints.forEach((c) => {
-          const status = c.resolved ? "✅ Resolved" : "🟡 Pending";
-          const statusClass = c.resolved ? "status-resolved" : "status-pending";
-          html += `
-                    <div class="complaint-item">
-                        <div><strong>${c.reason}</strong> — <span class="${statusClass}">${status}</span></div>
-                        <div>📝 ${c.details}</div>
-                        <div>👤 User: ${c.userId} | Reporter: ${c.reporterId || "Unknown"}</div>
-                        <div style="font-size:11px; color:#888;">📅 ${new Date(c.date).toLocaleString()}</div>
-                        ${!c.resolved ? `<button class="btn green btn-small" onclick="resolveComplaint('${c.id}')">✅ Resolve</button>` : ""}
-                        <button class="btn red btn-small" onclick="deleteComplaint('${c.id}')">🗑️ Delete</button>
-                    </div>
-                `;
+        var html = "<h3>" + title + " (" + complaints.length + ")</h3>";
+        complaints.forEach(function (c) {
+          var status = c.resolved ? "✅ Resolved" : "🟡 Pending";
+          var statusClass = c.resolved ? "status-resolved" : "status-pending";
+          html += '<div class="user-item">';
+          html +=
+            "<div><strong>" +
+            c.reason +
+            '</strong> — <span class="' +
+            statusClass +
+            '">' +
+            status +
+            "</span></div>";
+          html += "<div>📝 " + c.details + "</div>";
+          html +=
+            "<div>👤 User: " +
+            c.userId +
+            " | Reporter: " +
+            (c.reporterId || "Unknown") +
+            "</div>";
+          html +=
+            '<div style="font-size:11px; color:#888;">📅 ' +
+            new Date(c.date).toLocaleString() +
+            "</div>";
+          if (!c.resolved) {
+            html +=
+              '<button class="btn-small green" onclick="resolveComplaint(\'' +
+              c.id +
+              "')\">✅ Resolve</button>";
+          }
+          html +=
+            ' <button class="btn-small red" onclick="deleteComplaint(\'' +
+            c.id +
+            "')\">🗑️ Delete</button>";
+          html += "</div>";
         });
         output.innerHTML = html;
       }
 
       function resolveComplaint(id) {
-        let complaints = getComplaints();
-        complaints = complaints.map((c) => {
+        var complaints = getComplaints().map(function (c) {
           if (c.id === id) c.resolved = true;
           return c;
         });
@@ -1165,8 +1541,9 @@
 
       function deleteComplaint(id) {
         if (!confirm("Delete this complaint?")) return;
-        let complaints = getComplaints();
-        complaints = complaints.filter((c) => c.id !== id);
+        var complaints = getComplaints().filter(function (c) {
+          return c.id !== id;
+        });
         localStorage.setItem("gkode_complaints", JSON.stringify(complaints));
         showToast("🗑️ Complaint deleted", "info");
         viewComplaints();
@@ -1177,31 +1554,33 @@
       // VIEW STRIKES
       // ============================================
       function viewStrikes() {
-        const users = getUsers().filter((u) => u.strikes > 0);
-        const output = document.getElementById("output");
+        var users = getUsers().filter(function (u) {
+          return u.strikes > 0;
+        });
+        var output = document.getElementById("output");
 
         if (users.length === 0) {
           output.innerHTML = "<p>No users with strikes.</p>";
           return;
         }
 
-        let html = "<h3>⚠️ Strikes Report</h3>";
-        users.sort((a, b) => b.strikes - a.strikes);
-        users.forEach((u) => {
-          const warning =
+        var html = "<h3>⚠️ Strikes Report</h3>";
+        users.sort(function (a, b) {
+          return b.strikes - a.strikes;
+        });
+        users.forEach(function (u) {
+          var warning =
             u.strikes >= 5
               ? "🔴 WARNING: Near ban!"
               : u.strikes >= 3
                 ? "🟡 Warning"
                 : "🟢 Ok";
-          html += `
-                    <div class="user-item">
-                        <div class="name">${u.name}</div>
-                        <div class="phone">📞 ${u.phone}</div>
-                        <div>⚠️ ${u.strikes} strikes — ${warning}</div>
-                        <div>${u.isBanned ? "🚫 BANNED" : "Active"}</div>
-                    </div>
-                `;
+          html +=
+            '<div class="user-item"><div class="name">' + u.name + "</div>";
+          html += '<div class="phone">📞 ' + u.phone + "</div>";
+          html += "<div>⚠️ " + u.strikes + " strikes — " + warning + "</div>";
+          html +=
+            "<div>" + (u.isBanned ? "🚫 BANNED" : "Active") + "</div></div>";
         });
         output.innerHTML = html;
       }
@@ -1210,39 +1589,45 @@
       // VIEW PAYMENTS & REVENUE
       // ============================================
       function viewPayments() {
-        const payments = getPayments();
-        const output = document.getElementById("output");
+        var payments = getPayments();
+        var output = document.getElementById("output");
 
         if (payments.length === 0) {
           output.innerHTML = "<p>No payments recorded.</p>";
           return;
         }
 
-        let html = "<h3>💰 Payments (" + payments.length + ")</h3>";
-        payments.forEach((p) => {
-          html += `
-                    <div class="user-item">
-                        <div>📞 ${p.phone}</div>
-                        <div>💰 Ksh ${p.amount} | Code: ${p.code}</div>
-                        <div>${p.verified ? "✅ Verified" : "❌ Pending"} | ${p.type || "User Fee"}</div>
-                        <div style="font-size:11px; color:#888;">📅 ${new Date(p.date).toLocaleString()}</div>
-                    </div>
-                `;
+        var html = "<h3>💰 Payments (" + payments.length + ")</h3>";
+        payments.forEach(function (p) {
+          html += '<div class="user-item">';
+          html += "<div>📞 " + p.phone + "</div>";
+          html += "<div>💰 Ksh " + p.amount + " | Code: " + p.code + "</div>";
+          html +=
+            "<div>" +
+            (p.verified ? "✅ Verified" : "❌ Pending") +
+            " | " +
+            (p.type || "User Fee") +
+            "</div>";
+          html +=
+            '<div style="font-size:11px; color:#888;">📅 ' +
+            new Date(p.date).toLocaleString() +
+            "</div>";
+          html += "</div>";
         });
         output.innerHTML = html;
       }
 
       function viewRevenueReport() {
-        const payments = getPayments();
-        const users = getUsers();
-        const gigs = getGigs();
+        var payments = getPayments();
+        var users = getUsers();
+        var gigs = getGigs();
 
-        let totalRevenue = 0;
-        let userFees = 0;
-        let commission = 0;
-        let totalOrders = 0;
+        var totalRevenue = 0;
+        var userFees = 0;
+        var commission = 0;
+        var totalOrders = 0;
 
-        payments.forEach((p) => {
+        payments.forEach(function (p) {
           if (p.verified) {
             totalRevenue += p.amount;
             if (p.type === "user_fee" || !p.type) userFees += p.amount;
@@ -1250,22 +1635,41 @@
           }
         });
 
-        const paidUsers = users.filter((u) => u.isPaid).length;
-        const completedGigs = gigs.filter(
-          (g) => g.status === "Completed",
-        ).length;
-        const orders = getOrders();
+        var paidUsers = users.filter(function (u) {
+          return u.isPaid;
+        }).length;
+        var completedGigs = gigs.filter(function (g) {
+          return g.status === "Completed";
+        }).length;
+        var orders = getOrders();
 
-        let html = "<h3>📊 Revenue Report</h3>";
-        html += `<div class="admin-card">`;
-        html += `<p><strong>Total Revenue:</strong> Ksh ${totalRevenue.toLocaleString()}</p>`;
-        html += `<p><strong>User Fees:</strong> Ksh ${userFees.toLocaleString()}</p>`;
-        html += `<p><strong>Commission (3%):</strong> Ksh ${commission.toLocaleString()}</p>`;
-        html += `<p><strong>Paid Users:</strong> ${paidUsers}/${users.length}</p>`;
-        html += `<p><strong>Completed Gigs:</strong> ${completedGigs}</p>`;
-        html += `<p><strong>Total Orders:</strong> ${orders.length}</p>`;
-        html += `<p><strong>Potential Revenue:</strong> Ksh ${(users.length - paidUsers) * 300 + orders.length * 50}</p>`;
-        html += `</div>`;
+        var html = "<h3>📊 Revenue Report</h3>";
+        html += '<div class="admin-card">';
+        html +=
+          "<p><strong>Total Revenue:</strong> Ksh " +
+          totalRevenue.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>User Fees:</strong> Ksh " +
+          userFees.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Commission (3%):</strong> Ksh " +
+          commission.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Paid Users:</strong> " +
+          paidUsers +
+          "/" +
+          users.length +
+          "</p>";
+        html += "<p><strong>Completed Gigs:</strong> " + completedGigs + "</p>";
+        html += "<p><strong>Total Orders:</strong> " + orders.length + "</p>";
+        html +=
+          "<p><strong>Potential Revenue:</strong> Ksh " +
+          ((users.length - paidUsers) * 300 + orders.length * 50) +
+          "</p>";
+        html += "</div>";
         document.getElementById("output").innerHTML = html;
       }
 
@@ -1273,7 +1677,7 @@
       // SYSTEM TOOLS
       // ============================================
       function downloadBackup() {
-        const data = {
+        var data = {
           exportedAt: new Date().toISOString(),
           app: "G-KODE",
           version: "3.0",
@@ -1290,10 +1694,10 @@
           },
         };
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
+        var blob = new Blob([JSON.stringify(data, null, 2)], {
           type: "application/json",
         });
-        const a = document.createElement("a");
+        var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download =
           "gkode-backup-" + new Date().toISOString().split("T")[0] + ".json";
@@ -1301,7 +1705,7 @@
         a.click();
         document.body.removeChild(a);
 
-        let backups = getBackups();
+        var backups = getBackups();
         backups.push({
           id: Date.now().toString(),
           timestamp: new Date().toISOString(),
@@ -1314,103 +1718,139 @@
       }
 
       function viewBackups() {
-        const backups = getBackups();
-        const output = document.getElementById("output");
+        var backups = getBackups();
+        var output = document.getElementById("output");
 
         if (backups.length === 0) {
           output.innerHTML = "<p>No backups found.</p>";
           return;
         }
 
-        let html = "<h3>📂 Backups (" + backups.length + ")</h3>";
+        var html = "<h3>📂 Backups (" + backups.length + ")</h3>";
         backups
           .slice()
           .reverse()
-          .forEach((b) => {
-            html += `
-                    <div class="user-item">
-                        <div>📅 ${new Date(b.timestamp).toLocaleString()}</div>
-                        <div>📦 ${b.size ? (b.size / 1024).toFixed(2) + " KB" : "Unknown size"}</div>
-                        <div>🆔 ${b.id.slice(-6)}</div>
-                    </div>
-                `;
+          .forEach(function (b) {
+            html += '<div class="user-item">';
+            html +=
+              "<div>📅 " + new Date(b.timestamp).toLocaleString() + "</div>";
+            html +=
+              "<div>📦 " +
+              (b.size ? (b.size / 1024).toFixed(2) + " KB" : "Unknown size") +
+              "</div>";
+            html += "<div>🆔 " + b.id.slice(-6) + "</div></div>";
           });
         output.innerHTML = html;
       }
 
       function viewLogs() {
-        const logs = getLogs();
-        const output = document.getElementById("output");
+        var logs = getLogs();
+        var output = document.getElementById("output");
 
         if (logs.length === 0) {
           output.innerHTML = "<p>No logs found.</p>";
           return;
         }
 
-        let html = "<h3>📜 Activity Logs (" + logs.length + ")</h3>";
+        var html = "<h3>📜 Activity Logs (" + logs.length + ")</h3>";
         logs
           .slice()
           .reverse()
-          .forEach((l) => {
-            html += `
-                    <div class="user-item" style="font-size:12px;">
-                        <div><strong>${l.action || l.type || "Action"}</strong></div>
-                        <div>👤 ${l.user || "Admin"} | 📅 ${new Date(l.time || l.timestamp).toLocaleString()}</div>
-                    </div>
-                `;
+          .forEach(function (l) {
+            html += '<div class="user-item" style="font-size:12px;">';
+            html +=
+              "<div><strong>" +
+              (l.action || l.type || "Action") +
+              "</strong></div>";
+            html +=
+              "<div>👤 " +
+              (l.user || "Admin") +
+              " | 📅 " +
+              new Date(l.time || l.timestamp).toLocaleString() +
+              "</div>";
+            html += "</div>";
           });
         output.innerHTML = html;
       }
 
       function viewSystemHealth() {
-        const users = getUsers();
-        const gigs = getGigs();
-        const complaints = getComplaints();
-        const payments = getPayments();
+        var users = getUsers();
+        var gigs = getGigs();
+        var complaints = getComplaints();
+        var payments = getPayments();
 
-        let totalRevenue = 0;
-        payments.forEach((p) => {
+        var totalRevenue = 0;
+        payments.forEach(function (p) {
           if (p.verified) totalRevenue += p.amount;
         });
 
-        let storageSize = 0;
-        for (let key in localStorage) {
+        var storageSize = 0;
+        for (var key in localStorage) {
           if (localStorage.hasOwnProperty(key)) {
             storageSize += localStorage[key].length;
           }
         }
 
-        const html = `
-                <h3>🏥 System Health</h3>
-                <div class="admin-card">
-                    <p>👥 Users: <strong>${users.length}</strong></p>
-                    <p>📋 Gigs: <strong>${gigs.length}</strong></p>
-                    <p>🚩 Complaints: <strong>${complaints.length}</strong></p>
-                    <p>💰 Revenue: <strong>Ksh ${totalRevenue.toLocaleString()}</strong></p>
-                    <p>💾 Storage: <strong>${(storageSize / 1024).toFixed(2)} KB</strong></p>
-                    <p>💳 Payment System: <strong>${paymentEnabled ? "✅ Active" : "⛔ Disabled"}</strong></p>
-                    <p>📅 Last Check: <strong>${new Date().toLocaleString()}</strong></p>
-                    <p style="color:#006400;">✅ System is healthy</p>
-                </div>
-            `;
+        var html = "<h3>🏥 System Health</h3>";
+        html += '<div class="admin-card">';
+        html += "<p>👥 Users: <strong>" + users.length + "</strong></p>";
+        html += "<p>📋 Gigs: <strong>" + gigs.length + "</strong></p>";
+        html +=
+          "<p>🚩 Complaints: <strong>" + complaints.length + "</strong></p>";
+        html +=
+          "<p>💰 Revenue: <strong>Ksh " +
+          totalRevenue.toLocaleString() +
+          "</strong></p>";
+        html +=
+          "<p>💾 Storage: <strong>" +
+          (storageSize / 1024).toFixed(2) +
+          " KB</strong></p>";
+        html +=
+          "<p>💳 Payment System: <strong>" +
+          (paymentEnabled ? "✅ Active" : "⛔ Disabled") +
+          "</strong></p>";
+        html +=
+          "<p>📅 Last Check: <strong>" +
+          new Date().toLocaleString() +
+          "</strong></p>";
+        html += '<p style="color:#006400;">✅ System is healthy</p>';
+        html += "</div>";
         document.getElementById("output").innerHTML = html;
       }
 
       function exportUsersCSV() {
-        const users = getUsers();
+        var users = getUsers();
         if (users.length === 0) {
           showToast("No users to export", "error");
           return;
         }
 
-        let csv =
+        var csv =
           "Name,Phone,ID,Location,Profession,Rating,Strikes,Paid,Banned\n";
-        users.forEach((u) => {
-          csv += `${u.name},${u.phone},${u.id},${u.location},${u.profession},${u.rating || 0},${u.strikes || 0},${u.isPaid ? "Yes" : "No"},${u.isBanned ? "Yes" : "No"}\n`;
+        users.forEach(function (u) {
+          csv +=
+            u.name +
+            "," +
+            u.phone +
+            "," +
+            u.id +
+            "," +
+            u.location +
+            "," +
+            u.profession +
+            "," +
+            (u.rating || 0) +
+            "," +
+            (u.strikes || 0) +
+            "," +
+            (u.isPaid ? "Yes" : "No") +
+            "," +
+            (u.isBanned ? "Yes" : "No") +
+            "\n";
         });
 
-        const blob = new Blob([csv], { type: "text/csv" });
-        const a = document.createElement("a");
+        var blob = new Blob([csv], { type: "text/csv" });
+        var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download =
           "gkode-users-" + new Date().toISOString().split("T")[0] + ".csv";
@@ -1491,7 +1931,7 @@
         localStorage.clear();
 
         showToast("🔄 App reset. Refreshing...", "info");
-        setTimeout(() => {
+        setTimeout(function () {
           window.location.href = "index.html";
         }, 2000);
       }
@@ -1500,7 +1940,7 @@
       // ADD LOG
       // ============================================
       function addLog(action) {
-        let logs = getLogs();
+        var logs = getLogs();
         logs.push({
           type: "ADMIN_ACTION",
           action: action,
@@ -1508,6 +1948,21 @@
           time: new Date().toISOString(),
         });
         localStorage.setItem("gkode_adminLogs", JSON.stringify(logs));
+      }
+
+      // ============================================
+      // AD DATA HELPERS (USED BY AD FUNCTIONS)
+      // ============================================
+      function getAds() {
+        try {
+          return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function setAds(ads) {
+        localStorage.setItem("gkode_ads", JSON.stringify(ads));
       }
 
       // ============================================

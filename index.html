@@ -44,8 +44,9 @@
         >
       </p>
     </div>
+
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER (WITH CAMERA BUTTONS)      -->
+    <!-- SCREEN: REGISTER -->
     <!-- ============================================ -->
     <div id="register" class="screen">
       <h2>Create Account</h2>
@@ -54,7 +55,6 @@
       </p>
 
       <form id="registerForm" onsubmit="register(event)">
-        <!-- PERSONAL DETAILS -->
         <label
           for="regName"
           style="
@@ -124,7 +124,6 @@
           pattern="[0-9]{8}"
         />
 
-        <!-- PASSWORD -->
         <label
           for="regPassword"
           style="
@@ -198,7 +197,6 @@
           >
         </div>
 
-        <!-- LOCATION & PROFESSION -->
         <label
           for="regLocation"
           style="
@@ -281,7 +279,7 @@
           >Optional — add other skills you have</small
         >
 
-        <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
+        <!-- Profile Photo with Camera -->
         <label
           for="regPhoto"
           style="
@@ -353,7 +351,7 @@
           >Take a clear photo of your face</small
         >
 
-        <!-- ===== ID SCAN WITH CAMERA ===== -->
+        <!-- ID Scan with Camera -->
         <label
           for="regIDScan"
           style="
@@ -420,7 +418,7 @@
           >Upload a clear photo of your ID</small
         >
 
-        <!-- EMAIL VERIFICATION NOTICE -->
+        <!-- Email Verification Notice -->
         <div
           style="
             background: #e8f5e9;
@@ -438,7 +436,7 @@
           </p>
         </div>
 
-        <!-- TERMS -->
+        <!-- Terms -->
         <div
           style="
             display: flex;
@@ -477,7 +475,7 @@
           >
         </div>
 
-        <!-- OTP SECTION -->
+        <!-- OTP Section -->
         <div
           id="otpSection"
           style="
@@ -529,7 +527,6 @@
           >
         </div>
 
-        <!-- BUTTONS -->
         <button type="submit" class="btn green" id="registerBtn">
           REGISTER
         </button>
@@ -542,6 +539,7 @@
         </button>
       </form>
     </div>
+
     <!-- ============================================ -->
     <!-- SCREEN: LOGIN -->
     <!-- ============================================ -->
@@ -904,7 +902,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: PAYMENT (UPDATED)                   -->
+    <!-- SCREEN: PAYMENT -->
     <!-- ============================================ -->
     <div id="payment" class="screen">
       <h2>💳 Payment</h2>
@@ -959,9 +957,12 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: HOME                                 -->
+    <!-- SCREEN: HOME -->
     <!-- ============================================ -->
     <div id="home" class="screen">
+      <!-- AD BANNER CONTAINER -->
+      <div id="adBannerContainer"></div>
+
       <h2>📍 Gigs Near You</h2>
       <div class="tab-container">
         <button id="tabOpen" class="active" onclick="switchTab('open')">
@@ -981,7 +982,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: POST GIG                            -->
+    <!-- SCREEN: POST GIG -->
     <!-- ============================================ -->
     <div id="postGig" class="screen">
       <h2>Post a Gig</h2>
@@ -1121,7 +1122,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: CHAT                                -->
+    <!-- SCREEN: CHAT -->
     <!-- ============================================ -->
     <div id="chat" class="screen">
       <h2>💬 Chat</h2>
@@ -1161,7 +1162,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: PROFILE                             -->
+    <!-- SCREEN: PROFILE -->
     <!-- ============================================ -->
     <div id="profile" class="screen">
       <h2>👤 My Profile</h2>
@@ -1244,7 +1245,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: TERMS                               -->
+    <!-- SCREEN: TERMS -->
     <!-- ============================================ -->
     <div id="terms" class="screen">
       <h2>📄 Terms of Use</h2>
@@ -1311,7 +1312,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: PRIVACY                             -->
+    <!-- SCREEN: PRIVACY -->
     <!-- ============================================ -->
     <div id="privacy" class="screen">
       <h2>🔒 Privacy Policy</h2>
@@ -1358,7 +1359,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: GUIDE                               -->
+    <!-- SCREEN: GUIDE -->
     <!-- ============================================ -->
     <div id="guide" class="screen">
       <h2>📖 How G-KODE Works</h2>
@@ -1406,7 +1407,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: COMPANY REGISTER                    -->
+    <!-- SCREEN: COMPANY REGISTER -->
     <!-- ============================================ -->
     <div id="companyRegister" class="screen">
       <h2>🏢 Register Business</h2>
@@ -1530,7 +1531,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: COMPANY DASHBOARD                   -->
+    <!-- SCREEN: COMPANY DASHBOARD -->
     <!-- ============================================ -->
     <div id="companyDashboard" class="screen">
       <h2>🏢 My Business</h2>
@@ -1564,7 +1565,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: ADD PRODUCT                         -->
+    <!-- SCREEN: ADD PRODUCT -->
     <!-- ============================================ -->
     <div id="addProduct" class="screen">
       <h2>📦 Add Product</h2>
@@ -1690,7 +1691,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: MARKETPLACE                         -->
+    <!-- SCREEN: MARKETPLACE -->
     <!-- ============================================ -->
     <div id="marketplace" class="screen">
       <h2>🛒 Marketplace</h2>
@@ -1702,7 +1703,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- BOTTOM NAV                                  -->
+    <!-- BOTTOM NAV -->
     <!-- ============================================ -->
     <div id="bottomNav" class="bottom-nav hidden">
       <button onclick="showScreen('home')">
@@ -1720,7 +1721,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCRIPTS                                      -->
+    <!-- SCRIPTS -->
     <!-- ============================================ -->
     <script src="app.js"></script>
   </body>

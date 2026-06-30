@@ -1,288 +1,11 @@
 // ============================================
-// G-KODE - COMPLETE CLEAN APP
+// G-KODE - COMPLETE WORKING APP
 // ============================================
 
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
-// ============================================
-// 📸 CAMERA FUNCTIONS - WORKS ON ALL DEVICES
-// ============================================
 
-let cameraStream = null;
-let cameraActive = false;
-
-// ===== OPEN CAMERA =====
-function openCamera(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) {
-    showToast("Error: Input not found.", "error");
-    return;
-  }
-
-  // Clear previous selection
-  input.value = "";
-
-  // If camera is already active, close it first
-  if (cameraActive) {
-    closeCamera();
-  }
-
-  // Check if getUserMedia is supported
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    // Fallback to file input
-    input.removeAttribute("capture");
-    input.setAttribute("accept", "image/*");
-    input.click();
-    return;
-  }
-
-  // Show camera modal
-  showCameraModal(input);
-}
-
-// ===== SHOW CAMERA MODAL =====
-function showCameraModal(input) {
-  // Create modal overlay
-  const overlay = document.createElement("div");
-  overlay.id = "cameraOverlay";
-  overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.95);
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    `;
-
-  // Create video element
-  const video = document.createElement("video");
-  video.id = "cameraVideo";
-  video.style.cssText = `
-        width: 100%;
-        max-width: 500px;
-        max-height: 70vh;
-        border-radius: 12px;
-        background: #000;
-        transform: scaleX(-1);
-        object-fit: cover;
-    `;
-  video.autoplay = true;
-  video.playsInline = true;
-
-  // Create button container
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.cssText = `
-        display: flex;
-        gap: 20px;
-        margin-top: 20px;
-        width: 100%;
-        max-width: 400px;
-        justify-content: center;
-    `;
-
-  // Capture button
-  const captureBtn = document.createElement("button");
-  captureBtn.textContent = "📸 CAPTURE";
-  captureBtn.style.cssText = `
-        padding: 15px 40px;
-        background: #006400;
-        color: #FFD700;
-        border: none;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
-
-  // Cancel button
-  const cancelBtn = document.createElement("button");
-  cancelBtn.textContent = "✕ CLOSE";
-  cancelBtn.style.cssText = `
-        padding: 15px 30px;
-        background: #cc0000;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
-
-  buttonContainer.appendChild(captureBtn);
-  buttonContainer.appendChild(cancelBtn);
-
-  overlay.appendChild(video);
-  overlay.appendChild(buttonContainer);
-  document.body.appendChild(overlay);
-
-  // Start camera
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-      },
-      audio: false,
-    })
-    .then(function (stream) {
-      cameraStream = stream;
-      cameraActive = true;
-      video.srcObject = stream;
-    })
-    .catch(function (err) {
-      console.error("Camera error:", err);
-      document.body.removeChild(overlay);
-      // Fallback to file input
-      input.removeAttribute("capture");
-      input.setAttribute("accept", "image/*");
-      input.click();
-      showToast("Camera not available. Please select a file.", "warning");
-    });
-
-  // Capture button handler
-  captureBtn.onclick = function () {
-    capturePhoto(video, input, overlay);
-  };
-
-  // Cancel button handler
-  cancelBtn.onclick = function () {
-    closeCamera();
-    document.body.removeChild(overlay);
-  };
-
-  // Click outside to close
-  overlay.onclick = function (e) {
-    if (e.target === overlay) {
-      closeCamera();
-      document.body.removeChild(overlay);
-    }
-  };
-}
-
-// ===== CAPTURE PHOTO =====
-function capturePhoto(video, input, overlay) {
-  try {
-    // Create canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-
-    // Draw video frame (flip back since video is mirrored)
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Convert to data URL
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-
-    // Create a file from the data URL
-    fetch(dataUrl)
-      .then(function (res) {
-        return res.blob();
-      })
-      .then(function (blob) {
-        const file = new File([blob], "camera-photo.jpg", {
-          type: "image/jpeg",
-        });
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        input.files = dataTransfer.files;
-
-        // Trigger change event
-        const event = new Event("change", { bubbles: true });
-        input.dispatchEvent(event);
-
-        // Close camera
-        closeCamera();
-        document.body.removeChild(overlay);
-
-        showToast("✅ Photo captured!", "success");
-      });
-  } catch (e) {
-    console.error("Capture error:", e);
-    showToast("Failed to capture photo. Please try again.", "error");
-  }
-}
-
-// ===== CLOSE CAMERA =====
-function closeCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(function (track) {
-      track.stop();
-    });
-    cameraStream = null;
-  }
-  cameraActive = false;
-  const video = document.getElementById("cameraVideo");
-  if (video) {
-    video.srcObject = null;
-  }
-}
-
-// ===== CLEAR IMAGE =====
-function clearImage(inputId, previewId, containerId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const container = document.getElementById(containerId);
-
-  if (input) input.value = "";
-  if (preview) {
-    preview.src = "";
-    preview.style.display = "none";
-  }
-  if (container) container.style.display = "none";
-}
-
-// ===== SETUP FILE PREVIEW =====
-function setupFilePreview(inputId, previewId, containerId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const container = document.getElementById(containerId);
-  if (!input) return;
-
-  input.addEventListener("change", function (e) {
-    const file = e.target.files[0];
-    if (!file) {
-      if (container) container.style.display = "none";
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      showToast("Please select an image file.", "error");
-      input.value = "";
-      if (container) container.style.display = "none";
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Image too large. Maximum 5MB.", "error");
-      input.value = "";
-      if (container) container.style.display = "none";
-      return;
-    }
-
-    if (preview && container) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        preview.src = e.target.result;
-        preview.style.display = "block";
-        container.style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-}
 // ============ STATE ============
 let currentUser = null;
 let currentTab = "open";
@@ -295,6 +18,8 @@ let resetUser = null;
 let resetEmail = "";
 let resetOtp = "";
 let isProcessing = false;
+let cameraStream = null;
+let cameraActive = false;
 
 // ============ ADMIN PHONES ============
 const ADMIN_PHONES = ["0703428192", "0711991467"];
@@ -467,92 +192,6 @@ function togglePassword(fieldId, icon) {
     field.type = "password";
     icon.textContent = "👁️";
   }
-  // ============================================
-  // 📸 CAMERA FUNCTIONS - FIX
-  // ============================================
-
-  // ===== OPEN CAMERA =====
-  function openCamera(inputId) {
-    const input = document.getElementById(inputId);
-    if (!input) {
-      showToast("Error: Input not found.", "error");
-      return;
-    }
-
-    // Clear previous selection
-    input.value = "";
-
-    // Check if on mobile device
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      // Force camera on mobile
-      input.setAttribute("capture", "environment");
-      input.setAttribute("accept", "image/*");
-      input.click();
-    } else {
-      // On desktop - use file picker
-      input.removeAttribute("capture");
-      input.setAttribute("accept", "image/*");
-      input.click();
-      showToast('📸 Select "Camera" from the file picker', "info");
-    }
-  }
-
-  // ===== CLEAR IMAGE =====
-  function clearImage(inputId, previewId, containerId) {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    const container = document.getElementById(containerId);
-
-    if (input) input.value = "";
-    if (preview) {
-      preview.src = "";
-      preview.style.display = "none";
-    }
-    if (container) container.style.display = "none";
-  }
-
-  // ===== SETUP FILE PREVIEW =====
-  function setupFilePreview(inputId, previewId, containerId) {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    const container = document.getElementById(containerId);
-    if (!input) return;
-
-    input.addEventListener("change", function (e) {
-      const file = e.target.files[0];
-      if (!file) {
-        if (container) container.style.display = "none";
-        return;
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        showToast("Please select an image file.", "error");
-        input.value = "";
-        if (container) container.style.display = "none";
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showToast("Image too large. Maximum 5MB.", "error");
-        input.value = "";
-        if (container) container.style.display = "none";
-        return;
-      }
-
-      // Show preview
-      if (preview && container) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          preview.src = e.target.result;
-          preview.style.display = "block";
-          container.style.display = "block";
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
 }
 
 // ============ PROFESSIONS ============
@@ -695,12 +334,178 @@ function openCamera(inputId) {
     showToast("Error: Input not found.", "error");
     return;
   }
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    input.setAttribute("capture", "environment");
-    input.click();
-  } else {
+  input.value = "";
+  if (cameraActive) {
+    closeCamera();
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
     input.click();
+    return;
+  }
+  showCameraModal(input);
+}
+
+function showCameraModal(input) {
+  const overlay = document.createElement("div");
+  overlay.id = "cameraOverlay";
+  overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+  const video = document.createElement("video");
+  video.id = "cameraVideo";
+  video.style.cssText = `
+        width: 100%;
+        max-width: 500px;
+        max-height: 70vh;
+        border-radius: 12px;
+        background: #000;
+        transform: scaleX(-1);
+        object-fit: cover;
+    `;
+  video.autoplay = true;
+  video.playsInline = true;
+
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = `
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 400px;
+        justify-content: center;
+    `;
+
+  const captureBtn = document.createElement("button");
+  captureBtn.textContent = "📸 CAPTURE";
+  captureBtn.style.cssText = `
+        padding: 15px 40px;
+        background: #006400;
+        color: #FFD700;
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 1;
+    `;
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "✕ CLOSE";
+  cancelBtn.style.cssText = `
+        padding: 15px 30px;
+        background: #cc0000;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 1;
+    `;
+
+  buttonContainer.appendChild(captureBtn);
+  buttonContainer.appendChild(cancelBtn);
+  overlay.appendChild(video);
+  overlay.appendChild(buttonContainer);
+  document.body.appendChild(overlay);
+
+  navigator.mediaDevices
+    .getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+      audio: false,
+    })
+    .then(function (stream) {
+      cameraStream = stream;
+      cameraActive = true;
+      video.srcObject = stream;
+    })
+    .catch(function (err) {
+      console.error("Camera error:", err);
+      document.body.removeChild(overlay);
+      input.removeAttribute("capture");
+      input.setAttribute("accept", "image/*");
+      input.click();
+      showToast("Camera not available. Please select a file.", "warning");
+    });
+
+  captureBtn.onclick = function () {
+    capturePhoto(video, input, overlay);
+  };
+
+  cancelBtn.onclick = function () {
+    closeCamera();
+    document.body.removeChild(overlay);
+  };
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) {
+      closeCamera();
+      document.body.removeChild(overlay);
+    }
+  };
+}
+
+function capturePhoto(video, input, overlay) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+    fetch(dataUrl)
+      .then(function (res) {
+        return res.blob();
+      })
+      .then(function (blob) {
+        const file = new File([blob], "camera-photo.jpg", {
+          type: "image/jpeg",
+        });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+        const event = new Event("change", { bubbles: true });
+        input.dispatchEvent(event);
+        closeCamera();
+        document.body.removeChild(overlay);
+        showToast("✅ Photo captured!", "success");
+      });
+  } catch (e) {
+    console.error("Capture error:", e);
+    showToast("Failed to capture photo. Please try again.", "error");
+  }
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    cameraStream = null;
+  }
+  cameraActive = false;
+  const video = document.getElementById("cameraVideo");
+  if (video) {
+    video.srcObject = null;
   }
 }
 
@@ -708,7 +513,6 @@ function clearImage(inputId, previewId, containerId) {
   const input = document.getElementById(inputId);
   const preview = document.getElementById(previewId);
   const container = document.getElementById(containerId);
-
   if (input) input.value = "";
   if (preview) {
     preview.src = "";
@@ -853,7 +657,6 @@ async function register(e) {
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
-    // --- VALIDATION ---
     if (
       !name ||
       !phone ||
@@ -905,7 +708,6 @@ async function register(e) {
       return;
     }
 
-    // Check if user exists
     const users = getUsersLocal();
     if (users.find((u) => u.phone === phone)) {
       showToast("Phone already registered", "error");
@@ -922,7 +724,6 @@ async function register(e) {
       return;
     }
 
-    // Check Supabase
     if (supabaseInitialized) {
       const { data, error } = await supabase
         .from("users")
@@ -956,7 +757,6 @@ async function register(e) {
       }
     }
 
-    // Read images
     btn.textContent = "⏳ PROCESSING IMAGES...";
     const photoData = await readFileAsDataURL(photoFile);
     const idData = await readFileAsDataURL(idScanFile);
@@ -980,16 +780,13 @@ async function register(e) {
       registeredAt: new Date().toISOString(),
     };
 
-    // Generate OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     pendingRegistration = user;
     pendingOtp = otpCode;
 
-    // Send OTP
     btn.textContent = "⏳ SENDING OTP...";
     sendOTPEmail(email, name, otpCode);
 
-    // Show OTP section
     const otpSection = document.getElementById("otpSection");
     if (otpSection) otpSection.style.display = "block";
     const otpInput = document.getElementById("regOtp");
@@ -1008,7 +805,6 @@ async function register(e) {
   }
 }
 
-// ============ VERIFY OTP ============
 function verifyOtp() {
   const enteredOtp = document.getElementById("regOtp")?.value?.trim() || "";
   if (!enteredOtp) {
@@ -1032,7 +828,6 @@ function resendOtp() {
   showToast("📧 New code sent to your email!", "success");
 }
 
-// ============ COMPLETE REGISTRATION ============
 async function completeRegistration() {
   if (!pendingRegistration) {
     showToast("No registration in progress", "error");
@@ -1048,7 +843,6 @@ async function completeRegistration() {
   try {
     const user = pendingRegistration;
 
-    // Save to Supabase
     let saved = false;
     if (supabaseInitialized) {
       try {
@@ -1074,12 +868,10 @@ async function completeRegistration() {
       }
     }
 
-    // Always save to localStorage as fallback
     let users = getUsersLocal();
     users.push(user);
     setUsersLocal(users);
 
-    // Auto-login
     currentUser = user;
     localStorage.setItem("gkode_user", JSON.stringify(user));
 
@@ -1134,7 +926,6 @@ async function login(e) {
       return;
     }
 
-    // Try Supabase first
     if (supabaseInitialized) {
       try {
         const { data: userData, error: userError } = await supabase
@@ -1186,7 +977,6 @@ async function login(e) {
       }
     }
 
-    // Fallback to localStorage
     const users = getUsersLocal();
     const user = users.find(
       (u) => u.phone === phone && u.password === password,
@@ -1236,9 +1026,179 @@ function logout() {
 }
 
 // ============================================
+// 🔑 RESET PASSWORD
+// ============================================
+function sendResetCode() {
+  const email = document.getElementById("resetEmail")?.value?.trim() || "";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast("Please enter a valid email address.", "error");
+    return;
+  }
+
+  const btn = document.getElementById("sendResetBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ SENDING...";
+  }
+
+  const users = getUsersLocal();
+  const found = users.find((u) => u.email === email);
+  if (!found) {
+    showToast("No account found with that email.", "error");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "📧 SEND RESET CODE";
+    }
+    return;
+  }
+
+  resetUser = found;
+  resetEmail = email;
+  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  sendResetEmail(email, found.name, resetOtp);
+
+  document.getElementById("resetStep1").style.display = "none";
+  document.getElementById("resetStep2").style.display = "block";
+  document.getElementById("resetEmailDisplay").textContent = email;
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "📧 SEND RESET CODE";
+  }
+  showToast("📧 Reset code sent to your email!", "success");
+}
+
+function resendResetCode() {
+  if (!resetUser) {
+    showToast("Please start password reset again", "error");
+    return;
+  }
+  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  sendResetEmail(resetEmail, resetUser.name, resetOtp);
+  showToast("📧 New reset code sent!", "success");
+}
+
+function verifyResetIdentity() {
+  const otp = document.getElementById("resetOtp")?.value?.trim() || "";
+  const phone = document.getElementById("resetPhone")?.value?.trim() || "";
+  const id = document.getElementById("resetID")?.value?.trim() || "";
+  const profession =
+    document.getElementById("resetProfession")?.value?.trim() || "";
+  const location =
+    document.getElementById("resetLocation")?.value?.trim() || "";
+
+  if (!otp || !phone || !id || !profession || !location) {
+    showToast("Please fill all fields", "error");
+    return;
+  }
+
+  if (otp !== resetOtp) {
+    showToast("❌ Invalid reset code", "error");
+    return;
+  }
+
+  const users = getUsersLocal();
+  const user = users.find(
+    (u) =>
+      u.email === resetEmail &&
+      u.phone === phone &&
+      u.id === id &&
+      u.profession === profession &&
+      u.location === location,
+  );
+
+  if (!user) {
+    showToast("❌ Identity verification failed. Check your details.", "error");
+    return;
+  }
+
+  document.getElementById("resetStep2").style.display = "none";
+  document.getElementById("resetStep3").style.display = "block";
+  showToast("✅ Identity verified! Set new password.", "success");
+}
+
+async function resetPassword() {
+  const newPass = document.getElementById("newPassword")?.value?.trim() || "";
+  const confirmPass =
+    document.getElementById("confirmPassword")?.value?.trim() || "";
+
+  if (!newPass || !confirmPass) {
+    showToast("Please enter and confirm new password", "error");
+    return;
+  }
+
+  if (newPass.length < 6 || !/[a-zA-Z]/.test(newPass) || !/\d/.test(newPass)) {
+    showToast(
+      "Password must be 6+ characters with letters and numbers",
+      "error",
+    );
+    return;
+  }
+
+  if (newPass !== confirmPass) {
+    showToast("Passwords do not match", "error");
+    return;
+  }
+
+  if (supabaseInitialized) {
+    const updated = await updateUserInSupabase(resetUser.phone, {
+      password_hash: newPass,
+    });
+    if (updated) {
+      showToast("✅ Password reset successful in cloud!", "success");
+    } else {
+      updateLocalPassword(newPass);
+    }
+  } else {
+    updateLocalPassword(newPass);
+  }
+
+  document.getElementById("resetStep1").style.display = "block";
+  document.getElementById("resetStep2").style.display = "none";
+  document.getElementById("resetStep3").style.display = "none";
+  document.getElementById("resetEmail").value = "";
+  document.getElementById("resetOtp").value = "";
+  document.getElementById("resetPhone").value = "";
+  document.getElementById("resetID").value = "";
+  document.getElementById("resetProfession").value = "";
+  document.getElementById("resetLocation").value = "";
+  document.getElementById("newPassword").value = "";
+  document.getElementById("confirmPassword").value = "";
+
+  showScreen("login");
+}
+
+async function updateUserInSupabase(phone, updates) {
+  if (!supabaseInitialized) return false;
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("phone", phone)
+      .select();
+    if (error) throw error;
+    console.log("✅ User updated in Supabase");
+    return true;
+  } catch (e) {
+    console.log("❌ Supabase update error:", e);
+    return false;
+  }
+}
+
+function updateLocalPassword(newPassword) {
+  let users = getUsersLocal();
+  const user = users.find((u) => u.email === resetEmail);
+  if (user) {
+    user.password = newPassword;
+    setUsersLocal(users);
+    showToast("✅ Password reset successful locally!", "success");
+  }
+}
+
+// ============================================
 // 📋 GIG FUNCTIONS
 // ============================================
-
 function postGig(e) {
   if (e) e.preventDefault();
   if (!currentUser) {
@@ -1353,6 +1313,12 @@ function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
 
+  // ===== AD BANNER =====
+  const adContainer = document.getElementById("adBannerContainer");
+  if (adContainer) {
+    adContainer.innerHTML = renderAdBanner("home_banner");
+  }
+
   const gigs = getGigsLocal();
   const filtered = gigs.filter((g) => {
     if (currentTab === "open") return g.status === "Open";
@@ -1426,7 +1392,6 @@ function acceptGig(id) {
 // ============================================
 // 💬 CHAT FUNCTIONS
 // ============================================
-
 function openChat(id) {
   currentGigId = id;
   document.getElementById("chatGigId").value = id;
@@ -1532,7 +1497,6 @@ function navigateToClient() {
 // ============================================
 // 👤 PROFILE FUNCTIONS
 // ============================================
-
 function loadProfile() {
   if (!currentUser) return;
   document.getElementById("profileName").textContent = currentUser.name;
@@ -1579,7 +1543,6 @@ function loadProfile() {
 // ============================================
 // 🔐 ADMIN FUNCTIONS
 // ============================================
-
 function isAdmin() {
   if (!currentUser) return false;
   return ADMIN_PHONES.includes(currentUser.phone);
@@ -1598,7 +1561,6 @@ function openAdminPanel() {
 // ============================================
 // 🛒 MARKETPLACE FUNCTIONS
 // ============================================
-
 function loadMarketplace() {
   const container = document.getElementById("marketplaceList");
   if (!container) return;
@@ -1647,7 +1609,6 @@ function buyProduct(id) {
 // ============================================
 // 🏢 COMPANY FUNCTIONS
 // ============================================
-
 function registerCompany(e) {
   if (e) e.preventDefault();
   if (!currentUser) {
@@ -1850,7 +1811,6 @@ function deleteProduct(id) {
 // ============================================
 // 💳 PAYMENT FUNCTIONS
 // ============================================
-
 function getPaymentSettings() {
   try {
     return JSON.parse(localStorage.getItem("gkode_payment_settings") || "{}");
@@ -1865,13 +1825,11 @@ function setPaymentSettings(settings) {
 
 function loadPaymentDetails() {
   const settings = getPaymentSettings();
-
   const till = document.getElementById("displayTill");
   const paybill = document.getElementById("displayPaybill");
   const account = document.getElementById("displayAccount");
   const commission = document.getElementById("displayCommission");
   const bank = document.getElementById("displayGkodeBank");
-
   if (till) till.textContent = settings.tillNumber || "9876543";
   if (paybill) paybill.textContent = settings.paybillNumber || "247247";
   if (account) account.textContent = settings.accountNumber || "G-KODE";
@@ -1940,182 +1898,66 @@ function verifyMpesaPayment() {
 }
 
 // ============================================
-// 🔑 PASSWORD RESET
+// 📢 ADVERTISING SYSTEM
 // ============================================
-
-function sendResetCode() {
-  const email = document.getElementById("resetEmail")?.value?.trim() || "";
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showToast("Please enter a valid email address.", "error");
-    return;
-  }
-
-  const btn = document.getElementById("sendResetBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ SENDING...";
-  }
-
-  const users = getUsersLocal();
-  const found = users.find((u) => u.email === email);
-  if (!found) {
-    showToast("No account found with that email.", "error");
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "📧 SEND RESET CODE";
-    }
-    return;
-  }
-
-  resetUser = found;
-  resetEmail = email;
-  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  sendResetEmail(email, found.name, resetOtp);
-
-  document.getElementById("resetStep1").style.display = "none";
-  document.getElementById("resetStep2").style.display = "block";
-  document.getElementById("resetEmailDisplay").textContent = email;
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "📧 SEND RESET CODE";
-  }
-  showToast("📧 Reset code sent to your email!", "success");
-}
-
-function resendResetCode() {
-  if (!resetUser) {
-    showToast("Please start password reset again", "error");
-    return;
-  }
-  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  sendResetEmail(resetEmail, resetUser.name, resetOtp);
-  showToast("📧 New reset code sent!", "success");
-}
-
-function verifyResetIdentity() {
-  const otp = document.getElementById("resetOtp")?.value?.trim() || "";
-  const phone = document.getElementById("resetPhone")?.value?.trim() || "";
-  const id = document.getElementById("resetID")?.value?.trim() || "";
-  const profession =
-    document.getElementById("resetProfession")?.value?.trim() || "";
-  const location =
-    document.getElementById("resetLocation")?.value?.trim() || "";
-
-  if (!otp || !phone || !id || !profession || !location) {
-    showToast("Please fill all fields", "error");
-    return;
-  }
-
-  if (otp !== resetOtp) {
-    showToast("❌ Invalid reset code", "error");
-    return;
-  }
-
-  const users = getUsersLocal();
-  const user = users.find(
-    (u) =>
-      u.email === resetEmail &&
-      u.phone === phone &&
-      u.id === id &&
-      u.profession === profession &&
-      u.location === location,
-  );
-
-  if (!user) {
-    showToast("❌ Identity verification failed. Check your details.", "error");
-    return;
-  }
-
-  document.getElementById("resetStep2").style.display = "none";
-  document.getElementById("resetStep3").style.display = "block";
-  showToast("✅ Identity verified! Set new password.", "success");
-}
-
-async function resetPassword() {
-  const newPass = document.getElementById("newPassword")?.value?.trim() || "";
-  const confirmPass =
-    document.getElementById("confirmPassword")?.value?.trim() || "";
-
-  if (!newPass || !confirmPass) {
-    showToast("Please enter and confirm new password", "error");
-    return;
-  }
-
-  if (newPass.length < 6 || !/[a-zA-Z]/.test(newPass) || !/\d/.test(newPass)) {
-    showToast(
-      "Password must be 6+ characters with letters and numbers",
-      "error",
-    );
-    return;
-  }
-
-  if (newPass !== confirmPass) {
-    showToast("Passwords do not match", "error");
-    return;
-  }
-
-  // Update in Supabase
-  if (supabaseInitialized) {
-    const updated = await updateUserInSupabase(resetUser.phone, {
-      password_hash: newPass,
-    });
-    if (updated) {
-      showToast("✅ Password reset successful in cloud!", "success");
-    } else {
-      updateLocalPassword(newPass);
-    }
-  } else {
-    updateLocalPassword(newPass);
-  }
-
-  document.getElementById("resetStep1").style.display = "block";
-  document.getElementById("resetStep2").style.display = "none";
-  document.getElementById("resetStep3").style.display = "none";
-  document.getElementById("resetEmail").value = "";
-  document.getElementById("resetOtp").value = "";
-  document.getElementById("resetPhone").value = "";
-  document.getElementById("resetID").value = "";
-  document.getElementById("resetProfession").value = "";
-  document.getElementById("resetLocation").value = "";
-  document.getElementById("newPassword").value = "";
-  document.getElementById("confirmPassword").value = "";
-
-  showScreen("login");
-}
-
-async function updateUserInSupabase(phone, updates) {
-  if (!supabaseInitialized) return false;
+function getAds() {
   try {
-    const { data, error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("phone", phone)
-      .select();
-    if (error) throw error;
-    console.log("✅ User updated in Supabase");
-    return true;
-  } catch (e) {
-    console.log("❌ Supabase update error:", e);
-    return false;
+    return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
+  } catch {
+    return [];
   }
 }
 
-function updateLocalPassword(newPassword) {
-  let users = getUsersLocal();
-  const user = users.find((u) => u.email === resetEmail);
-  if (user) {
-    user.password = newPassword;
-    setUsersLocal(users);
-    showToast("✅ Password reset successful locally!", "success");
+function setAds(ads) {
+  localStorage.setItem("gkode_ads", JSON.stringify(ads));
+}
+
+function getActiveAds(placement) {
+  const ads = getAds();
+  return ads.filter((ad) => ad.isActive === true && ad.placement === placement);
+}
+
+function trackAdView(adId) {
+  const ads = getAds();
+  const ad = ads.find((a) => a.id === adId);
+  if (ad) {
+    ad.views = (ad.views || 0) + 1;
+    setAds(ads);
   }
+}
+
+function trackAdClick(adId) {
+  const ads = getAds();
+  const ad = ads.find((a) => a.id === adId);
+  if (ad) {
+    ad.clicks = (ad.clicks || 0) + 1;
+    setAds(ads);
+  }
+}
+
+function renderAdBanner(placement) {
+  const ads = getActiveAds(placement);
+  if (ads.length === 0) return "";
+
+  const ad = ads[Math.floor(Math.random() * ads.length)];
+  trackAdView(ad.id);
+
+  return `
+        <div class="ad-banner" style="background:linear-gradient(135deg,#1a1a1a,#006400);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(255,215,0,0.2);">
+            <div style="flex:1;min-width:150px;">
+                <div style="font-size:10px;color:#FFD700;font-weight:bold;">📢 SPONSORED</div>
+                <div style="font-weight:bold;color:#fff;font-size:14px;">${ad.title}</div>
+                <div style="font-size:12px;color:#ccc;">${ad.description}</div>
+            </div>
+            <a href="${ad.link}" target="_blank" onclick="trackAdClick('${ad.id}')" style="background:#FFD700;color:#000;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">LEARN MORE →</a>
+            <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+    `;
 }
 
 // ============================================
 // 🚨 EMERGENCY
 // ============================================
-
 function emergencyCall() {
   if (confirm("🚨 EMERGENCY\n\nTap OK to open emergency contacts.")) {
     window.location.href = "emergency.html";
@@ -2125,7 +1967,6 @@ function emergencyCall() {
 // ============================================
 // 🔄 UPDATE BOTTOM NAV
 // ============================================
-
 function updateBottomNav() {
   const nav = document.getElementById("bottomNav");
   if (!nav) return;
@@ -2139,7 +1980,6 @@ function updateBottomNav() {
 // ============================================
 // 🧹 RESET
 // ============================================
-
 function resetEverything() {
   if (
     !confirm(
@@ -2154,9 +1994,75 @@ function resetEverything() {
 }
 
 // ============================================
+// ⚖️ LEGAL & EXPORT
+// ============================================
+function showLegalNotice(type) {
+  const notices = {
+    privacy:
+      "🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, profession, skills, photo, ID scan, GPS location.\n\nYour rights: Access, correct, delete anytime.",
+    terms:
+      "📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Kenyan law applies",
+    disclaimer:
+      "⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Use at your own risk",
+  };
+  alert(notices[type] || "Notice not found.");
+}
+
+function exportUserData() {
+  if (!currentUser) {
+    showToast("Please login first.", "error");
+    return;
+  }
+  const data = {
+    exportedAt: new Date().toISOString(),
+    user: currentUser,
+    userGigs: getGigsLocal().filter(
+      (g) => g.client === currentUser.name || g.worker === currentUser.name,
+    ),
+    userOrders: [],
+    userPayments: JSON.parse(
+      localStorage.getItem("gkode_payments") || "[]",
+    ).filter((p) => p.phone === currentUser.phone),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `gkode-my-data-${new Date().toISOString().split("T")[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast("✅ Your data has been exported.", "success");
+}
+
+function deleteAccount() {
+  if (!currentUser) {
+    showToast("Please login first.", "error");
+    return;
+  }
+  if (!confirm("⚠️ ACCOUNT DELETION\n\nThis CANNOT be undone!")) return;
+  if (!confirm("FINAL WARNING: Continue?")) return;
+
+  let users = getUsersLocal().filter((u) => u.phone !== currentUser.phone);
+  setUsersLocal(users);
+
+  let gigs = getGigsLocal().filter(
+    (g) => g.client !== currentUser.name && g.worker !== currentUser.name,
+  );
+  setGigsLocal(gigs);
+
+  currentUser = null;
+  localStorage.removeItem("gkode_user");
+  localStorage.removeItem("gkode_token");
+  showToast("✅ Account deleted successfully.", "success");
+  showScreen("welcome");
+  updateBottomNav();
+}
+
+// ============================================
 // 🚀 INIT
 // ============================================
-
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 G-KODE v3.0 loading...");
 
