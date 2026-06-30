@@ -5,7 +5,284 @@
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
+// ============================================
+// 📸 CAMERA FUNCTIONS - WORKS ON ALL DEVICES
+// ============================================
 
+let cameraStream = null;
+let cameraActive = false;
+
+// ===== OPEN CAMERA =====
+function openCamera(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) {
+    showToast("Error: Input not found.", "error");
+    return;
+  }
+
+  // Clear previous selection
+  input.value = "";
+
+  // If camera is already active, close it first
+  if (cameraActive) {
+    closeCamera();
+  }
+
+  // Check if getUserMedia is supported
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    // Fallback to file input
+    input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    return;
+  }
+
+  // Show camera modal
+  showCameraModal(input);
+}
+
+// ===== SHOW CAMERA MODAL =====
+function showCameraModal(input) {
+  // Create modal overlay
+  const overlay = document.createElement("div");
+  overlay.id = "cameraOverlay";
+  overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+  // Create video element
+  const video = document.createElement("video");
+  video.id = "cameraVideo";
+  video.style.cssText = `
+        width: 100%;
+        max-width: 500px;
+        max-height: 70vh;
+        border-radius: 12px;
+        background: #000;
+        transform: scaleX(-1);
+        object-fit: cover;
+    `;
+  video.autoplay = true;
+  video.playsInline = true;
+
+  // Create button container
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = `
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 400px;
+        justify-content: center;
+    `;
+
+  // Capture button
+  const captureBtn = document.createElement("button");
+  captureBtn.textContent = "📸 CAPTURE";
+  captureBtn.style.cssText = `
+        padding: 15px 40px;
+        background: #006400;
+        color: #FFD700;
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 1;
+    `;
+
+  // Cancel button
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "✕ CLOSE";
+  cancelBtn.style.cssText = `
+        padding: 15px 30px;
+        background: #cc0000;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 1;
+    `;
+
+  buttonContainer.appendChild(captureBtn);
+  buttonContainer.appendChild(cancelBtn);
+
+  overlay.appendChild(video);
+  overlay.appendChild(buttonContainer);
+  document.body.appendChild(overlay);
+
+  // Start camera
+  navigator.mediaDevices
+    .getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+      audio: false,
+    })
+    .then(function (stream) {
+      cameraStream = stream;
+      cameraActive = true;
+      video.srcObject = stream;
+    })
+    .catch(function (err) {
+      console.error("Camera error:", err);
+      document.body.removeChild(overlay);
+      // Fallback to file input
+      input.removeAttribute("capture");
+      input.setAttribute("accept", "image/*");
+      input.click();
+      showToast("Camera not available. Please select a file.", "warning");
+    });
+
+  // Capture button handler
+  captureBtn.onclick = function () {
+    capturePhoto(video, input, overlay);
+  };
+
+  // Cancel button handler
+  cancelBtn.onclick = function () {
+    closeCamera();
+    document.body.removeChild(overlay);
+  };
+
+  // Click outside to close
+  overlay.onclick = function (e) {
+    if (e.target === overlay) {
+      closeCamera();
+      document.body.removeChild(overlay);
+    }
+  };
+}
+
+// ===== CAPTURE PHOTO =====
+function capturePhoto(video, input, overlay) {
+  try {
+    // Create canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+
+    // Draw video frame (flip back since video is mirrored)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert to data URL
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+    // Create a file from the data URL
+    fetch(dataUrl)
+      .then(function (res) {
+        return res.blob();
+      })
+      .then(function (blob) {
+        const file = new File([blob], "camera-photo.jpg", {
+          type: "image/jpeg",
+        });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+
+        // Trigger change event
+        const event = new Event("change", { bubbles: true });
+        input.dispatchEvent(event);
+
+        // Close camera
+        closeCamera();
+        document.body.removeChild(overlay);
+
+        showToast("✅ Photo captured!", "success");
+      });
+  } catch (e) {
+    console.error("Capture error:", e);
+    showToast("Failed to capture photo. Please try again.", "error");
+  }
+}
+
+// ===== CLOSE CAMERA =====
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    cameraStream = null;
+  }
+  cameraActive = false;
+  const video = document.getElementById("cameraVideo");
+  if (video) {
+    video.srcObject = null;
+  }
+}
+
+// ===== CLEAR IMAGE =====
+function clearImage(inputId, previewId, containerId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+
+  if (input) input.value = "";
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+  if (container) container.style.display = "none";
+}
+
+// ===== SETUP FILE PREVIEW =====
+function setupFilePreview(inputId, previewId, containerId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+  if (!input) return;
+
+  input.addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (!file) {
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Please select an image file.", "error");
+      input.value = "";
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image too large. Maximum 5MB.", "error");
+      input.value = "";
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    if (preview && container) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+        container.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
 // ============ STATE ============
 let currentUser = null;
 let currentTab = "open";
