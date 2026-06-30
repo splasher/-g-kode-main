@@ -1563,3 +1563,15 @@
   console.log("☁️ Now reading users from Supabase Cloud!");
   console.log("🇰🇪 Kenya Helping Kenya");
 </script>
+// ============================================ // ADMIN: LOOK UP USER DETAILS
+// ============================================ async function adminLookupUser()
+{ const phone = prompt('Enter user phone number:'); if (!phone) return; try {
+const { data, error } = await supabase .from('users') .select('full_name, email,
+national_id, profession, location, phone') .eq('phone', phone); if (error) throw
+error; if (!data || data.length === 0) { showToast('❌ User not found',
+'error'); return; } const user = data[0]; const msg = `📋 USER DETAILS\n\n` +
+`Name: ${user.full_name}\n` + `Phone: ${user.phone}\n` + `Email:
+${user.email}\n` + `ID: ${user.national_id}\n` + `Profession:
+${user.profession}\n` + `Location: ${user.location}`; alert(msg); showToast('✅
+User details copied to console', 'info'); console.log('User details:', user); }
+catch (err) { showToast('Error: ' + err.message, 'error'); } }

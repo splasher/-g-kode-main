@@ -5,6 +5,111 @@
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
+// ============================================
+// SUPABASE CONFIG - ADD THIS TO YOUR APP.JS
+// ============================================
+const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
+let supabase = null;
+let supabaseInitialized = false;
+
+function initSupabase() {
+  if (supabaseInitialized) return;
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseInitialized = true;
+    console.log("✅ Supabase connected");
+  } catch (e) {
+    console.log("⚠️ Supabase not available");
+  }
+}
+
+// Call this when the app loads
+initSupabase();
+
+// ============================================
+// SYNC USER TO SUPABASE (MANDATORY)
+// ============================================
+async function syncUserToSupabase(userData) {
+  if (!supabaseInitialized) {
+    console.warn("⚠️ Supabase not initialized, user not synced");
+    return false;
+  }
+
+  try {
+    // Check if user already exists
+    const { data: existing, error: checkError } = await supabase
+      .from("users")
+      .select("phone")
+      .eq("phone", userData.phone);
+
+    if (checkError) throw checkError;
+
+    if (existing && existing.length > 0) {
+      // UPDATE existing user
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          full_name: userData.name || userData.full_name,
+          national_id: userData.id || userData.national_id,
+          email: userData.email || "N/A",
+          location: userData.location || "N/A",
+          profession: userData.profession || "N/A",
+          skills: userData.skills
+            ? Array.isArray(userData.skills)
+              ? userData.skills
+              : [userData.skills]
+            : [],
+          photo_url: userData.photo || userData.photo_url || null,
+          rating: userData.rating || 0,
+          review_count: userData.reviewCount || userData.review_count || 0,
+          strikes: userData.strikes || 0,
+          is_paid: userData.isPaid || userData.is_paid || false,
+          is_banned: userData.isBanned || userData.is_banned || false,
+          last_active: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("phone", userData.phone);
+
+      if (updateError) throw updateError;
+      console.log("✅ User updated in Supabase:", userData.phone);
+    } else {
+      // INSERT new user
+      const { error: insertError } = await supabase.from("users").insert({
+        phone: userData.phone,
+        full_name: userData.name || userData.full_name || "Unknown",
+        national_id: userData.id || userData.national_id || "N/A",
+        email: userData.email || "N/A",
+        password_hash: userData.password || "password",
+        location: userData.location || "N/A",
+        profession: userData.profession || "N/A",
+        skills: userData.skills
+          ? Array.isArray(userData.skills)
+            ? userData.skills
+            : [userData.skills]
+          : [],
+        photo_url: userData.photo || userData.photo_url || null,
+        rating: userData.rating || 0,
+        review_count: userData.reviewCount || userData.review_count || 0,
+        strikes: userData.strikes || 0,
+        is_paid: userData.isPaid || userData.is_paid || false,
+        is_banned: userData.isBanned || userData.is_banned || false,
+        created_at: userData.registeredAt || new Date().toISOString(),
+        last_active: new Date().toISOString(),
+      });
+
+      if (insertError) throw insertError;
+      console.log("✅ New user saved to Supabase:", userData.phone);
+    }
+    return true;
+  } catch (e) {
+    console.error("❌ Supabase sync error:", e);
+    // Still allow the user to continue even if sync fails
+    // But show a warning
+    showToast("⚠️ User saved locally but cloud sync failed", "warning");
+    return false;
+  }
+}
 
 // ============ STATE ============
 let currentUser = null;
@@ -999,297 +1104,436 @@ async function completeRegistration() {
 }
 
 // ============================================
-// 🔑 LOGIN
+// LOGIN - CLOUD ONLY
 // ============================================
 async function login(e) {
-  if (e) e.preventDefault();
+  e.preventDefault();
+
   const btn = document.getElementById("loginBtn");
-  if (!btn || isProcessing) return;
-  isProcessing = true;
   btn.disabled = true;
   btn.textContent = "⏳ LOGGING IN...";
 
   try {
-    const phone = document.getElementById("loginPhone")?.value?.trim() || "";
-    const password =
-      document.getElementById("loginPassword")?.value?.trim() || "";
+    const phone = document.getElementById("loginPhone").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const rememberMe = document.getElementById("rememberMe").checked;
 
     if (!phone || !password) {
-      showToast("Please enter phone and password", "error");
+      showToast("❌ Enter phone and password.", "error");
       btn.disabled = false;
       btn.textContent = "LOGIN";
-      isProcessing = false;
       return;
     }
 
-    if (supabaseInitialized) {
-      try {
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("phone", phone)
-          .single();
+    // Check Supabase
+    const { data: users, error: findError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("phone", phone);
 
-        if (userData) {
-          if (userData.password_hash === password) {
-            const user = {
-              name: userData.full_name,
-              phone: userData.phone,
-              id: userData.national_id,
-              email: userData.email,
-              password: userData.password_hash,
-              location: userData.location,
-              profession: userData.profession,
-              skills: userData.skills ? userData.skills.join(", ") : "",
-              photo: userData.photo_url,
-              idScan: userData.id_scan_url,
-              isPaid: userData.is_paid || false,
-              isBanned: userData.is_banned || false,
-              strikes: userData.strikes || 0,
-              rating: userData.rating || 0,
-              reviewCount: userData.review_count || 0,
-            };
-            if (user.isBanned) {
-              showToast("🚫 Account banned. Contact support.", "error");
-              btn.disabled = false;
-              btn.textContent = "LOGIN";
-              isProcessing = false;
-              return;
-            }
-            currentUser = user;
-            localStorage.setItem("gkode_user", JSON.stringify(user));
-            showToast(`Welcome back, ${user.name}! 🇰🇪`, "success");
-            showScreen("home");
-            loadGigs();
-            updateBottomNav();
-            btn.disabled = false;
-            btn.textContent = "LOGIN";
-            isProcessing = false;
-            return;
-          }
-        }
-      } catch (e) {
-        console.log("Supabase login error:", e);
-      }
-    }
+    if (findError) throw findError;
 
-    const users = getUsersLocal();
-    const user = users.find(
-      (u) => u.phone === phone && u.password === password,
-    );
-
-    if (user) {
-      if (user.isBanned) {
-        showToast("🚫 Account banned. Contact support.", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        isProcessing = false;
-        return;
-      }
-      currentUser = user;
-      localStorage.setItem("gkode_user", JSON.stringify(user));
-      showToast(`Welcome back, ${user.name}! 🇰🇪`, "success");
-      showScreen("home");
-      loadGigs();
-      updateBottomNav();
+    if (!users || users.length === 0) {
+      showToast("❌ Phone not registered.", "error");
       btn.disabled = false;
       btn.textContent = "LOGIN";
-      isProcessing = false;
       return;
     }
 
-    showToast("Invalid phone or password", "error");
-  } catch (error) {
-    console.error("Login error:", error);
-    showToast("Login error: " + error.message, "error");
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "LOGIN";
-    isProcessing = false;
+    const user = users[0];
+
+    // Check password
+    if (user.password_hash !== password) {
+      showToast("❌ Wrong password.", "error");
+      btn.disabled = false;
+      btn.textContent = "LOGIN";
+      return;
+    }
+
+    // Check if banned
+    if (user.is_banned) {
+      showToast("🚫 Account is banned! Contact support.", "error");
+      btn.disabled = false;
+      btn.textContent = "LOGIN";
+      return;
+    }
+
+    // Update last active
+    await supabase
+      .from("users")
+      .update({ last_active: new Date().toISOString() })
+      .eq("id", user.id);
+
+    // Store user
+    currentUser = user;
+    if (rememberMe) {
+      localStorage.setItem("gkode_currentUser", JSON.stringify(user));
+    } else {
+      sessionStorage.setItem("gkode_currentUser", JSON.stringify(user));
+    }
+
+    document.getElementById("loginForm").reset();
+    showToast("Welcome back, " + user.full_name + "!", "success");
+    showScreen("home");
+    loadGigs();
+  } catch (err) {
+    showToast("Login error: " + err.message, "error");
+    console.error("Login error:", err);
   }
+
+  btn.disabled = false;
+  btn.textContent = "LOGIN";
 }
 
 // ============================================
-// 🔄 LOGOUT
+// RESET PASSWORD - VARIABLES
 // ============================================
-function logout() {
-  currentUser = null;
-  localStorage.removeItem("gkode_user");
-  localStorage.removeItem("gkode_token");
-  showToast("Logged out.", "info");
-  showScreen("welcome");
-  updateBottomNav();
-}
+let resetData = null;
+let resetTimerInterval = null;
+let resetTimeLeft = 600;
 
 // ============================================
-// 🔑 RESET PASSWORD
+// SEND RESET CODE (Step 1)
 // ============================================
-function sendResetCode() {
-  const email = document.getElementById("resetEmail")?.value?.trim() || "";
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showToast("Please enter a valid email address.", "error");
-    return;
-  }
-
+async function sendResetCode() {
   const btn = document.getElementById("sendResetBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ SENDING...";
-  }
+  btn.disabled = true;
+  btn.textContent = "⏳ SENDING...";
 
-  const users = getUsersLocal();
-  const found = users.find((u) => u.email === email);
-  if (!found) {
-    showToast("No account found with that email.", "error");
-    if (btn) {
+  try {
+    const email = document.getElementById("resetEmail").value.trim();
+
+    if (!email) {
+      showToast("❌ Please enter your email.", "error");
       btn.disabled = false;
       btn.textContent = "📧 SEND RESET CODE";
+      return;
     }
-    return;
-  }
 
-  resetUser = found;
-  resetEmail = email;
-  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  sendResetEmail(email, found.name, resetOtp);
-
-  document.getElementById("resetStep1").style.display = "none";
-  document.getElementById("resetStep2").style.display = "block";
-  document.getElementById("resetEmailDisplay").textContent = email;
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "📧 SEND RESET CODE";
-  }
-  showToast("📧 Reset code sent to your email!", "success");
-}
-
-function resendResetCode() {
-  if (!resetUser) {
-    showToast("Please start password reset again", "error");
-    return;
-  }
-  resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  sendResetEmail(resetEmail, resetUser.name, resetOtp);
-  showToast("📧 New reset code sent!", "success");
-}
-
-function verifyResetIdentity() {
-  const otp = document.getElementById("resetOtp")?.value?.trim() || "";
-  const phone = document.getElementById("resetPhone")?.value?.trim() || "";
-  const id = document.getElementById("resetID")?.value?.trim() || "";
-  const profession =
-    document.getElementById("resetProfession")?.value?.trim() || "";
-  const location =
-    document.getElementById("resetLocation")?.value?.trim() || "";
-
-  if (!otp || !phone || !id || !profession || !location) {
-    showToast("Please fill all fields", "error");
-    return;
-  }
-
-  if (otp !== resetOtp) {
-    showToast("❌ Invalid reset code", "error");
-    return;
-  }
-
-  const users = getUsersLocal();
-  const user = users.find(
-    (u) =>
-      u.email === resetEmail &&
-      u.phone === phone &&
-      u.id === id &&
-      u.profession === profession &&
-      u.location === location,
-  );
-
-  if (!user) {
-    showToast("❌ Identity verification failed. Check your details.", "error");
-    return;
-  }
-
-  document.getElementById("resetStep2").style.display = "none";
-  document.getElementById("resetStep3").style.display = "block";
-  showToast("✅ Identity verified! Set new password.", "success");
-}
-
-async function resetPassword() {
-  const newPass = document.getElementById("newPassword")?.value?.trim() || "";
-  const confirmPass =
-    document.getElementById("confirmPassword")?.value?.trim() || "";
-
-  if (!newPass || !confirmPass) {
-    showToast("Please enter and confirm new password", "error");
-    return;
-  }
-
-  if (newPass.length < 6 || !/[a-zA-Z]/.test(newPass) || !/\d/.test(newPass)) {
-    showToast(
-      "Password must be 6+ characters with letters and numbers",
-      "error",
-    );
-    return;
-  }
-
-  if (newPass !== confirmPass) {
-    showToast("Passwords do not match", "error");
-    return;
-  }
-
-  if (supabaseInitialized) {
-    const updated = await updateUserInSupabase(resetUser.phone, {
-      password_hash: newPass,
-    });
-    if (updated) {
-      showToast("✅ Password reset successful in cloud!", "success");
-    } else {
-      updateLocalPassword(newPass);
-    }
-  } else {
-    updateLocalPassword(newPass);
-  }
-
-  document.getElementById("resetStep1").style.display = "block";
-  document.getElementById("resetStep2").style.display = "none";
-  document.getElementById("resetStep3").style.display = "none";
-  document.getElementById("resetEmail").value = "";
-  document.getElementById("resetOtp").value = "";
-  document.getElementById("resetPhone").value = "";
-  document.getElementById("resetID").value = "";
-  document.getElementById("resetProfession").value = "";
-  document.getElementById("resetLocation").value = "";
-  document.getElementById("newPassword").value = "";
-  document.getElementById("confirmPassword").value = "";
-
-  showScreen("login");
-}
-
-async function updateUserInSupabase(phone, updates) {
-  if (!supabaseInitialized) return false;
-  try {
-    const { data, error } = await supabase
+    // Check if email exists
+    const { data: users, error: findError } = await supabase
       .from("users")
-      .update(updates)
-      .eq("phone", phone)
-      .select();
-    if (error) throw error;
-    console.log("✅ User updated in Supabase");
+      .select("*")
+      .eq("email", email);
+
+    if (findError) throw findError;
+
+    if (!users || users.length === 0) {
+      showToast("❌ No account found with this email.", "error");
+      btn.disabled = false;
+      btn.textContent = "📧 SEND RESET CODE";
+      return;
+    }
+
+    const user = users[0];
+
+    // Generate reset code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("🔑 Reset Code:", resetCode);
+
+    // Send reset code to email
+    showToast(`📧 Sending reset code to ${email}...`, "info");
+
+    const emailSent = await sendResetEmail(email, user.full_name, resetCode);
+
+    if (!emailSent) {
+      showToast(`⚠️ Email failed. Your code: ${resetCode}`, "warning");
+    }
+
+    // Store reset data
+    resetData = {
+      email: email,
+      code: resetCode,
+      phone: user.phone,
+      national_id: user.national_id,
+      profession: user.profession,
+      location: user.location,
+      userId: user.id,
+    };
+
+    // Show Step 2
+    document.getElementById("resetStep1").style.display = "none";
+    document.getElementById("resetStep2").style.display = "block";
+    document.getElementById("resetEmailDisplay").textContent = email;
+    document.getElementById("resetOtp").value = "";
+    document.getElementById("resetOtp").focus();
+
+    // Start timer
+    startResetTimer();
+
+    showToast(`📧 Reset code sent to ${email}`, "success");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Reset error:", err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "📧 SEND RESET CODE";
+}
+
+// ============================================
+// SEND RESET EMAIL
+// ============================================
+async function sendResetEmail(email, name, code) {
+  try {
+    if (typeof emailjs === "undefined") {
+      await loadEmailJS();
+    }
+
+    const templateParams = {
+      to_email: email,
+      to_name: name || "User",
+      code: code,
+      app_name: "G-KODE",
+      year: new Date().getFullYear(),
+      message: "Your G-KODE password reset code",
+    };
+
+    const response = await emailjs.send(
+      "service_hw35xfu",
+      "template_0787ox7",
+      templateParams,
+      "vc371wcNfQy56zlH8",
+    );
+
+    console.log("✅ Reset email sent! Status:", response.status);
     return true;
-  } catch (e) {
-    console.log("❌ Supabase update error:", e);
+  } catch (error) {
+    console.error("❌ Reset email failed:", error);
     return false;
   }
 }
 
-function updateLocalPassword(newPassword) {
-  let users = getUsersLocal();
-  const user = users.find((u) => u.email === resetEmail);
-  if (user) {
-    user.password = newPassword;
-    setUsersLocal(users);
-    showToast("✅ Password reset successful locally!", "success");
+// ============================================
+// VERIFY RESET IDENTITY (Step 2)
+// ============================================
+async function verifyResetIdentity() {
+  const btn = document.getElementById("verifyBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ VERIFYING...";
+
+  try {
+    const enteredCode = document.getElementById("resetOtp").value.trim();
+    const phone = document.getElementById("resetPhone").value.trim();
+    const id = document.getElementById("resetID").value.trim();
+    const profession = document.getElementById("resetProfession").value.trim();
+    const location = document.getElementById("resetLocation").value.trim();
+
+    // Validate code
+    if (!enteredCode || enteredCode.length !== 6) {
+      showToast("❌ Please enter the 6-digit reset code.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    if (!resetData) {
+      showToast("❌ Reset session expired. Please start over.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    // Verify code
+    if (enteredCode !== resetData.code) {
+      showToast("❌ Invalid reset code. Please try again.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    // Verify user details
+    let errorMsg = "";
+
+    if (phone !== resetData.phone) {
+      errorMsg = "❌ Phone number does not match our records.";
+    } else if (id !== resetData.national_id) {
+      errorMsg = "❌ National ID does not match our records.";
+    } else if (
+      profession.toLowerCase() !== resetData.profession.toLowerCase()
+    ) {
+      errorMsg = "❌ Profession does not match our records.";
+    } else if (location.toLowerCase() !== resetData.location.toLowerCase()) {
+      errorMsg = "❌ Location does not match our records.";
+    }
+
+    if (errorMsg) {
+      showToast(errorMsg + " Please check your details.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    // All verified! Show Step 3
+    document.getElementById("resetStep2").style.display = "none";
+    document.getElementById("resetStep3").style.display = "block";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+    document.getElementById("newPassword").focus();
+
+    showToast("✅ Identity verified! Set your new password.", "success");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Verification error:", err);
   }
+
+  btn.disabled = false;
+  btn.textContent = "VERIFY IDENTITY";
+}
+
+// ============================================
+// RESEND RESET CODE
+// ============================================
+async function resendResetCode() {
+  if (!resetData) {
+    showToast("❌ Reset session expired. Please start over.", "error");
+    return;
+  }
+
+  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+  resetData.code = newCode;
+
+  showToast(`📧 Sending new reset code...`, "info");
+
+  const emailSent = await sendResetEmail(resetData.email, "User", newCode);
+
+  if (emailSent) {
+    showToast("📧 New reset code sent!", "success");
+    startResetTimer();
+  } else {
+    showToast(`⚠️ Email failed. Your new code: ${newCode}`, "warning");
+  }
+}
+
+// ============================================
+// RESET PASSWORD (Step 3)
+// ============================================
+async function resetPassword() {
+  const btn = document.getElementById("resetPasswordBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ RESETTING...";
+
+  try {
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (newPassword.length < 6) {
+      showToast("❌ Password must be at least 6 characters.", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast("❌ Passwords do not match!", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    if (!resetData) {
+      showToast("❌ Reset session expired. Please start over.", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    // Update password in Supabase
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ password_hash: newPassword })
+      .eq("id", resetData.userId);
+
+    if (updateError) throw updateError;
+
+    // Reset everything
+    resetData = null;
+    clearInterval(resetTimerInterval);
+    document.getElementById("resetStep3").style.display = "none";
+    document.getElementById("resetStep1").style.display = "block";
+    document.getElementById("resetEmail").value = "";
+
+    showToast("✅ Password reset successful! Please login.", "success");
+    showScreen("login");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Reset password error:", err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "RESET PASSWORD";
+}
+
+// ============================================
+// RESET TIMER
+// ============================================
+function startResetTimer() {
+  resetTimeLeft = 600;
+  updateResetTimerDisplay();
+
+  if (resetTimerInterval) clearInterval(resetTimerInterval);
+
+  resetTimerInterval = setInterval(function () {
+    resetTimeLeft--;
+    updateResetTimerDisplay();
+
+    if (resetTimeLeft <= 0) {
+      clearInterval(resetTimerInterval);
+      document.getElementById("resetCountdown").textContent = "00:00";
+      document.getElementById("resetCountdown").style.color = "#cc0000";
+      showToast("⏰ Reset code expired. Please resend.", "warning");
+    }
+  }, 1000);
+}
+
+function updateResetTimerDisplay() {
+  const minutes = Math.floor(resetTimeLeft / 60);
+  const seconds = resetTimeLeft % 60;
+  const display = document.getElementById("resetCountdown");
+  if (display) {
+    display.textContent =
+      String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+  }
+}
+
+// ============================================
+// CHECK SESSION
+// ============================================
+async function checkSession() {
+  const savedUser =
+    sessionStorage.getItem("gkode_currentUser") ||
+    localStorage.getItem("gkode_currentUser");
+
+  if (savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id);
+
+      if (!error && data && data.length > 0) {
+        currentUser = data[0];
+        showScreen("home");
+        loadGigs();
+        return;
+      }
+    } catch (e) {
+      console.log("Session expired");
+    }
+  }
+  showScreen("welcome");
+}
+
+// ============================================
+// LOGOUT
+// ============================================
+function logout() {
+  currentUser = null;
+  localStorage.removeItem("gkode_currentUser");
+  sessionStorage.removeItem("gkode_currentUser");
+  showToast("Logged out.", "info");
+  showScreen("welcome");
 }
 
 // ============================================
@@ -2197,3 +2441,108 @@ window.onerror = function (message, source, lineno, colno, error) {
   console.error("Global error:", { message, source, lineno, colno, error });
   showToast("An unexpected error occurred. Please try again.", "error");
 };
+// ============================================
+// SYNC ALL LOCAL USERS TO SUPABASE
+// ============================================
+async function syncAllUsersToCloud() {
+  if (!supabaseInitialized) {
+    showToast("❌ Supabase not connected!", "error");
+    return;
+  }
+
+  const localUsers = getUsersSync(); // Your existing function to get local users
+
+  if (localUsers.length === 0) {
+    showToast("⚠️ No local users to sync", "warning");
+    return;
+  }
+
+  showToast(`⏳ Syncing ${localUsers.length} users to cloud...`, "info");
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const user of localUsers) {
+    const synced = await syncUserToSupabase(user);
+    if (synced) {
+      successCount++;
+    } else {
+      failCount++;
+    }
+  }
+
+  showToast(
+    `✅ Synced ${successCount} users, ${failCount} failed`,
+    successCount > 0 ? "success" : "error",
+  );
+} // ============================================
+// AUTO-SYNC USER TO SUPABASE (NEW)
+// ============================================
+async function autoSyncUserToSupabase(userData) {
+  if (!supabaseInitialized) {
+    console.log("⚠️ Supabase not ready, skipping sync");
+    return false;
+  }
+
+  try {
+    // Check if user exists in Supabase
+    const { data: existing, error: checkError } = await supabase
+      .from("users")
+      .select("phone")
+      .eq("phone", userData.phone);
+
+    if (checkError) throw checkError;
+
+    if (existing && existing.length > 0) {
+      // UPDATE existing user
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          full_name: userData.name || userData.full_name,
+          national_id: userData.id || userData.national_id,
+          email: userData.email || "N/A",
+          location: userData.location || "N/A",
+          profession: userData.profession || "N/A",
+          skills: userData.skills ? [userData.skills] : [],
+          photo_url: userData.photo || null,
+          rating: userData.rating || 0,
+          review_count: userData.reviewCount || 0,
+          strikes: userData.strikes || 0,
+          is_paid: userData.isPaid || false,
+          is_banned: userData.isBanned || false,
+          last_active: new Date().toISOString(),
+        })
+        .eq("phone", userData.phone);
+
+      if (updateError) throw updateError;
+      console.log("✅ User updated in Supabase:", userData.phone);
+    } else {
+      // INSERT new user
+      const { error: insertError } = await supabase.from("users").insert({
+        phone: userData.phone,
+        full_name: userData.name || userData.full_name || "Unknown",
+        national_id: userData.id || userData.national_id || "N/A",
+        email: userData.email || "N/A",
+        password_hash: userData.password || "password",
+        location: userData.location || "N/A",
+        profession: userData.profession || "N/A",
+        skills: userData.skills ? [userData.skills] : [],
+        photo_url: userData.photo || null,
+        rating: userData.rating || 0,
+        review_count: userData.reviewCount || 0,
+        strikes: userData.strikes || 0,
+        is_paid: userData.isPaid || false,
+        is_banned: userData.isBanned || false,
+        created_at: userData.registeredAt || new Date().toISOString(),
+        last_active: new Date().toISOString(),
+      });
+
+      if (insertError) throw insertError;
+      console.log("✅ New user saved to Supabase:", userData.phone);
+    }
+    return true;
+  } catch (e) {
+    console.error("❌ Auto-sync error:", e);
+    return false;
+  }
+}
