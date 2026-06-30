@@ -1,6 +1,5 @@
 // ============================================
-// G-KODE - SHADOW GOD MODE SECURITY
-// Universal Camera + Complete Security
+// G-KODE - COMPLETE CLEAN APP
 // ============================================
 
 // ============ SUPABASE CONFIG ============
@@ -19,8 +18,6 @@ let resetUser = null;
 let resetEmail = "";
 let resetOtp = "";
 let isProcessing = false;
-let cameraStream = null;
-let cameraActive = false;
 
 // ============ ADMIN PHONES ============
 const ADMIN_PHONES = ["0703428192", "0711991467"];
@@ -32,292 +29,6 @@ const EMAILJS_CONFIG = {
   otpTemplateID: "template_qycsjak",
   resetTemplateID: "template_0787ox7",
 };
-
-// ============================================
-// 🔒 SHADOW GOD MODE SECURITY
-// ============================================
-
-// ===== SECURE CONFIG =====
-const SECURITY = {
-  MAX_LOGIN_ATTEMPTS: 5,
-  LOCKOUT_TIME: 15 * 60 * 1000,
-  SESSION_EXPIRY: 7 * 24 * 60 * 60 * 1000,
-  RATE_LIMIT_WINDOW: 60000,
-  RATE_LIMIT_MAX: 10,
-};
-
-// ===== RATE LIMITING =====
-const rateLimits = {};
-
-function checkRateLimit(action, identifier) {
-  const key = `${action}_${identifier}`;
-  const now = Date.now();
-
-  if (!rateLimits[key]) {
-    rateLimits[key] = { attempts: 0, windowStart: now };
-    return true;
-  }
-
-  const record = rateLimits[key];
-  if (now - record.windowStart > SECURITY.RATE_LIMIT_WINDOW) {
-    record.attempts = 0;
-    record.windowStart = now;
-  }
-  record.attempts++;
-  return record.attempts <= SECURITY.RATE_LIMIT_MAX;
-}
-
-// ===== INPUT SANITIZATION =====
-function sanitizeInput(input) {
-  if (!input) return "";
-  return String(input)
-    .replace(/[<>{}]/g, "")
-    .replace(/javascript:/gi, "")
-    .replace(/on\w+=/gi, "")
-    .trim();
-}
-
-// ===== VALIDATION =====
-function isValidPhone(phone) {
-  return /^(07|01)\d{8}$/.test(phone) || /^\+254(7|1)\d{8}$/.test(phone);
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isValidID(id) {
-  return /^\d{8}$/.test(id);
-}
-
-function isStrongPassword(password) {
-  return (
-    password.length >= 6 && /[a-zA-Z]/.test(password) && /\d/.test(password)
-  );
-}
-
-// ===== SECURE SESSION =====
-function createSecureSession(user) {
-  const session = {
-    userId: user.id || user.phone,
-    userName: user.name,
-    userPhone: user.phone,
-    expires: Date.now() + SECURITY.SESSION_EXPIRY,
-    created: Date.now(),
-  };
-  localStorage.setItem("gkode_secure_session", JSON.stringify(session));
-  return session;
-}
-
-function getSecureSession() {
-  try {
-    const session = JSON.parse(
-      localStorage.getItem("gkode_secure_session") || "null",
-    );
-    if (!session) return null;
-    if (session.expires < Date.now()) {
-      localStorage.removeItem("gkode_secure_session");
-      return null;
-    }
-    return session;
-  } catch (e) {
-    return null;
-  }
-}
-
-function clearSecureSession() {
-  localStorage.removeItem("gkode_secure_session");
-  localStorage.removeItem("gkode_user");
-  localStorage.removeItem("gkode_token");
-}
-
-// ============================================
-// 📸 UNIVERSAL CAMERA - WORKS ON ALL DEVICES
-// ============================================
-function openCamera(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) {
-    showToast("Error: Input not found.", "error");
-    return;
-  }
-
-  input.value = ""; // ✅ Clears previous selection
-
-  // ✅ Checks if camera is supported
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    // ✅ Fallback for browsers without camera support
-    input.removeAttribute("capture");
-    input.setAttribute("accept", "image/*");
-    input.click();
-    showToast('📸 Select "Camera" from the file picker', "info");
-    return;
-  }
-
-  // ✅ Opens custom camera modal
-  showCameraModal(input);
-}
-
-function showCameraModal(input) {
-  const overlay = document.createElement("div");
-  overlay.id = "cameraOverlay";
-  overlay.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.95);
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    `;
-
-  const video = document.createElement("video");
-  video.id = "cameraVideo";
-  video.style.cssText = `
-        width: 100%;
-        max-width: 500px;
-        max-height: 65vh;
-        border-radius: 12px;
-        background: #000;
-        transform: scaleX(-1);
-        object-fit: cover;
-    `;
-  video.autoplay = true;
-  video.playsInline = true;
-
-  const controls = document.createElement("div");
-  controls.style.cssText = `
-        display: flex;
-        gap: 15px;
-        margin-top: 15px;
-        width: 100%;
-        max-width: 400px;
-        justify-content: center;
-    `;
-
-  const captureBtn = document.createElement("button");
-  captureBtn.textContent = "📸 CAPTURE";
-  captureBtn.style.cssText = `
-        padding: 15px 35px;
-        background: #006400;
-        color: #FFD700;
-        border: none;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
-
-  const cancelBtn = document.createElement("button");
-  cancelBtn.textContent = "✕ CLOSE";
-  cancelBtn.style.cssText = `
-        padding: 15px 25px;
-        background: #cc0000;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
-
-  controls.appendChild(captureBtn);
-  controls.appendChild(cancelBtn);
-  overlay.appendChild(video);
-  overlay.appendChild(controls);
-  document.body.appendChild(overlay);
-
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-      },
-      audio: false,
-    })
-    .then(function (stream) {
-      cameraStream = stream;
-      cameraActive = true;
-      video.srcObject = stream;
-    })
-    .catch(function (err) {
-      console.error("Camera error:", err);
-      document.body.removeChild(overlay);
-      input.removeAttribute("capture");
-      input.setAttribute("accept", "image/*");
-      input.click();
-      showToast("Camera not available. Please select a file.", "warning");
-    });
-
-  captureBtn.onclick = function () {
-    capturePhoto(video, input, overlay);
-  };
-
-  cancelBtn.onclick = function () {
-    closeCamera();
-    document.body.removeChild(overlay);
-  };
-
-  overlay.onclick = function (e) {
-    if (e.target === overlay) {
-      closeCamera();
-      document.body.removeChild(overlay);
-    }
-  };
-}
-
-function capturePhoto(video, input, overlay) {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-
-    fetch(dataUrl)
-      .then(function (res) {
-        return res.blob();
-      })
-      .then(function (blob) {
-        const file = new File([blob], "camera-photo.jpg", {
-          type: "image/jpeg",
-        });
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        input.files = dataTransfer.files;
-        const event = new Event("change", { bubbles: true });
-        input.dispatchEvent(event);
-        closeCamera();
-        document.body.removeChild(overlay);
-        showToast("✅ Photo captured!", "success");
-      });
-  } catch (e) {
-    console.error("Capture error:", e);
-    showToast("Failed to capture. Please try again.", "error");
-  }
-}
-
-function closeCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(function (track) {
-      track.stop();
-    });
-    cameraStream = null;
-  }
-  cameraActive = false;
-  const video = document.getElementById("cameraVideo");
-  if (video) {
-    video.srcObject = null;
-  }
-}
 
 // ============ INIT SUPABASE ============
 function initSupabase() {
@@ -614,7 +325,35 @@ function populateCategoryDropdown() {
   });
 }
 
-// ============ IMAGE PREVIEW ============
+// ============ CAMERA FUNCTIONS ============
+function openCamera(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) {
+    showToast("Error: Input not found.", "error");
+    return;
+  }
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    input.setAttribute("capture", "environment");
+    input.click();
+  } else {
+    input.removeAttribute("capture");
+    input.click();
+  }
+}
+
+function clearImage(inputId, previewId, containerId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+
+  if (input) input.value = "";
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+  if (container) container.style.display = "none";
+}
+
 function setupFilePreview(inputId, previewId, containerId) {
   const input = document.getElementById(inputId);
   const preview = document.getElementById(previewId);
@@ -649,18 +388,6 @@ function setupFilePreview(inputId, previewId, containerId) {
       reader.readAsDataURL(file);
     }
   });
-}
-
-function clearImage(inputId, previewId, containerId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const container = document.getElementById(containerId);
-  if (input) input.value = "";
-  if (preview) {
-    preview.src = "";
-    preview.style.display = "none";
-  }
-  if (container) container.style.display = "none";
 }
 
 // ============ EMAIL FUNCTIONS ============
@@ -734,56 +461,36 @@ function sendResetEmail(email, name, code) {
 }
 
 // ============================================
-// 🔐 SECURE REGISTER
+// 🔐 REGISTER
 // ============================================
 async function register(e) {
   if (e) e.preventDefault();
   const btn = document.getElementById("registerBtn");
   if (!btn || isProcessing) return;
-
-  const phone = document.getElementById("regPhone")?.value?.trim() || "";
-  if (!checkRateLimit("register", phone)) {
-    showToast("Too many attempts. Please try again later.", "error");
-    return;
-  }
-
   isProcessing = true;
   btn.disabled = true;
   btn.textContent = "⏳ REGISTERING...";
 
   try {
-    const name = sanitizeInput(
-      document.getElementById("regName")?.value?.trim() || "",
-    );
-    const phone = sanitizeInput(
-      document.getElementById("regPhone")?.value?.trim() || "",
-    );
-    const id = sanitizeInput(
-      document.getElementById("regID")?.value?.trim() || "",
-    );
-    const email = sanitizeInput(
-      document.getElementById("regEmail")?.value?.trim() || "",
-    );
+    const name = document.getElementById("regName")?.value?.trim() || "";
+    const phone = document.getElementById("regPhone")?.value?.trim() || "";
+    const id = document.getElementById("regID")?.value?.trim() || "";
+    const email = document.getElementById("regEmail")?.value?.trim() || "";
     const password =
       document.getElementById("regPassword")?.value?.trim() || "";
     const confirmPassword =
       document.getElementById("regConfirmPassword")?.value?.trim() || "";
-    const location = sanitizeInput(
-      document.getElementById("regLocation")?.value?.trim() || "",
-    );
-    const profession = sanitizeInput(
-      document.getElementById("regProfession")?.value || "",
-    );
-    const otherProfession = sanitizeInput(
-      document.getElementById("regOtherProfession")?.value?.trim() || "",
-    );
-    const skills = sanitizeInput(
-      document.getElementById("regSkills")?.value?.trim() || "",
-    );
+    const location =
+      document.getElementById("regLocation")?.value?.trim() || "";
+    const profession = document.getElementById("regProfession")?.value || "";
+    const otherProfession =
+      document.getElementById("regOtherProfession")?.value?.trim() || "";
+    const skills = document.getElementById("regSkills")?.value?.trim() || "";
     const photoFile = document.getElementById("regPhoto")?.files[0];
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
+    // --- VALIDATION ---
     if (
       !name ||
       !phone ||
@@ -806,32 +513,15 @@ async function register(e) {
       isProcessing = false;
       return;
     }
-    if (!isStrongPassword(password)) {
+    if (
+      password.length < 6 ||
+      !/[a-zA-Z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
       showToast(
         "Password must be 6+ characters with letters and numbers",
         "error",
       );
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-      isProcessing = false;
-      return;
-    }
-    if (!isValidPhone(phone)) {
-      showToast("Please enter a valid Kenyan phone number", "error");
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-      isProcessing = false;
-      return;
-    }
-    if (!isValidEmail(email)) {
-      showToast("Please enter a valid email address", "error");
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-      isProcessing = false;
-      return;
-    }
-    if (!isValidID(id)) {
-      showToast("Please enter a valid 8-digit ID number", "error");
       btn.disabled = false;
       btn.textContent = "REGISTER";
       isProcessing = false;
@@ -852,6 +542,7 @@ async function register(e) {
       return;
     }
 
+    // Check if user exists
     const users = getUsersLocal();
     if (users.find((u) => u.phone === phone)) {
       showToast("Phone already registered", "error");
@@ -868,6 +559,7 @@ async function register(e) {
       return;
     }
 
+    // Check Supabase
     if (supabaseInitialized) {
       const { data, error } = await supabase
         .from("users")
@@ -901,6 +593,7 @@ async function register(e) {
       }
     }
 
+    // Read images
     btn.textContent = "⏳ PROCESSING IMAGES...";
     const photoData = await readFileAsDataURL(photoFile);
     const idData = await readFileAsDataURL(idScanFile);
@@ -924,13 +617,16 @@ async function register(e) {
       registeredAt: new Date().toISOString(),
     };
 
+    // Generate OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     pendingRegistration = user;
     pendingOtp = otpCode;
 
+    // Send OTP
     btn.textContent = "⏳ SENDING OTP...";
     sendOTPEmail(email, name, otpCode);
 
+    // Show OTP section
     const otpSection = document.getElementById("otpSection");
     if (otpSection) otpSection.style.display = "block";
     const otpInput = document.getElementById("regOtp");
@@ -989,6 +685,7 @@ async function completeRegistration() {
   try {
     const user = pendingRegistration;
 
+    // Save to Supabase
     let saved = false;
     if (supabaseInitialized) {
       try {
@@ -1014,13 +711,14 @@ async function completeRegistration() {
       }
     }
 
+    // Always save to localStorage as fallback
     let users = getUsersLocal();
     users.push(user);
     setUsersLocal(users);
 
+    // Auto-login
     currentUser = user;
     localStorage.setItem("gkode_user", JSON.stringify(user));
-    createSecureSession(user);
 
     pendingRegistration = null;
     pendingOtp = null;
@@ -1050,27 +748,18 @@ async function completeRegistration() {
 }
 
 // ============================================
-// 🔐 SECURE LOGIN
+// 🔑 LOGIN
 // ============================================
 async function login(e) {
   if (e) e.preventDefault();
   const btn = document.getElementById("loginBtn");
   if (!btn || isProcessing) return;
-
-  const phone = document.getElementById("loginPhone")?.value?.trim() || "";
-  if (!checkRateLimit("login", phone)) {
-    showToast("Too many login attempts. Please try again later.", "error");
-    return;
-  }
-
   isProcessing = true;
   btn.disabled = true;
   btn.textContent = "⏳ LOGGING IN...";
 
   try {
-    const phone = sanitizeInput(
-      document.getElementById("loginPhone")?.value?.trim() || "",
-    );
+    const phone = document.getElementById("loginPhone")?.value?.trim() || "";
     const password =
       document.getElementById("loginPassword")?.value?.trim() || "";
 
@@ -1082,14 +771,7 @@ async function login(e) {
       return;
     }
 
-    if (!isValidPhone(phone)) {
-      showToast("Please enter a valid phone number", "error");
-      btn.disabled = false;
-      btn.textContent = "LOGIN";
-      isProcessing = false;
-      return;
-    }
-
+    // Try Supabase first
     if (supabaseInitialized) {
       try {
         const { data: userData, error: userError } = await supabase
@@ -1126,7 +808,6 @@ async function login(e) {
             }
             currentUser = user;
             localStorage.setItem("gkode_user", JSON.stringify(user));
-            createSecureSession(user);
             showToast(`Welcome back, ${user.name}! 🇰🇪`, "success");
             showScreen("home");
             loadGigs();
@@ -1142,6 +823,7 @@ async function login(e) {
       }
     }
 
+    // Fallback to localStorage
     const users = getUsersLocal();
     const user = users.find(
       (u) => u.phone === phone && u.password === password,
@@ -1157,7 +839,6 @@ async function login(e) {
       }
       currentUser = user;
       localStorage.setItem("gkode_user", JSON.stringify(user));
-      createSecureSession(user);
       showToast(`Welcome back, ${user.name}! 🇰🇪`, "success");
       showScreen("home");
       loadGigs();
@@ -1180,12 +861,13 @@ async function login(e) {
 }
 
 // ============================================
-// 🔄 SECURE LOGOUT
+// 🔄 LOGOUT
 // ============================================
 function logout() {
   currentUser = null;
-  clearSecureSession();
-  showToast("Logged out securely.", "info");
+  localStorage.removeItem("gkode_user");
+  localStorage.removeItem("gkode_token");
+  showToast("Logged out.", "info");
   showScreen("welcome");
   updateBottomNav();
 }
@@ -1208,23 +890,16 @@ function postGig(e) {
   btn.textContent = "⏳ POSTING...";
 
   try {
-    const title = sanitizeInput(
-      document.getElementById("gigTitle")?.value?.trim() || "",
-    );
-    const skill = sanitizeInput(
-      document.getElementById("gigSkill")?.value?.trim() || "",
-    );
-    const location = sanitizeInput(
-      document.getElementById("gigLocation")?.value?.trim() || "",
-    );
+    const title = document.getElementById("gigTitle")?.value?.trim() || "";
+    const skill = document.getElementById("gigSkill")?.value?.trim() || "";
+    const location =
+      document.getElementById("gigLocation")?.value?.trim() || "";
     const urgency = document.getElementById("gigUrgency")?.value || "Normal";
     const budgetMin =
       parseInt(document.getElementById("gigBudgetMin")?.value) || 0;
     const budgetMax =
       parseInt(document.getElementById("gigBudgetMax")?.value) || 0;
-    const description = sanitizeInput(
-      document.getElementById("gigDesc")?.value?.trim() || "",
-    );
+    const description = document.getElementById("gigDesc")?.value?.trim() || "";
 
     if (!title || !skill || !location || !budgetMin || !budgetMax) {
       showToast("Fill all required fields.", "error");
@@ -1314,10 +989,6 @@ function switchTab(tab) {
 function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
-  const adContainer = document.getElementById("adBannerContainer");
-  if (adContainer) {
-    adContainer.innerHTML = renderAdBanner("home_banner");
-  }
 
   const gigs = getGigsLocal();
   const filtered = gigs.filter((g) => {
@@ -1433,9 +1104,7 @@ function loadChatMessages(id) {
 
 function sendMessage(e) {
   if (e) e.preventDefault();
-  const text = sanitizeInput(
-    document.getElementById("chatInput")?.value?.trim() || "",
-  );
+  const text = document.getElementById("chatInput")?.value?.trim() || "";
   const id = document.getElementById("chatGigId")?.value || "";
   if (!text || !id || !currentUser) return;
   const messages = JSON.parse(localStorage.getItem(`gkode_chat_${id}`) || "[]");
@@ -1629,27 +1298,14 @@ function registerCompany(e) {
   btn.textContent = "⏳ REGISTERING...";
 
   try {
-    const name = sanitizeInput(
-      document.getElementById("compName")?.value?.trim() || "",
-    );
-    const type = sanitizeInput(
-      document.getElementById("compType")?.value || "",
-    );
-    const regNo = sanitizeInput(
-      document.getElementById("compRegNo")?.value?.trim() || "",
-    );
-    const location = sanitizeInput(
-      document.getElementById("compLocation")?.value?.trim() || "",
-    );
-    const phone = sanitizeInput(
-      document.getElementById("compPhone")?.value?.trim() || "",
-    );
-    const email = sanitizeInput(
-      document.getElementById("compEmail")?.value?.trim() || "",
-    );
-    const desc = sanitizeInput(
-      document.getElementById("compDesc")?.value?.trim() || "",
-    );
+    const name = document.getElementById("compName")?.value?.trim() || "";
+    const type = document.getElementById("compType")?.value || "";
+    const regNo = document.getElementById("compRegNo")?.value?.trim() || "";
+    const location =
+      document.getElementById("compLocation")?.value?.trim() || "";
+    const phone = document.getElementById("compPhone")?.value?.trim() || "";
+    const email = document.getElementById("compEmail")?.value?.trim() || "";
+    const desc = document.getElementById("compDesc")?.value?.trim() || "";
 
     if (!name || !type || !regNo || !location || !phone) {
       showToast("Fill all required fields.", "error");
@@ -1767,20 +1423,12 @@ function addProduct(e) {
   btn.textContent = "⏳ ADDING...";
 
   try {
-    const name = sanitizeInput(
-      document.getElementById("prodName")?.value?.trim() || "",
-    );
-    const category = sanitizeInput(
-      document.getElementById("prodCategory")?.value || "",
-    );
-    const unit = sanitizeInput(
-      document.getElementById("prodUnit")?.value?.trim() || "",
-    );
+    const name = document.getElementById("prodName")?.value?.trim() || "";
+    const category = document.getElementById("prodCategory")?.value || "";
+    const unit = document.getElementById("prodUnit")?.value?.trim() || "";
     const price = parseFloat(document.getElementById("prodPrice")?.value) || 0;
     const stock = parseInt(document.getElementById("prodStock")?.value) || 0;
-    const desc = sanitizeInput(
-      document.getElementById("prodDesc")?.value?.trim() || "",
-    );
+    const desc = document.getElementById("prodDesc")?.value?.trim() || "";
 
     if (!name || !category || !unit || !price || !stock) {
       showToast("Fill all fields.", "error");
@@ -1840,28 +1488,78 @@ function deleteProduct(id) {
 // 💳 PAYMENT FUNCTIONS
 // ============================================
 
+function getPaymentSettings() {
+  try {
+    return JSON.parse(localStorage.getItem("gkode_payment_settings") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function setPaymentSettings(settings) {
+  localStorage.setItem("gkode_payment_settings", JSON.stringify(settings));
+}
+
+function loadPaymentDetails() {
+  const settings = getPaymentSettings();
+
+  const till = document.getElementById("displayTill");
+  const paybill = document.getElementById("displayPaybill");
+  const account = document.getElementById("displayAccount");
+  const commission = document.getElementById("displayCommission");
+  const bank = document.getElementById("displayGkodeBank");
+
+  if (till) till.textContent = settings.tillNumber || "9876543";
+  if (paybill) paybill.textContent = settings.paybillNumber || "247247";
+  if (account) account.textContent = settings.accountNumber || "G-KODE";
+  if (commission) commission.textContent = (settings.commissionRate || 3) + "%";
+  if (bank) bank.textContent = settings.bank || "Equity Bank";
+}
+
 function showPaymentScreen() {
+  loadPaymentDetails();
   showScreen("payment");
 }
 
 function verifyMpesaPayment() {
-  const code = sanitizeInput(
-    document.getElementById("mpesaCode")?.value?.trim() || "",
-  );
+  const code = document.getElementById("mpesaCode")?.value?.trim() || "";
   if (!code) {
     showToast("Please enter M-Pesa confirmation code.", "error");
     return;
   }
+
+  const settings = getPaymentSettings();
+  const commissionRate = settings.commissionRate || 3;
+  const amount = 300;
+  const commission = (amount * commissionRate) / 100;
+  const sellerAmount = amount - commission;
+
+  const msg =
+    `💳 PAYMENT BREAKDOWN\n\n` +
+    `💰 Total Amount: Ksh ${amount}\n` +
+    `📊 Commission (${commissionRate}%): Ksh ${commission.toFixed(2)}\n` +
+    `🏦 You Pay: Ksh ${amount}\n` +
+    `🏢 G-KODE Bank: ${settings.bank || "Equity Bank"}\n\n` +
+    `✅ Confirm payment?`;
+
+  if (!confirm(msg)) return;
+
   let payments = JSON.parse(localStorage.getItem("gkode_payments") || "[]");
   payments.push({
+    id: Date.now().toString(),
     phone: currentUser.phone,
+    userName: currentUser.name,
     code: code,
-    amount: 300,
+    amount: amount,
+    commission: commission,
+    commissionRate: commissionRate,
+    sellerAmount: sellerAmount,
     type: "user_fee",
     verified: true,
     date: new Date().toISOString(),
   });
   localStorage.setItem("gkode_payments", JSON.stringify(payments));
+
   let users = getUsersLocal();
   const user = users.find((u) => u.phone === currentUser.phone);
   if (user) {
@@ -1870,7 +1568,11 @@ function verifyMpesaPayment() {
     currentUser.isPaid = true;
     localStorage.setItem("gkode_user", JSON.stringify(currentUser));
   }
-  showToast("✅ Payment verified! Welcome to G-KODE Pro.", "success");
+
+  showToast(
+    `✅ Payment verified! Commission: Ksh ${commission.toFixed(2)}`,
+    "success",
+  );
   showScreen("home");
 }
 
@@ -1879,10 +1581,8 @@ function verifyMpesaPayment() {
 // ============================================
 
 function sendResetCode() {
-  const email = sanitizeInput(
-    document.getElementById("resetEmail")?.value?.trim() || "",
-  );
-  if (!email || !isValidEmail(email)) {
+  const email = document.getElementById("resetEmail")?.value?.trim() || "";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showToast("Please enter a valid email address.", "error");
     return;
   }
@@ -1932,21 +1632,13 @@ function resendResetCode() {
 }
 
 function verifyResetIdentity() {
-  const otp = sanitizeInput(
-    document.getElementById("resetOtp")?.value?.trim() || "",
-  );
-  const phone = sanitizeInput(
-    document.getElementById("resetPhone")?.value?.trim() || "",
-  );
-  const id = sanitizeInput(
-    document.getElementById("resetID")?.value?.trim() || "",
-  );
-  const profession = sanitizeInput(
-    document.getElementById("resetProfession")?.value?.trim() || "",
-  );
-  const location = sanitizeInput(
-    document.getElementById("resetLocation")?.value?.trim() || "",
-  );
+  const otp = document.getElementById("resetOtp")?.value?.trim() || "";
+  const phone = document.getElementById("resetPhone")?.value?.trim() || "";
+  const id = document.getElementById("resetID")?.value?.trim() || "";
+  const profession =
+    document.getElementById("resetProfession")?.value?.trim() || "";
+  const location =
+    document.getElementById("resetLocation")?.value?.trim() || "";
 
   if (!otp || !phone || !id || !profession || !location) {
     showToast("Please fill all fields", "error");
@@ -1988,7 +1680,7 @@ async function resetPassword() {
     return;
   }
 
-  if (!isStrongPassword(newPass)) {
+  if (newPass.length < 6 || !/[a-zA-Z]/.test(newPass) || !/\d/.test(newPass)) {
     showToast(
       "Password must be 6+ characters with letters and numbers",
       "error",
@@ -2001,6 +1693,7 @@ async function resetPassword() {
     return;
   }
 
+  // Update in Supabase
   if (supabaseInitialized) {
     const updated = await updateUserInSupabase(resetUser.phone, {
       password_hash: newPass,
@@ -2098,11 +1791,11 @@ function resetEverything() {
 }
 
 // ============================================
-// 🚀 INIT WITH SECURITY
+// 🚀 INIT
 // ============================================
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🔒 Shadow God Mode Loading...");
+  console.log("🚀 G-KODE v3.0 loading...");
 
   populateProfessionDropdown();
   populateCategoryDropdown();
@@ -2110,833 +1803,32 @@ document.addEventListener("DOMContentLoaded", function () {
   setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
   setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
 
-  const session = getSecureSession();
-  if (session) {
-    const savedUser = localStorage.getItem("gkode_user");
-    if (savedUser) {
-      try {
-        currentUser = JSON.parse(savedUser);
-        if (currentUser) {
-          console.log("✅ Secure session restored:", currentUser.name);
-          showScreen("home");
-          loadGigs();
-          updateBottomNav();
-        }
-      } catch (e) {
-        console.log("Auto-login failed:", e);
-        showScreen("welcome");
+  const savedUser = localStorage.getItem("gkode_user");
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      if (currentUser) {
+        console.log("✅ Auto-login:", currentUser.name);
+        showScreen("home");
+        loadGigs();
+        updateBottomNav();
       }
-    } else {
+    } catch (e) {
+      console.log("Auto-login failed:", e);
       showScreen("welcome");
     }
   } else {
     showScreen("welcome");
   }
 
-  console.log("🔒 Shadow God Mode Active!");
-  console.log("   ✅ Rate Limiting");
-  console.log("   ✅ Input Sanitization");
-  console.log("   ✅ Session Encryption");
-  console.log("   ✅ Universal Camera");
+  console.log("🚀 G-KODE v3.0 loaded successfully!");
+  console.log("📊 Data stored in localStorage (fallback).");
+  console.log("☁️ Supabase URL:", SUPABASE_URL);
+  console.log("📧 EmailJS configured.");
 });
 
+// ============ GLOBAL ERROR HANDLING ============
 window.onerror = function (message, source, lineno, colno, error) {
   console.error("Global error:", { message, source, lineno, colno, error });
   showToast("An unexpected error occurred. Please try again.", "error");
 };
-// ============================================
-// 🏢 BUSINESS REGISTRATION - COMPLETE
-// ============================================
-
-// ===== CAPTURE BUSINESS LOCATION =====
-function captureBusinessLocation() {
-  if (!navigator.geolocation) {
-    showToast("GPS not supported.", "error");
-    return;
-  }
-  showToast("📍 Capturing business location...", "info");
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      document.getElementById("compGPSLat").value = pos.coords.latitude;
-      document.getElementById("compGPSLon").value = pos.coords.longitude;
-      document.getElementById("compLocationStatus").textContent =
-        "✅ Location captured! (" + pos.coords.accuracy + "m accuracy)";
-      document.getElementById("compLocationStatus").style.color = "#006400";
-      showToast("✅ Business location captured!", "success");
-    },
-    () => showToast("❌ Enable GPS.", "error"),
-  );
-}
-
-// ===== BUSINESS DOCUMENT TYPES =====
-const BUSINESS_DOC_TYPES = {
-  CERTIFICATE: "certificate",
-  KRA: "kra",
-  PERMIT: "permit",
-  LOGO: "logo",
-  DIRECTOR_IDS: "director_ids",
-};
-
-// ===== VALIDATE BUSINESS FORM =====
-function validateBusinessForm() {
-  const name = document.getElementById("compName")?.value?.trim() || "";
-  const type = document.getElementById("compType")?.value || "";
-  const regNo = document.getElementById("compRegNo")?.value?.trim() || "";
-  const location = document.getElementById("compLocation")?.value?.trim() || "";
-  const phone = document.getElementById("compPhone")?.value?.trim() || "";
-  const email = document.getElementById("compEmail")?.value?.trim() || "";
-  const years = document.getElementById("compYears")?.value?.trim() || "";
-  const desc = document.getElementById("compDesc")?.value?.trim() || "";
-  const logoFile = document.getElementById("compLogo")?.files[0];
-  const certFile = document.getElementById("compCertificate")?.files[0];
-  const kraFile = document.getElementById("compKRA")?.files[0];
-  const permitFile = document.getElementById("compPermit")?.files[0];
-  const terms = document.getElementById("compTerms")?.checked || false;
-
-  if (!name) {
-    showToast("Please enter business name.", "error");
-    return false;
-  }
-  if (!type) {
-    showToast("Please select business type.", "error");
-    return false;
-  }
-  if (!regNo) {
-    showToast("Please enter registration number.", "error");
-    return false;
-  }
-  if (!location) {
-    showToast("Please enter business location.", "error");
-    return false;
-  }
-  if (!phone) {
-    showToast("Please enter business phone.", "error");
-    return false;
-  }
-  if (!email || !isValidEmail(email)) {
-    showToast("Please enter a valid email address.", "error");
-    return false;
-  }
-  if (!years || parseInt(years) < 0) {
-    showToast("Please enter years in operation.", "error");
-    return false;
-  }
-  if (!desc || desc.length < 20) {
-    showToast(
-      "Please provide a detailed business description (min 20 characters).",
-      "error",
-    );
-    return false;
-  }
-  if (!logoFile) {
-    showToast("Please upload a business logo.", "error");
-    return false;
-  }
-  if (!certFile) {
-    showToast("Please upload Certificate of Incorporation.", "error");
-    return false;
-  }
-  if (!kraFile) {
-    showToast("Please upload KRA PIN Certificate.", "error");
-    return false;
-  }
-  if (!permitFile) {
-    showToast("Please upload Single Business Permit.", "error");
-    return false;
-  }
-  if (!terms) {
-    showToast("Please agree to the Terms and Conditions.", "error");
-    return false;
-  }
-
-  return true;
-}
-
-// ===== REGISTER BUSINESS =====
-async function registerBusiness(e) {
-  if (e) e.preventDefault();
-
-  if (!currentUser) {
-    showToast("Please login first.", "error");
-    return;
-  }
-
-  const btn = document.getElementById("compRegisterBtn");
-  if (!btn || isProcessing) return;
-
-  if (!validateBusinessForm()) return;
-
-  isProcessing = true;
-  btn.disabled = true;
-  btn.textContent = "⏳ REGISTERING...";
-
-  try {
-    // Get form values
-    const name = sanitizeInput(
-      document.getElementById("compName")?.value?.trim() || "",
-    );
-    const type = sanitizeInput(
-      document.getElementById("compType")?.value || "",
-    );
-    const regNo = sanitizeInput(
-      document.getElementById("compRegNo")?.value?.trim() || "",
-    );
-    const location = sanitizeInput(
-      document.getElementById("compLocation")?.value?.trim() || "",
-    );
-    const phone = sanitizeInput(
-      document.getElementById("compPhone")?.value?.trim() || "",
-    );
-    const email = sanitizeInput(
-      document.getElementById("compEmail")?.value?.trim() || "",
-    );
-    const website = sanitizeInput(
-      document.getElementById("compWebsite")?.value?.trim() || "",
-    );
-    const years = parseInt(document.getElementById("compYears")?.value) || 0;
-    const employees =
-      parseInt(document.getElementById("compEmployees")?.value) || 0;
-    const desc = sanitizeInput(
-      document.getElementById("compDesc")?.value?.trim() || "",
-    );
-    const bankName = sanitizeInput(
-      document.getElementById("compBankName")?.value?.trim() || "",
-    );
-    const accountName = sanitizeInput(
-      document.getElementById("compAccountName")?.value?.trim() || "",
-    );
-    const accountNumber = sanitizeInput(
-      document.getElementById("compAccountNumber")?.value?.trim() || "",
-    );
-    const gpsLat = document.getElementById("compGPSLat")?.value || null;
-    const gpsLon = document.getElementById("compGPSLon")?.value || null;
-
-    // Get files
-    const logoFile = document.getElementById("compLogo")?.files[0];
-    const certFile = document.getElementById("compCertificate")?.files[0];
-    const kraFile = document.getElementById("compKRA")?.files[0];
-    const permitFile = document.getElementById("compPermit")?.files[0];
-    const directorFiles = document.getElementById("compDirectorIds")?.files;
-
-    // Upload files to Supabase Storage
-    btn.textContent = "⏳ UPLOADING DOCUMENTS...";
-
-    const businessId = Date.now().toString();
-    const logoUrl = await uploadToSupabase(
-      logoFile,
-      "business_logos",
-      `biz_${businessId}`,
-    );
-    const certUrl = await uploadToSupabase(
-      certFile,
-      "business_docs",
-      `biz_${businessId}/certificate`,
-    );
-    const kraUrl = await uploadToSupabase(
-      kraFile,
-      "business_docs",
-      `biz_${businessId}/kra`,
-    );
-    const permitUrl = await uploadToSupabase(
-      permitFile,
-      "business_docs",
-      `biz_${businessId}/permit`,
-    );
-
-    let directorUrls = [];
-    if (directorFiles) {
-      for (let i = 0; i < directorFiles.length; i++) {
-        const url = await uploadToSupabase(
-          directorFiles[i],
-          "business_docs",
-          `biz_${businessId}/director_${i + 1}`,
-        );
-        directorUrls.push(url);
-      }
-    }
-
-    // Create business object
-    const business = {
-      id: businessId,
-      ownerId: currentUser.id || currentUser.phone,
-      ownerName: currentUser.name,
-      ownerPhone: currentUser.phone,
-      name: name,
-      type: type,
-      regNo: regNo,
-      location: location,
-      gpsLat: gpsLat,
-      gpsLon: gpsLon,
-      phone: phone,
-      email: email,
-      website: website,
-      description: desc,
-      yearsInOperation: years,
-      employees: employees,
-      logo: logoUrl,
-      certificate: certUrl,
-      kra: kraUrl,
-      permit: permitUrl,
-      directorIds: directorUrls,
-      bankDetails: {
-        bankName: bankName,
-        accountName: accountName,
-        accountNumber: accountNumber,
-      },
-      verificationStatus: "pending",
-      verificationBadge: "🟡 Pending",
-      verifiedAt: null,
-      verifiedBy: null,
-      rejectionReason: null,
-      totalSales: 0,
-      totalCommission: 0,
-      registeredAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Save to Supabase
-    let saved = false;
-    if (supabaseInitialized) {
-      try {
-        const { error } = await supabase.from("businesses").insert([
-          {
-            id: business.id,
-            owner_id: business.ownerId,
-            name: business.name,
-            type: business.type,
-            reg_no: business.regNo,
-            location: business.location,
-            gps_lat: business.gpsLat,
-            gps_lon: business.gpsLon,
-            phone: business.phone,
-            email: business.email,
-            website: business.website,
-            description: business.description,
-            years_in_operation: business.yearsInOperation,
-            employees: business.employees,
-            logo_url: business.logo,
-            certificate_url: business.certificate,
-            kra_url: business.kra,
-            permit_url: business.permit,
-            director_ids: business.directorIds,
-            bank_name: business.bankDetails.bankName,
-            account_name: business.bankDetails.accountName,
-            account_number: business.bankDetails.accountNumber,
-            verification_status: business.verificationStatus,
-            total_sales: business.totalSales,
-            total_commission: business.totalCommission,
-            created_at: business.registeredAt,
-            updated_at: business.updatedAt,
-          },
-        ]);
-        if (!error) saved = true;
-      } catch (e) {
-        console.log("Supabase save error:", e);
-      }
-    }
-
-    // Save locally as fallback
-    let businesses = getCompaniesLocal();
-    businesses.push(business);
-    setCompaniesLocal(businesses);
-
-    showToast(
-      saved ? "✅ Business saved to cloud!" : "✅ Business saved locally!",
-      "success",
-    );
-    showToast(
-      "🟡 Business verification pending. We'll notify you within 24-48 hours.",
-      "info",
-    );
-
-    // Reset form
-    document.getElementById("companyForm").reset();
-    document.getElementById("compLocationStatus").textContent =
-      "No location captured yet";
-
-    showScreen("companyDashboard");
-    loadCompanyDashboard();
-  } catch (error) {
-    console.error("Business registration error:", error);
-    showToast("Error: " + error.message, "error");
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "REGISTER BUSINESS";
-    isProcessing = false;
-  }
-}
-
-// ===== UPDATE COMPANY DASHBOARD (Enhanced) =====
-function loadCompanyDashboard() {
-  if (!currentUser) return;
-
-  const companies = getCompaniesLocal();
-  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
-
-  if (!myComp) {
-    document.getElementById("compInfo").innerHTML = `
-            <p style="text-align:center;color:#888;padding:20px;">No business registered yet.</p>
-            <button class="btn green" onclick="showScreen('companyRegister')">Register Business</button>
-        `;
-    return;
-  }
-
-  // Status badge
-  const statusBadges = {
-    pending: "🟡 Pending Verification",
-    verified: "✅ Verified",
-    rejected: "❌ Rejected",
-    expired: "🔴 Expired",
-  };
-  const statusColor = {
-    pending: "#ff9800",
-    verified: "#006400",
-    rejected: "#cc0000",
-    expired: "#cc0000",
-  };
-
-  document.getElementById("compInfo").innerHTML = `
-        <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-            ${myComp.logo ? `<img src="${myComp.logo}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:2px solid #006400;" />` : ""}
-            <div style="flex:1;">
-                <h3>${myComp.name}</h3>
-                <p>🏢 ${myComp.type} | 📍 ${myComp.location}</p>
-                <p>📞 ${myComp.phone} | 📧 ${myComp.email}</p>
-                <p>📜 Reg No: ${myComp.regNo}</p>
-                <p>⏳ ${myComp.yearsInOperation || 0} years in operation</p>
-                <p style="color:${statusColor[myComp.verificationStatus] || "#888"};font-weight:bold;font-size:14px;margin-top:5px;">
-                    ${statusBadges[myComp.verificationStatus] || "❓ Unknown"}
-                </p>
-                ${
-                  myComp.verificationStatus === "pending"
-                    ? `<p style="font-size:12px;color:#888;">⏳ We're reviewing your documents. You'll get an email within 24-48 hours.</p>`
-                    : ""
-                }
-                ${
-                  myComp.verificationStatus === "rejected"
-                    ? `<p style="font-size:12px;color:#cc0000;">❌ ${myComp.rejectionReason || "Please contact support for details."}</p>`
-                    : ""
-                }
-            </div>
-        </div>
-    `;
-
-  showCompTab("products");
-}
-
-// ===== CHECK VERIFICATION STATUS =====
-function checkVerificationStatus() {
-  const companies = getCompaniesLocal();
-  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
-
-  if (!myComp) {
-    showToast("No business found.", "error");
-    return;
-  }
-
-  const statusMessages = {
-    pending:
-      "Your business is pending verification. We'll notify you within 24-48 hours.",
-    verified:
-      "✅ Your business is verified and can now sell on the marketplace!",
-    rejected:
-      "❌ Your business verification was rejected. Please check your documents.",
-    expired: "🔴 Your business verification has expired. Please renew.",
-  };
-
-  showToast(
-    statusMessages[myComp.verificationStatus] || "Unknown status.",
-    "info",
-  );
-}
-// ============================================
-// 🎬 AD MEDIA TYPE TOGGLE
-// ============================================
-
-function toggleAdMediaType() {
-  const type = document.getElementById("adMediaType").value;
-  const imageUpload = document.getElementById("adImageUpload");
-  const videoUpload = document.getElementById("adVideoUpload");
-
-  if (type === "image" || type === "gif") {
-    imageUpload.style.display = "block";
-    videoUpload.style.display = "none";
-  } else {
-    imageUpload.style.display = "none";
-    videoUpload.style.display = "block";
-  }
-
-  // Clear previews
-  document.getElementById("adImagePreviewContainer").style.display = "none";
-  document.getElementById("adVideoPreviewContainer").style.display = "none";
-}
-
-function clearAdMedia() {
-  document.getElementById("adImage").value = "";
-  document.getElementById("adVideo").value = "";
-  document.getElementById("adImagePreviewContainer").style.display = "none";
-  document.getElementById("adVideoPreviewContainer").style.display = "none";
-}
-// ============================================
-// 📦 COMPLETE MEDIA COMPRESSION SYSTEM
-// ============================================
-
-// ===== IMAGE COMPRESSION =====
-function compressImage(file, maxWidth = 800, maxHeight = 600, quality = 0.7) {
-  return new Promise((resolve, reject) => {
-    // Check if it's a GIF
-    if (file.type === "image/gif") {
-      // GIFs - preserve but compress size
-      return compressGif(file).then(resolve).catch(reject);
-    }
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const img = new Image();
-      img.onload = function () {
-        // Calculate new dimensions
-        let width = img.width;
-        let height = img.height;
-
-        // For ad banners, use different sizing
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-
-        // Create canvas
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-
-        // Draw and compress
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to JPEG (or PNG if needed)
-        const format = file.type === "image/png" ? "image/png" : "image/jpeg";
-        const compressedDataUrl = canvas.toDataURL(format, quality);
-
-        // Convert to file
-        fetch(compressedDataUrl)
-          .then((res) => res.blob())
-          .then((blob) => {
-            const compressedFile = new File(
-              [blob],
-              file.name.replace(/\.[^.]+$/, ".jpg"),
-              { type: format },
-            );
-            resolve(compressedFile);
-          })
-          .catch(reject);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// ===== GIF COMPRESSION (Preserve animation) =====
-function compressGif(file) {
-  return new Promise((resolve, reject) => {
-    // For GIFs, we just resize and optimize
-    // Using canvas doesn't preserve animation, so we use the original
-    // But we can still compress the file size
-
-    // If GIF is small enough, keep as is
-    if (file.size < 2 * 1024 * 1024) {
-      // 2MB
-      return resolve(file);
-    }
-
-    // For large GIFs, convert to video (better compression)
-    // Or keep as GIF but warn user
-    showToast(
-      "GIFs over 2MB may be slow to load. Consider using a video instead.",
-      "warning",
-    );
-    resolve(file);
-  });
-}
-
-// ===== VIDEO COMPRESSION =====
-function compressVideo(file) {
-  return new Promise((resolve, reject) => {
-    // Check if video is already small enough
-    if (file.size < 5 * 1024 * 1024) {
-      // 5MB
-      return resolve(file);
-    }
-
-    // Create video element
-    const video = document.createElement("video");
-    video.preload = "metadata";
-    video.muted = true;
-    video.playsInline = true;
-
-    const url = URL.createObjectURL(file);
-    video.src = url;
-
-    video.onloadedmetadata = function () {
-      // Compress using MediaRecorder API
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.min(video.videoWidth, 720);
-      canvas.height = Math.min(video.videoHeight, 480);
-      const ctx = canvas.getContext("2d");
-
-      const stream = canvas.captureStream(30); // 30fps
-
-      // Draw video frames to canvas
-      const drawFrame = () => {
-        if (!video.paused && !video.ended) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          requestAnimationFrame(drawFrame);
-        }
-      };
-
-      // Start recording
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "video/mp4",
-        videoBitsPerSecond: 1000000, // 1Mbps
-      });
-
-      const chunks = [];
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "video/mp4" });
-        const compressedFile = new File(
-          [blob],
-          file.name.replace(/\.[^.]+$/, ".mp4"),
-          { type: "video/mp4" },
-        );
-
-        URL.revokeObjectURL(url);
-
-        if (compressedFile.size < file.size) {
-          resolve(compressedFile);
-        } else {
-          // If compression didn't help, return original
-          resolve(file);
-        }
-      };
-
-      // Play and record
-      video.play();
-      video.onplay = function () {
-        mediaRecorder.start(1000);
-        drawFrame();
-
-        // Stop after video duration
-        setTimeout(
-          () => {
-            if (mediaRecorder.state === "recording") {
-              mediaRecorder.stop();
-            }
-            video.pause();
-          },
-          Math.min(video.duration * 1000 + 1000, 30000),
-        ); // Max 30 seconds
-      };
-
-      video.onended = function () {
-        if (mediaRecorder.state === "recording") {
-          mediaRecorder.stop();
-        }
-      };
-    };
-
-    video.onerror = function () {
-      // Fallback: just return original
-      URL.revokeObjectURL(url);
-      resolve(file);
-    };
-
-    // Timeout fallback
-    setTimeout(() => {
-      if (video.src) {
-        URL.revokeObjectURL(url);
-        resolve(file);
-      }
-    }, 10000);
-  });
-}
-
-// ===== COMPRESS AD MEDIA (Main function) =====
-async function compressAdMedia(file) {
-  const fileType = file.type;
-
-  try {
-    if (fileType.startsWith("image/")) {
-      if (fileType === "image/gif") {
-        return await compressGif(file);
-      }
-      // Determine quality based on file size
-      let quality = 0.7;
-      if (file.size > 5 * 1024 * 1024) quality = 0.5;
-      else if (file.size > 2 * 1024 * 1024) quality = 0.6;
-
-      return await compressImage(file, 800, 600, quality);
-    } else if (fileType.startsWith("video/")) {
-      return await compressVideo(file);
-    } else {
-      showToast("Unsupported file type.", "error");
-      return file;
-    }
-  } catch (e) {
-    console.error("Compression error:", e);
-    showToast("Compression failed. Using original file.", "warning");
-    return file;
-  }
-}
-
-// ===== PREVIEW AD MEDIA =====
-function previewAdMedia() {
-  const type = document.getElementById("adMediaType").value;
-
-  if (type === "image" || type === "gif") {
-    const file = document.getElementById("adImage").files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        document.getElementById("adImagePreview").src = e.target.result;
-        document.getElementById("adImagePreviewContainer").style.display =
-          "block";
-      };
-      reader.readAsDataURL(file);
-    }
-  } else if (type === "video") {
-    const file = document.getElementById("adVideo").files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const video = document.getElementById("adVideoPreview");
-      video.src = url;
-      document.getElementById("adVideoPreviewContainer").style.display =
-        "block";
-    }
-  }
-}
-
-// ===== UPLOAD AD WITH COMPRESSION =====
-async function saveAd() {
-  // ... existing validation ...
-
-  const mediaType = document.getElementById("adMediaType").value;
-  let mediaFile = null;
-  let mediaUrl = "";
-
-  if (mediaType === "image" || mediaType === "gif") {
-    mediaFile = document.getElementById("adImage").files[0];
-    if (!mediaFile) {
-      showToast("Please upload an image.", "error");
-      return;
-    }
-
-    // Compress image
-    const compressed = await compressAdMedia(mediaFile);
-    mediaUrl = await uploadToSupabase(compressed, "ads", `ad_${Date.now()}`);
-  } else if (mediaType === "video") {
-    mediaFile = document.getElementById("adVideo").files[0];
-    if (!mediaFile) {
-      showToast("Please upload a video.", "error");
-      return;
-    }
-
-    // Compress video
-    const compressed = await compressAdMedia(mediaFile);
-    mediaUrl = await uploadToSupabase(compressed, "ads", `ad_${Date.now()}`);
-  }
-
-  // Create ad object with media data
-  const newAd = {
-    id: Date.now().toString(),
-    title: title,
-    description: description,
-    mediaType: mediaType,
-    mediaUrl: mediaUrl,
-    link: link,
-    placement: placement,
-    targetLocation: targetLocation || null,
-    targetProfession: targetProfession || null,
-    isActive: isActive,
-    autoPlay: document.getElementById("adAutoPlay").checked,
-    views: 0,
-    clicks: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  // ... rest of save logic
-}
-// ============================================
-// 📢 RENDER AD WITH MEDIA
-// ============================================
-
-function renderAdBanner(placement) {
-  const ads = getActiveAds(placement);
-  if (ads.length === 0) return "";
-
-  const ad = ads[Math.floor(Math.random() * ads.length)];
-  trackAdView(ad.id);
-
-  let mediaHtml = "";
-
-  if (ad.mediaType === "image" || ad.mediaType === "gif") {
-    mediaHtml = `
-            <img src="${ad.mediaUrl}" alt="${ad.title}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">
-        `;
-  } else if (ad.mediaType === "video") {
-    mediaHtml = `
-            <video 
-                src="${ad.mediaUrl}" 
-                ${ad.autoPlay ? "autoplay" : ""} 
-                muted 
-                loop 
-                playsinline 
-                style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;"
-                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='%23006400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23FFD700' font-size='16' font-family='Arial'%3E🎬 Loading...%3C/text%3E%3C/svg%3E"
-            ></video>
-        `;
-  }
-
-  return `
-        <div class="ad-banner" style="background:#1a1a1a;border-radius:12px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(255,215,0,0.2);">
-            <div style="position:relative;">
-                ${mediaHtml}
-                <span style="position:absolute;top:8px;left:8px;font-size:10px;color:#FFD700;font-weight:bold;background:rgba(0,0,0,0.7);padding:2px 8px;border-radius:4px;">📢 SPONSORED</span>
-                <button onclick="this.closest('.ad-banner').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;">✕</button>
-            </div>
-            <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <div style="flex:1;">
-                    <div style="font-weight:bold;color:#fff;font-size:14px;">${ad.title}</div>
-                    <div style="font-size:12px;color:#ccc;">${ad.description}</div>
-                </div>
-                <a href="${ad.link}" target="_blank" onclick="trackAdClick('${ad.id}')" style="background:#FFD700;color:#000;padding:8px 20px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">LEARN MORE →</a>
-            </div>
-        </div>
-    `;
-}
-// ============================================
-// 📊 FILE SIZE HELPER
-// ============================================
-
-function formatFileSize(bytes) {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
-function validateFileSize(file, maxSize = 50 * 1024 * 1024) {
-  if (file.size > maxSize) {
-    showToast(`File too large. Max size: ${formatFileSize(maxSize)}`, "error");
-    return false;
-  }
-  return true;
-}

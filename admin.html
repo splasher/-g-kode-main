@@ -6,231 +6,454 @@
     <title>G-KODE — Admin Panel</title>
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* ALL YOUR EXISTING STYLES */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .admin-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+      .admin-card h3 {
+        color: #006400;
+        margin-bottom: 10px;
+      }
+      .admin-card h4 {
+        color: #006400;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      .admin-card .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .admin-card .stat {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .admin-card .stat .number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #006400;
+      }
+      .admin-card .stat .label {
+        font-size: 12px;
+        color: #888;
+      }
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 13px;
+        width: auto;
+        display: inline-block;
+        margin-right: 5px;
+        margin-bottom: 5px;
+      }
+      .flex-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .flex-buttons .btn-small {
+        flex: 1;
+        min-width: 100px;
+      }
+      .section-title {
+        color: #006400;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 15px 0 10px 0;
+        border-bottom: 2px solid #006400;
+        padding-bottom: 5px;
+      }
+      .user-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+      }
+      .user-item:last-child {
+        border-bottom: none;
+      }
+      .user-item .name {
+        font-weight: bold;
+      }
+      .user-item .phone {
+        color: #888;
+        font-size: 13px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+      }
+      .badge-paid {
+        background: #006400;
+        color: #ffd700;
+      }
+      .badge-unpaid {
+        background: #ff9800;
+        color: #000;
+      }
+      .badge-banned {
+        background: #cc0000;
+        color: #fff;
+      }
+      .badge-active {
+        background: #2196f3;
+        color: #fff;
+      }
+      .login-box {
+        max-width: 400px;
+        margin: 100px auto;
+        text-align: center;
+      }
+      .login-box input {
+        text-align: center;
+      }
+      #output {
+        max-height: 500px;
+        overflow-y: auto;
+      }
+      .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #006400;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .btn {
+        width: 100%;
+        padding: 14px;
+        background: #006400;
+        color: #ffd700;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 10px;
+      }
+      .btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 100, 0, 0.3);
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn.green {
+        background: #006400;
+        color: #ffd700;
+      }
+      .btn.outline {
+        background: #fff;
+        color: #006400;
+        border: 2px solid #006400;
+      }
+      .btn.red {
+        background: #cc0000;
+        color: #fff;
+      }
+      .btn.blue {
+        background: #2196f3;
+        color: #fff;
+      }
+      .btn.orange {
+        background: #ff9800;
+        color: #000;
+      }
+      .btn.purple {
+        background: #9c27b0;
+        color: #fff;
+      }
+      input {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        background: #fff;
+      }
+      input:focus {
+        border-color: #006400;
+        outline: none;
+      }
+      textarea {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #fff;
+        resize: vertical;
+        font-family: inherit;
+      }
+      textarea:focus {
+        border-color: #006400;
+        outline: none;
+      }
+      label {
+        font-size: 13px;
+        color: #333;
+      }
+      #toast-container {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        width: 90%;
+        max-width: 500px;
+        pointer-events: none;
+      }
+      .toast {
+        padding: 12px 20px;
+        border-radius: 10px;
+        color: #fff;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        animation: slideDown 0.4s ease;
+        pointer-events: auto;
+        font-weight: 500;
+        font-size: 14px;
+      }
+      .toast.success {
+        background: #006400;
+      }
+      .toast.error {
+        background: #cc0000;
+      }
+      .toast.info {
+        background: #2196f3;
+      }
+      .toast.warning {
+        background: #ff9800;
+      }
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .danger-zone {
+        border: 2px solid #cc0000;
+        border-radius: 12px;
+        padding: 15px;
+        background: #fff5f5;
+      }
+      .danger-zone .section-title {
+        border-bottom-color: #cc0000;
+        color: #cc0000;
+      }
+      .ad-item {
+        background: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #eee;
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (max-width: 480px) {
+        .admin-card .stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        .flex-buttons .btn-small {
+          min-width: 80px;
+          font-size: 12px;
+          padding: 6px 12px;
+        }
+      }
     </style>
   </head>
   <body>
-    <!-- ===== LOGIN BOX ===== -->
-    <div id="loginBox">
-      <!-- YOUR EXISTING LOGIN -->
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="toast-container"></div>
+
+    <!-- ============================================ -->
+    <!-- LOGIN BOX                                   -->
+    <!-- ============================================ -->
+    <div id="loginBox" class="login-box">
+      <h1>🔐 Admin Panel</h1>
+      <p style="color: #888; margin-bottom: 20px">
+        Founder Access Only — Splasher
+      </p>
+      <input
+        type="password"
+        id="adminKey"
+        placeholder="Enter Admin Key"
+        style="max-width: 300px; margin: 0 auto"
+        onkeydown="if (event.key === 'Enter') adminLogin();"
+      />
+      <button class="btn green" onclick="adminLogin()">AUTHENTICATE</button>
+      <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <!-- ===== ADMIN PANEL ===== -->
-    <div id="adminPanel" style="display: none">
+    <!-- ============================================ -->
+    <!-- ADMIN PANEL                                 -->
+    <!-- ============================================ -->
+    <div id="adminPanel" class="hidden">
+      <h1>🚨 Admin Panel</h1>
+      <p style="color: #888; margin-bottom: 20px">
+        G-KODE — Kenya Helping Kenya
+      </p>
+
       <!-- ===== STATS DASHBOARD ===== -->
       <div class="admin-card">
-        <!-- YOUR EXISTING STATS -->
+        <h3>📊 Dashboard</h3>
+        <div class="stats">
+          <div class="stat">
+            <div class="number" id="statUsers">0</div>
+            <div class="label">👥 Users</div>
+          </div>
+          <div class="stat">
+            <div class="number" id="statGigs">0</div>
+            <div class="label">📋 Gigs</div>
+          </div>
+          <div class="stat">
+            <div class="number" id="statRevenue">Ksh 0</div>
+            <div class="label">💰 Revenue</div>
+          </div>
+          <div class="stat">
+            <div class="number" id="statComplaints">0</div>
+            <div class="label">🚩 Complaints</div>
+          </div>
+          <div class="stat">
+            <div class="number" id="statBusinesses">0</div>
+            <div class="label">🏢 Businesses</div>
+          </div>
+          <div class="stat">
+            <div class="number" id="statProducts">0</div>
+            <div class="label">📦 Products</div>
+          </div>
+        </div>
       </div>
 
       <!-- ===== USER MANAGEMENT ===== -->
       <div class="section-title">👥 USER MANAGEMENT</div>
       <div class="admin-card">
-        <!-- YOUR EXISTING USER BUTTONS -->
+        <div class="flex-buttons">
+          <button class="btn green btn-small" onclick="viewUsers()">
+            👥 View Users
+          </button>
+          <button class="btn green btn-small" onclick="viewBannedUsers()">
+            🚫 Banned
+          </button>
+          <button class="btn green btn-small" onclick="viewPaidUsers()">
+            ✅ Paid
+          </button>
+        </div>
       </div>
 
       <!-- ===== GIG MANAGEMENT ===== -->
       <div class="section-title">📋 GIG MANAGEMENT</div>
       <div class="admin-card">
-        <!-- YOUR EXISTING GIG BUTTONS -->
+        <div class="flex-buttons">
+          <button class="btn green btn-small" onclick="viewGigs()">
+            📋 All Gigs
+          </button>
+          <button class="btn green btn-small" onclick="viewOpenGigs()">
+            🟢 Open
+          </button>
+          <button class="btn green btn-small" onclick="viewCompletedGigs()">
+            ✅ Completed
+          </button>
+        </div>
       </div>
 
       <!-- ===== COMPLAINTS & SECURITY ===== -->
       <div class="section-title">🚩 COMPLAINTS & SECURITY</div>
       <div class="admin-card">
-        <!-- YOUR EXISTING COMPLAINT BUTTONS -->
+        <div class="flex-buttons">
+          <button class="btn green btn-small" onclick="viewComplaints()">
+            🚩 All
+          </button>
+          <button class="btn green btn-small" onclick="viewPendingComplaints()">
+            🟡 Pending
+          </button>
+          <button
+            class="btn green btn-small"
+            onclick="viewResolvedComplaints()"
+          >
+            ✅ Resolved
+          </button>
+          <button class="btn red btn-small" onclick="viewStrikes()">
+            ⚠️ Strikes
+          </button>
+        </div>
       </div>
 
       <!-- ===== PAYMENT SYSTEM ===== -->
       <div class="section-title">💳 PAYMENT SYSTEM</div>
       <div class="admin-card">
-        <!-- YOUR EXISTING PAYMENT BUTTONS -->
-      </div>
-
-      <!-- ============================================ -->
-      <!-- 📢 ADVERTISING - ADD THIS SECTION            -->
-      <!-- ============================================ -->
-      <div class="section-title">📢 ADVERTISING</div>
-      <div class="admin-card">
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="showAddAdForm()">
-            ➕ New Ad
+          <button class="btn green btn-small" onclick="viewPayments()">
+            💰 Payments
           </button>
-          <button class="btn green btn-small" onclick="viewAds()">
-            📋 View Ads
+          <button class="btn green btn-small" onclick="viewRevenueReport()">
+            📊 Revenue
           </button>
-          <button class="btn green btn-small" onclick="viewAdStats()">
-            📊 Ad Stats
+          <button
+            class="btn orange btn-small"
+            onclick="togglePaymentSystem()"
+            id="paymentToggleBtn"
+          >
+            🔒 Toggle
           </button>
         </div>
-
         <div
-          id="adFormContainer"
           style="
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 10px;
+            padding: 10px;
             background: #f5f5f5;
             border-radius: 8px;
           "
         >
-          <h4>📢 Create New Ad</h4>
-          <label style="display: block; margin: 8px 0 4px">Ad Title *</label>
-          <input
-            type="text"
-            id="adTitle"
-            placeholder="e.g., 50% Off"
-            style="width: 100%"
-          />
-          <label style="display: block; margin: 8px 0 4px">Description *</label>
-          <textarea
-            id="adDescription"
-            placeholder="Describe your offer..."
-            style="width: 100%; height: 60px"
-          ></textarea>
-          <label style="display: block; margin: 8px 0 4px">Media Type *</label>
-          <select
-            id="adMediaType"
-            onchange="toggleAdMediaType()"
-            style="width: 100%; padding: 10px"
+          <span>Payment Status: </span>
+          <span id="paymentStatus" style="font-weight: bold; color: #006400"
+            >✅ ACTIVE</span
           >
-            <option value="image">🖼️ Image</option>
-            <option value="video">🎬 Video</option>
-            <option value="gif">🎞️ GIF</option>
-          </select>
-          <div id="adImageUpload">
-            <label style="display: block; margin: 8px 0 4px">Image *</label>
-            <input
-              type="file"
-              id="adImage"
-              accept="image/*"
-              style="width: 100%; padding: 10px"
-              onchange="previewAdMedia()"
-            />
-            <div
-              id="adImagePreviewContainer"
-              style="display: none; margin-top: 5px"
-            >
-              <img
-                id="adImagePreview"
-                style="
-                  max-width: 200px;
-                  max-height: 150px;
-                  border-radius: 8px;
-                  border: 2px solid #006400;
-                "
-              />
-              <button
-                type="button"
-                onclick="clearAdMedia()"
-                style="
-                  background: #cc0000;
-                  color: #fff;
-                  border: none;
-                  padding: 2px 10px;
-                  border-radius: 50%;
-                  cursor: pointer;
-                  margin-left: 5px;
-                "
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          <div id="adVideoUpload" style="display: none">
-            <label style="display: block; margin: 8px 0 4px">Video *</label>
-            <input
-              type="file"
-              id="adVideo"
-              accept="video/*"
-              style="width: 100%; padding: 10px"
-              onchange="previewAdMedia()"
-            />
-            <div
-              id="adVideoPreviewContainer"
-              style="display: none; margin-top: 5px"
-            >
-              <video
-                id="adVideoPreview"
-                style="max-width: 200px; max-height: 150px; border-radius: 8px"
-                controls
-              ></video>
-              <button
-                type="button"
-                onclick="clearAdMedia()"
-                style="
-                  background: #cc0000;
-                  color: #fff;
-                  border: none;
-                  padding: 2px 10px;
-                  border-radius: 50%;
-                  cursor: pointer;
-                  margin-left: 5px;
-                "
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          <label style="display: block; margin: 8px 0 4px">Ad Link *</label>
-          <input
-            type="url"
-            id="adLink"
-            placeholder="https://example.com"
-            style="width: 100%"
-          />
-          <label style="display: block; margin: 8px 0 4px">Placement *</label>
-          <select id="adPlacement" style="width: 100%; padding: 10px">
-            <option value="home_banner">🏠 Home Screen</option>
-            <option value="marketplace">🛒 Marketplace</option>
-            <option value="gigs">📋 Gig Listings</option>
-            <option value="profile">👤 Profile Page</option>
-          </select>
-          <label style="display: block; margin: 8px 0 4px"
-            >Target Location (optional)</label
+          <span style="font-size: 12px; color: #888; display: block"
+            >User Fee: Ksh 300 | Commission: 3%</span
           >
-          <input
-            type="text"
-            id="adTargetLocation"
-            placeholder="e.g., Nairobi"
-            style="width: 100%"
-          />
-          <label style="display: block; margin: 8px 0 4px"
-            >Target Profession (optional)</label
-          >
-          <input
-            type="text"
-            id="adTargetProfession"
-            placeholder="e.g., Plumber"
-            style="width: 100%"
-          />
-          <div style="display: flex; gap: 10px; margin-top: 10px">
-            <label style="display: flex; align-items: center; gap: 5px">
-              <input type="checkbox" id="adActive" checked /> Active
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px">
-              <input type="checkbox" id="adAutoPlay" checked /> Auto-play
-              (videos)
-            </label>
-          </div>
-          <button class="btn green" onclick="saveAd()" style="margin-top: 10px">
-            💾 SAVE AD
-          </button>
-          <button
-            class="btn outline"
-            onclick="
-              document.getElementById('adFormContainer').style.display = 'none'
-            "
-          >
-            CANCEL
-          </button>
         </div>
-        <div id="adsList" style="margin-top: 15px"></div>
       </div>
 
       <!-- ============================================ -->
-      <!-- 💳 PAYMENT SETTINGS - ADD THIS SECTION       -->
+      <!-- 💳 PAYMENT SETTINGS                          -->
       <!-- ============================================ -->
       <div class="section-title">💳 PAYMENT SETTINGS</div>
+
       <div class="admin-card">
         <h4>💰 Commission & Bank</h4>
         <label style="display: block; margin: 8px 0 4px"
@@ -243,365 +466,286 @@
           step="0.1"
           min="0"
           max="100"
-          style="width: 100%"
         />
-        <label style="display: block; margin: 8px 0 4px">Bank Name</label>
-        <input
-          type="text"
-          id="gkodeBankName"
-          placeholder="Equity Bank"
-          style="width: 100%"
-        />
-        <label style="display: block; margin: 8px 0 4px">Account Number</label>
-        <input
-          type="text"
-          id="gkodeAccountNumber"
-          placeholder="1234567890"
-          style="width: 100%"
-        />
-        <label style="display: block; margin: 8px 0 4px">Account Name</label>
-        <input
-          type="text"
-          id="gkodeAccountName"
-          placeholder="G-KODE LTD"
-          style="width: 100%"
-        />
+        <label style="display: block; margin: 8px 0 4px"
+          >G-KODE Bank Name</label
+        >
+        <input type="text" id="gkodeBankName" placeholder="Equity Bank" />
+        <label style="display: block; margin: 8px 0 4px"
+          >G-KODE Account Number</label
+        >
+        <input type="text" id="gkodeAccountNumber" placeholder="1234567890" />
         <button class="btn green btn-small" onclick="savePaymentSettings()">
           💾 SAVE
         </button>
       </div>
 
       <div class="admin-card">
-        <h4>📱 M-Pesa Settings</h4>
+        <h4>📱 M-Pesa</h4>
         <label style="display: block; margin: 8px 0 4px">Till Number *</label>
-        <input
-          type="text"
-          id="mpesaTillNumber"
-          placeholder="9876543"
-          style="width: 100%"
-        />
+        <input type="text" id="mpesaTillNumber" placeholder="9876543" />
         <label style="display: block; margin: 8px 0 4px"
           >Paybill Number *</label
         >
-        <input
-          type="text"
-          id="mpesaPaybillNumber"
-          placeholder="247247"
-          style="width: 100%"
-        />
+        <input type="text" id="mpesaPaybillNumber" placeholder="247247" />
         <label style="display: block; margin: 8px 0 4px"
           >Account Reference</label
         >
-        <input
-          type="text"
-          id="mpesaAccountNumber"
-          placeholder="G-KODE"
-          style="width: 100%"
-        />
+        <input type="text" id="mpesaAccountNumber" placeholder="G-KODE" />
         <button class="btn green btn-small" onclick="saveMpesaSettings()">
           💾 SAVE
         </button>
       </div>
 
       <div class="admin-card">
-        <h4>📱 Kabambe (USSD) Settings</h4>
+        <h4>📱 Kabambe (USSD)</h4>
         <label style="display: block; margin: 8px 0 4px">USSD Code *</label>
-        <input
-          type="text"
-          id="ussdCode"
-          placeholder="*384#"
-          style="width: 100%"
-        />
+        <input type="text" id="ussdCode" placeholder="*384#" />
         <label style="display: block; margin: 8px 0 4px"
           >USSD Menu (one per line)</label
         >
         <textarea
           id="ussdMenu"
           placeholder="1. Register&#10;2. Login&#10;3. Post a Gig&#10;4. Find Gigs&#10;5. Chat with Client&#10;6. My Profile"
-          style="width: 100%; height: 120px"
+          rows="6"
         ></textarea>
         <button class="btn green btn-small" onclick="saveUssdSettings()">
           💾 SAVE
         </button>
       </div>
 
+      <!-- ===== SYSTEM TOOLS ===== -->
+      <div class="section-title">🔧 SYSTEM TOOLS</div>
       <div class="admin-card">
-        <h4>🏦 Escrow Management</h4>
         <div class="flex-buttons">
-          <button class="btn green btn-small" onclick="viewEscrowBalance()">
-            🏦 View Escrow
+          <button class="btn blue btn-small" onclick="downloadBackup()">
+            💾 Backup
           </button>
-          <button class="btn green btn-small" onclick="viewSecurePayments()">
-            🔒 Payments
+          <button class="btn blue btn-small" onclick="viewBackups()">
+            📂 Backups
           </button>
-          <button class="btn green btn-small" onclick="viewAuditLog()">
-            📋 Audit Log
+          <button class="btn blue btn-small" onclick="viewLogs()">
+            📜 Logs
           </button>
-        </div>
-        <div
-          id="escrowSummary"
-          style="
-            margin-top: 10px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 8px;
-          "
-        >
-          <p>🏦 Balance: <strong id="escrowBalanceDisplay">Ksh 0</strong></p>
-          <p>
-            💵 Commission: <strong id="escrowCommissionDisplay">Ksh 0</strong>
-          </p>
-          <p>📊 Pending: <strong id="escrowPendingDisplay">0</strong></p>
+          <button class="btn blue btn-small" onclick="viewSystemHealth()">
+            🏥 Health
+          </button>
+          <button class="btn blue btn-small" onclick="exportUsersCSV()">
+            📤 Export CSV
+          </button>
         </div>
       </div>
 
       <!-- ===== DANGER ZONE ===== -->
-      <div class="section-title" style="border-bottom-color: #cc0000">
+      <div
+        class="section-title"
+        style="border-bottom-color: #cc0000; color: #cc0000"
+      >
         ⚠️ DANGER ZONE
       </div>
-      <div class="admin-card">
-        <!-- YOUR EXISTING DANGER BUTTONS -->
+      <div class="admin-card danger-zone">
+        <div class="flex-buttons">
+          <button class="btn red btn-small" onclick="resetEverything()">
+            🔄 Reset Data
+          </button>
+          <button class="btn red btn-small" onclick="clearAllData()">
+            🔥 Clear All
+          </button>
+          <button class="btn red btn-small" onclick="resetApp()">
+            🔄 Full Reset
+          </button>
+        </div>
+        <p style="font-size: 11px; color: #cc0000; margin-top: 10px">
+          ⚠️ These actions cannot be undone. A backup will be created
+          automatically.
+        </p>
       </div>
 
       <!-- ===== OUTPUT ===== -->
       <div id="output"></div>
 
       <!-- ===== LOGOUT ===== -->
-      <button class="btn outline" onclick="adminLogout()">🚪 Logout</button>
+      <button
+        class="btn outline"
+        onclick="adminLogout()"
+        style="margin-top: 20px"
+      >
+        🚪 Logout
+      </button>
       <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
     <!-- ============================================ -->
-    <!-- SCRIPTS - ALL JAVASCRIPT                    -->
+    <!-- SCRIPTS                                     -->
     <!-- ============================================ -->
     <script>
       // ============================================
-      // YOUR EXISTING ADMIN JAVASCRIPT
-      // (adminLogin, adminLogout, loadStats, viewUsers, etc.)
+      // ADMIN CONFIG
       // ============================================
-      // ... ALL YOUR EXISTING CODE HERE ...
+      const ADMIN_KEY = "MAYA";
+      let adminLoggedIn = false;
+      let paymentEnabled = true;
 
       // ============================================
-      // 📢 AD FUNCTIONS (ADD THIS)
+      // TOAST
       // ============================================
-      function getAds() {
+      function showToast(message, type) {
+        type = type || "info";
+        var container = document.getElementById("toast-container");
+        if (!container) {
+          container = document.createElement("div");
+          container.id = "toast-container";
+          container.style.cssText =
+            "position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;";
+          document.body.appendChild(container);
+        }
+        var toast = document.createElement("div");
+        var colors = {
+          success: "#006400",
+          error: "#cc0000",
+          info: "#2196F3",
+          warning: "#ff9800",
+        };
+        toast.style.cssText =
+          "padding:12px 20px;border-radius:10px;color:#fff;margin-bottom:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:" +
+          (colors[type] || "#333") +
+          ";pointer-events:auto;font-size:14px;font-weight:500;animation:slideDown 0.3s ease;";
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function () {
+          toast.style.opacity = "0";
+          toast.style.transition = "opacity 0.5s";
+          setTimeout(function () {
+            if (toast.parentNode) toast.remove();
+          }, 500);
+        }, 4000);
+      }
+
+      // ============================================
+      // AUTHENTICATION
+      // ============================================
+      function adminLogin() {
+        const key = document.getElementById("adminKey").value;
+        if (key === ADMIN_KEY) {
+          adminLoggedIn = true;
+          document.getElementById("loginBox").style.display = "none";
+          document.getElementById("adminPanel").classList.remove("hidden");
+          loadStats();
+          updatePaymentStatus();
+          loadPaymentSettings();
+          showToast("✅ Welcome Admin!", "success");
+        } else {
+          showToast("❌ Access denied", "error");
+        }
+      }
+
+      function adminLogout() {
+        adminLoggedIn = false;
+        document.getElementById("loginBox").style.display = "block";
+        document.getElementById("adminPanel").classList.add("hidden");
+        document.getElementById("adminKey").value = "";
+        document.getElementById("output").innerHTML = "";
+        showToast("Logged out", "info");
+      }
+
+      // ============================================
+      // DATA HELPERS
+      // ============================================
+      function getData(key) {
         try {
-          return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
+          return JSON.parse(localStorage.getItem(key) || "[]");
         } catch {
           return [];
         }
       }
-      function setAds(ads) {
-        localStorage.setItem("gkode_ads", JSON.stringify(ads));
+      function getUsers() {
+        return getData("gkode_users");
       }
-
-      function showAddAdForm() {
-        const container = document.getElementById("adFormContainer");
-        if (container) {
-          container.style.display =
-            container.style.display === "none" ? "block" : "none";
-          document.getElementById("adTitle").value = "";
-          document.getElementById("adDescription").value = "";
-          document.getElementById("adLink").value = "";
-          document.getElementById("adTargetLocation").value = "";
-          document.getElementById("adTargetProfession").value = "";
-          document.getElementById("adActive").checked = true;
-          document.getElementById("adImage").value = "";
-          document.getElementById("adVideo").value = "";
-          document.getElementById("adImagePreviewContainer").style.display =
-            "none";
-          document.getElementById("adVideoPreviewContainer").style.display =
-            "none";
-        }
+      function getGigs() {
+        return getData("gkode_gigs");
       }
-
-      function toggleAdMediaType() {
-        const type = document.getElementById("adMediaType").value;
-        document.getElementById("adImageUpload").style.display =
-          type === "image" || type === "gif" ? "block" : "none";
-        document.getElementById("adVideoUpload").style.display =
-          type === "video" ? "block" : "none";
+      function getComplaints() {
+        return getData("gkode_complaints");
       }
-
-      function previewAdMedia() {
-        const type = document.getElementById("adMediaType").value;
-        if (type === "image" || type === "gif") {
-          const file = document.getElementById("adImage").files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              document.getElementById("adImagePreview").src = e.target.result;
-              document.getElementById("adImagePreviewContainer").style.display =
-                "block";
-            };
-            reader.readAsDataURL(file);
-          }
-        } else if (type === "video") {
-          const file = document.getElementById("adVideo").files[0];
-          if (file) {
-            const url = URL.createObjectURL(file);
-            document.getElementById("adVideoPreview").src = url;
-            document.getElementById("adVideoPreviewContainer").style.display =
-              "block";
-          }
-        }
+      function getPayments() {
+        return getData("gkode_payments");
       }
-
-      function clearAdMedia() {
-        document.getElementById("adImage").value = "";
-        document.getElementById("adVideo").value = "";
-        document.getElementById("adImagePreviewContainer").style.display =
-          "none";
-        document.getElementById("adVideoPreviewContainer").style.display =
-          "none";
+      function getBusinesses() {
+        return getData("gkode_companies");
       }
-
-      async function saveAd() {
-        const title = document.getElementById("adTitle").value.trim();
-        const description = document
-          .getElementById("adDescription")
-          .value.trim();
-        const link = document.getElementById("adLink").value.trim();
-        const placement = document.getElementById("adPlacement").value;
-        const targetLocation = document
-          .getElementById("adTargetLocation")
-          .value.trim();
-        const targetProfession = document
-          .getElementById("adTargetProfession")
-          .value.trim();
-        const isActive = document.getElementById("adActive").checked;
-        const mediaType = document.getElementById("adMediaType").value;
-
-        if (!title || !description || !link) {
-          showToast("Please fill all required fields.", "error");
-          return;
-        }
-
-        let mediaFile = null;
-        if (mediaType === "image" || mediaType === "gif") {
-          mediaFile = document.getElementById("adImage").files[0];
-          if (!mediaFile) {
-            showToast("Please upload an image.", "error");
-            return;
-          }
-        } else if (mediaType === "video") {
-          mediaFile = document.getElementById("adVideo").files[0];
-          if (!mediaFile) {
-            showToast("Please upload a video.", "error");
-            return;
-          }
-        }
-
-        let mediaUrl =
-          "https://via.placeholder.com/728x90/006400/FFD700?text=G-KODE+Ad";
-        if (mediaFile) {
-          try {
-            mediaUrl = await uploadToSupabase(
-              mediaFile,
-              "ads",
-              `ad_${Date.now()}`,
-            );
-          } catch (e) {
-            showToast("Upload failed, using default image.", "warning");
-          }
-        }
-
-        const ads = getAds();
-        const newAd = {
-          id: Date.now().toString(),
-          title: title,
-          description: description,
-          mediaType: mediaType,
-          mediaUrl: mediaUrl,
-          link: link,
-          placement: placement,
-          targetLocation: targetLocation || null,
-          targetProfession: targetProfession || null,
-          isActive: isActive,
-          autoPlay: document.getElementById("adAutoPlay")?.checked || false,
-          views: 0,
-          clicks: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        ads.push(newAd);
-        setAds(ads);
-        showToast("✅ Ad created!", "success");
-        document.getElementById("adFormContainer").style.display = "none";
-        viewAds();
+      function getProducts() {
+        return getData("gkode_products");
       }
-
-      function viewAds() {
-        const ads = getAds();
-        const container = document.getElementById("adsList");
-        if (!container) return;
-        if (ads.length === 0) {
-          container.innerHTML =
-            '<p style="color:#888;padding:10px;">No ads created yet.</p>';
-          return;
-        }
-        let html = "<h4>📢 All Ads</h4>";
-        ads.forEach((ad) => {
-          html += `
-                    <div class="ad-item" style="background:#fff;padding:10px;border-radius:8px;margin-bottom:8px;border:1px solid #eee;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
-                            <div>
-                                <strong>${ad.title}</strong>
-                                <span style="font-size:12px;color:${ad.isActive ? "#006400" : "#cc0000"};">${ad.isActive ? "🟢 Active" : "🔴 Inactive"}</span>
-                                <div style="font-size:12px;color:#888;">📊 ${ad.views || 0} views | ${ad.clicks || 0} clicks</div>
-                            </div>
-                            <div>
-                                <button onclick="toggleAd('${ad.id}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">${ad.isActive ? "⏸️ Pause" : "▶️ Activate"}</button>
-                                <button onclick="deleteAd('${ad.id}')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️</button>
-                            </div>
-                        </div>
-                        <div style="font-size:12px;color:#888;margin-top:5px;">📌 ${ad.placement} ${ad.targetLocation ? "| 📍 " + ad.targetLocation : ""} ${ad.targetProfession ? "| 👔 " + ad.targetProfession : ""}</div>
-                    </div>
-                `;
-        });
-        container.innerHTML = html;
+      function getOrders() {
+        return getData("gkode_orders");
       }
-
-      function toggleAd(adId) {
-        const ads = getAds();
-        const ad = ads.find((a) => a.id === adId);
-        if (ad) {
-          ad.isActive = !ad.isActive;
-          setAds(ads);
-          showToast(`Ad ${ad.isActive ? "activated" : "paused"}.`, "success");
-          viewAds();
-        }
+      function getLogs() {
+        return getData("gkode_adminLogs");
       }
-
-      function deleteAd(adId) {
-        if (!confirm("Delete this ad?")) return;
-        const ads = getAds().filter((a) => a.id !== adId);
-        setAds(ads);
-        showToast("Ad deleted.", "info");
-        viewAds();
-      }
-
-      function viewAdStats() {
-        const ads = getAds();
-        if (ads.length === 0) {
-          showToast("No ads.", "info");
-          return;
-        }
-        let totalViews = 0,
-          totalClicks = 0,
-          activeAds = 0;
-        ads.forEach((ad) => {
-          totalViews += ad.views || 0;
-          totalClicks += ad.clicks || 0;
-          if (ad.isActive) activeAds++;
-        });
-        const msg = `📊 AD STATS\n\n📢 Total Ads: ${ads.length}\n🟢 Active: ${activeAds}\n👁️ Views: ${totalViews}\n👆 Clicks: ${totalClicks}\n📈 CTR: ${totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0}%`;
-        alert(msg);
+      function getBackups() {
+        return getData("gkode_backups");
       }
 
       // ============================================
-      // 💳 PAYMENT SETTINGS FUNCTIONS (ADD THIS)
+      // LOAD STATS
+      // ============================================
+      function loadStats() {
+        const users = getUsers();
+        const gigs = getGigs();
+        const complaints = getComplaints();
+        const payments = getPayments();
+        const businesses = getBusinesses();
+        const products = getProducts();
+
+        let totalRevenue = 0;
+        payments.forEach((p) => {
+          if (p.verified) totalRevenue += p.amount;
+        });
+
+        document.getElementById("statUsers").textContent = users.length;
+        document.getElementById("statGigs").textContent = gigs.length;
+        document.getElementById("statRevenue").textContent =
+          "Ksh " + totalRevenue.toLocaleString();
+        document.getElementById("statComplaints").textContent =
+          complaints.length;
+        document.getElementById("statBusinesses").textContent =
+          businesses.length;
+        document.getElementById("statProducts").textContent = products.length;
+      }
+
+      // ============================================
+      // PAYMENT SYSTEM
+      // ============================================
+      function togglePaymentSystem() {
+        paymentEnabled = !paymentEnabled;
+        updatePaymentStatus();
+        const status = paymentEnabled ? "ENABLED" : "DISABLED";
+        showToast(
+          "💳 Payment system " + status,
+          paymentEnabled ? "success" : "warning",
+        );
+        addLog("Payment system " + status);
+      }
+
+      function updatePaymentStatus() {
+        const statusEl = document.getElementById("paymentStatus");
+        const toggleBtn = document.getElementById("paymentToggleBtn");
+
+        if (paymentEnabled) {
+          statusEl.textContent = "✅ ACTIVE";
+          statusEl.style.color = "#006400";
+          toggleBtn.textContent = "🔒 Toggle Payment";
+          toggleBtn.className = "btn orange btn-small";
+        } else {
+          statusEl.textContent = "⛔ DISABLED (Testing)";
+          statusEl.style.color = "#ff9800";
+          toggleBtn.textContent = "🔓 Toggle Payment";
+          toggleBtn.className = "btn green btn-small";
+        }
+      }
+
+      // ============================================
+      // 💳 PAYMENT SETTINGS FUNCTIONS
       // ============================================
       function getPaymentSettings() {
         try {
@@ -612,6 +756,7 @@
           return {};
         }
       }
+
       function setPaymentSettings(settings) {
         localStorage.setItem(
           "gkode_payment_settings",
@@ -628,9 +773,6 @@
           .value.trim();
         settings.accountNumber = document
           .getElementById("gkodeAccountNumber")
-          .value.trim();
-        settings.accountName = document
-          .getElementById("gkodeAccountName")
           .value.trim();
         setPaymentSettings(settings);
         showToast("✅ Payment settings saved!", "success");
@@ -670,8 +812,6 @@
           settings.bankName || "";
         document.getElementById("gkodeAccountNumber").value =
           settings.accountNumber || "";
-        document.getElementById("gkodeAccountName").value =
-          settings.accountName || "";
         document.getElementById("mpesaTillNumber").value =
           settings.tillNumber || "";
         document.getElementById("mpesaPaybillNumber").value =
@@ -683,154 +823,706 @@
         document.getElementById("ussdMenu").value =
           settings.ussdMenu ||
           "1. Register\n2. Login\n3. Post a Gig\n4. Find Gigs\n5. Chat with Client\n6. My Profile";
-        updateEscrowDisplay();
-      }
-
-      function updateEscrowDisplay() {
-        try {
-          const secureEscrow = localStorage.getItem("gkode_secure_escrow");
-          if (secureEscrow) {
-            const escrow = JSON.parse(secureEscrow);
-            const decrypted = decryptData(escrow.encrypted);
-            if (decrypted) {
-              document.getElementById("escrowBalanceDisplay").textContent =
-                "Ksh " + (decrypted.totalHeld || 0).toFixed(2);
-              document.getElementById("escrowCommissionDisplay").textContent =
-                "Ksh " + (decrypted.totalCommission || 0).toFixed(2);
-              const payments = JSON.parse(
-                localStorage.getItem("gkode_secure_payments") || "[]",
-              );
-              const pending = payments.filter((p) => {
-                const dec = decryptData(p.encrypted);
-                return dec && dec.status === "HELD";
-              });
-              document.getElementById("escrowPendingDisplay").textContent =
-                pending.length;
-            }
-          }
-        } catch (e) {}
       }
 
       // ============================================
-      // 🔒 ENCRYPTION & ESCROW FUNCTIONS (ADD THIS)
+      // VIEW USERS
       // ============================================
-      function decryptData(encryptedData) {
-        try {
-          if (!encryptedData) return null;
-          const key = btoa("G-KODE-SECURE-KEY-2026-splasher");
-          let decrypted = encryptedData.split("").reverse().join("");
-          const paddingStart = 5 + (decrypted.length % 5);
-          const paddingEnd = 5 + ((decrypted.length + 3) % 5);
-          decrypted = decrypted.substring(
-            paddingStart,
-            decrypted.length - paddingEnd,
-          );
-          decrypted = atob(decrypted);
-          let xorResult = "";
-          for (let i = 0; i < decrypted.length; i++) {
-            xorResult += String.fromCharCode(
-              decrypted.charCodeAt(i) ^ key.charCodeAt(i % key.length),
-            );
-          }
-          return JSON.parse(xorResult.split("").reverse().join(""));
-        } catch (e) {
-          return null;
+      function viewUsers() {
+        const users = getUsers();
+        const output = document.getElementById("output");
+
+        if (users.length === 0) {
+          output.innerHTML = "<p>No users found.</p>";
+          return;
         }
+
+        let html = "<h3>👥 All Users (" + users.length + ")</h3>";
+        html +=
+          '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
+        html += '<div id="userList">';
+
+        users.forEach((u, i) => {
+          const statusClass = u.isBanned
+            ? "badge-banned"
+            : u.isPaid
+              ? "badge-paid"
+              : "badge-unpaid";
+          const statusText = u.isBanned
+            ? "🚫 Banned"
+            : u.isPaid
+              ? "✅ Paid"
+              : "🟡 Unpaid";
+
+          html += `
+                    <div class="user-item" data-name="${u.name.toLowerCase()}" data-phone="${u.phone}">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone} | 🆔 ${u.id}</div>
+                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
+                        <div>⭐ ${u.rating || 0} (${u.reviewCount || 0} reviews) | ⚠️ ${u.strikes || 0} strikes</div>
+                        <div><span class="badge ${statusClass}">${statusText}</span></div>
+                        <div style="margin-top:5px;">
+                            ${
+                              !u.isBanned
+                                ? `<button class="btn red btn-small" onclick="banUser('${u.phone}')">🚫 Ban</button>`
+                                : `<button class="btn green btn-small" onclick="unbanUser('${u.phone}')">✅ Unban</button>`
+                            }
+                            <button class="btn red btn-small" onclick="deleteUser('${u.phone}')">🗑️ Delete</button>
+                            <button class="btn blue btn-small" onclick="viewUserDetails('${u.phone}')">📋 Details</button>
+                        </div>
+                    </div>
+                `;
+        });
+
+        html += "</div>";
+        output.innerHTML = html;
       }
 
-      function viewEscrowBalance() {
-        try {
-          const secureEscrow = localStorage.getItem("gkode_secure_escrow");
-          if (!secureEscrow) {
-            showToast("No escrow data.", "info");
-            return;
-          }
-          const escrow = JSON.parse(secureEscrow);
-          const decrypted = decryptData(escrow.encrypted);
-          if (!decrypted) {
-            showToast("Could not decrypt escrow.", "error");
-            return;
-          }
-          const msg = `🏦 ESCROW BALANCE\n\n💰 Total Held: Ksh ${(decrypted.totalHeld || 0).toFixed(2)}\n💵 Commission: Ksh ${(decrypted.totalCommission || 0).toFixed(2)}\n🏦 Released: Ksh ${(decrypted.totalReleased || 0).toFixed(2)}`;
-          alert(msg);
-        } catch (e) {
-          showToast("Error loading escrow.", "error");
-        }
+      function searchUsers() {
+        const query = document.getElementById("userSearch").value.toLowerCase();
+        const items = document.querySelectorAll(".user-item");
+        items.forEach((item) => {
+          const name = item.dataset.name || "";
+          const phone = item.dataset.phone || "";
+          const match = name.includes(query) || phone.includes(query);
+          item.style.display = match ? "block" : "none";
+        });
       }
 
-      function viewSecurePayments() {
-        try {
-          const securePayments = JSON.parse(
-            localStorage.getItem("gkode_secure_payments") || "[]",
-          );
-          if (securePayments.length === 0) {
-            showToast("No payments found.", "info");
-            return;
-          }
-          let msg = "🔒 ENCRYPTED PAYMENTS\n\n";
-          let count = 0;
-          for (const secure of securePayments) {
-            const decrypted = decryptData(secure.encrypted);
-            if (decrypted) {
-              count++;
-              msg += `${count}. ${decrypted.userName || "Unknown"} (${decrypted.phone || "N/A"})\n`;
-              msg += `   💰 Ksh ${decrypted.amount || 0}\n`;
-              msg += `   📊 Commission: Ksh ${(decrypted.commission || 0).toFixed(2)}\n`;
-              msg += `   📅 ${new Date(decrypted.heldAt || Date.now()).toLocaleString()}\n`;
-              msg += `   🔑 ${decrypted.id?.slice(-6) || "N/A"}\n\n`;
-            }
-          }
-          if (count === 0) {
-            showToast("No readable payments.", "info");
-            return;
-          }
-          alert(msg);
-        } catch (e) {
-          showToast("Error loading payments.", "error");
+      function viewBannedUsers() {
+        const users = getUsers().filter((u) => u.isBanned);
+        if (users.length === 0) {
+          showToast("No banned users", "info");
+          return;
         }
+        displayUsers(users, "🚫 Banned Users");
       }
 
-      function viewAuditLog() {
-        try {
-          const auditLog = JSON.parse(
-            localStorage.getItem("gkode_audit_log") || "[]",
-          );
-          if (auditLog.length === 0) {
-            showToast("No logs.", "info");
-            return;
-          }
-          let msg = "📋 AUDIT LOG\n\n";
-          auditLog
-            .slice(-20)
-            .reverse()
-            .forEach((entry) => {
-              msg += `🔹 ${entry.action}\n`;
-              msg += `   📅 ${new Date(entry.timestamp).toLocaleString()}\n\n`;
-            });
-          alert(msg);
-        } catch (e) {
-          showToast("Error loading audit log.", "error");
+      function viewPaidUsers() {
+        const users = getUsers().filter((u) => u.isPaid);
+        if (users.length === 0) {
+          showToast("No paid users", "info");
+          return;
         }
+        displayUsers(users, "✅ Paid Users");
+      }
+
+      function displayUsers(users, title) {
+        let html = `<h3>${title} (${users.length})</h3>`;
+        users.forEach((u) => {
+          html += `
+                    <div class="user-item">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone}</div>
+                        <div>📍 ${u.location} | 👔 ${u.profession}</div>
+                        <div>⭐ ${u.rating || 0} | ⚠️ ${u.strikes || 0} strikes</div>
+                    </div>
+                `;
+        });
+        document.getElementById("output").innerHTML = html;
+      }
+
+      function viewUserDetails(phone) {
+        const users = getUsers();
+        const user = users.find((u) => u.phone === phone);
+        if (!user) {
+          showToast("User not found", "error");
+          return;
+        }
+
+        const gigs = getGigs().filter(
+          (g) => g.clientPhone === phone || g.workerPhone === phone,
+        );
+        const complaints = getComplaints().filter(
+          (c) => c.userId === phone || c.reporterId === phone,
+        );
+
+        let html = `<h3>📋 User Details: ${user.name}</h3>`;
+        html += `<div class="admin-card"><p><strong>Phone:</strong> ${user.phone}</p>`;
+        html += `<p><strong>ID:</strong> ${user.id}</p>`;
+        html += `<p><strong>Location:</strong> ${user.location}</p>`;
+        html += `<p><strong>Profession:</strong> ${user.profession}</p>`;
+        html += `<p><strong>Skills:</strong> ${user.skills || "None"}</p>`;
+        html += `<p><strong>Rating:</strong> ⭐ ${user.rating || 0} (${user.reviewCount || 0} reviews)</p>`;
+        html += `<p><strong>Strikes:</strong> ⚠️ ${user.strikes || 0}</p>`;
+        html += `<p><strong>Status:</strong> ${user.isBanned ? "🚫 Banned" : user.isPaid ? "✅ Paid" : "🟡 Unpaid"}</p>`;
+        html += `<p><strong>Joined:</strong> ${new Date(user.registeredAt).toLocaleString()}</p></div>`;
+
+        html += `<h4>📋 Gigs (${gigs.length})</h4>`;
+        gigs.forEach((g) => {
+          html += `<div class="gig-item">${g.title} — ${g.status} (${g.location})</div>`;
+        });
+
+        html += `<h4>🚩 Complaints (${complaints.length})</h4>`;
+        complaints.forEach((c) => {
+          html += `<div class="complaint-item">${c.reason} — ${c.resolved ? "✅ Resolved" : "🟡 Pending"}</div>`;
+        });
+
+        document.getElementById("output").innerHTML = html;
       }
 
       // ============================================
-      // 🚀 LOAD SETTINGS ON PAGE LOAD
+      // USER ACTIONS
+      // ============================================
+      function banUser(phone) {
+        if (!confirm(`Ban user ${phone}? They will lose all access.`)) return;
+        let users = getUsers();
+        users = users.map((u) => {
+          if (u.phone === phone) u.isBanned = true;
+          return u;
+        });
+        localStorage.setItem("gkode_users", JSON.stringify(users));
+        showToast("✅ User banned", "success");
+        addLog("Banned user: " + phone);
+        viewUsers();
+        loadStats();
+      }
+
+      function unbanUser(phone) {
+        if (!confirm(`Unban user ${phone}?`)) return;
+        let users = getUsers();
+        users = users.map((u) => {
+          if (u.phone === phone) u.isBanned = false;
+          return u;
+        });
+        localStorage.setItem("gkode_users", JSON.stringify(users));
+        showToast("✅ User unbanned", "success");
+        addLog("Unbanned user: " + phone);
+        viewUsers();
+        loadStats();
+      }
+
+      function deleteUser(phone) {
+        if (
+          !confirm(
+            `⚠️ Delete user ${phone} permanently? This cannot be undone!`,
+          )
+        )
+          return;
+        let users = getUsers();
+        users = users.filter((u) => u.phone !== phone);
+        localStorage.setItem("gkode_users", JSON.stringify(users));
+        showToast("🗑️ User deleted", "info");
+        addLog("Deleted user: " + phone);
+        viewUsers();
+        loadStats();
+      }
+
+      // ============================================
+      // VIEW GIGS
+      // ============================================
+      function viewGigs() {
+        const gigs = getGigs();
+        displayGigs(gigs, "📋 All Gigs");
+      }
+
+      function viewOpenGigs() {
+        const gigs = getGigs().filter((g) => g.status === "Open");
+        if (gigs.length === 0) {
+          showToast("No open gigs", "info");
+          return;
+        }
+        displayGigs(gigs, "🟢 Open Gigs");
+      }
+
+      function viewCompletedGigs() {
+        const gigs = getGigs().filter((g) => g.status === "Completed");
+        if (gigs.length === 0) {
+          showToast("No completed gigs", "info");
+          return;
+        }
+        displayGigs(gigs, "✅ Completed Gigs");
+      }
+
+      function displayGigs(gigs, title) {
+        const output = document.getElementById("output");
+        if (gigs.length === 0) {
+          output.innerHTML = "<p>No gigs found.</p>";
+          return;
+        }
+
+        let html = `<h3>${title} (${gigs.length})</h3>`;
+        gigs.forEach((g) => {
+          html += `
+                    <div class="gig-item">
+                        <div><strong>${g.title}</strong> — ${g.status}</div>
+                        <div>👤 ${g.client} | 🛠️ ${g.skill}</div>
+                        <div>📍 ${g.location} | 💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
+                        ${g.worker ? `<div>👷 Worker: ${g.worker}</div>` : ""}
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(g.createdAt).toLocaleString()}</div>
+                        <div style="margin-top:5px;">
+                            <button class="btn red btn-small" onclick="deleteGig('${g.id}')">🗑️ Delete</button>
+                            <button class="btn blue btn-small" onclick="viewGigDetails('${g.id}')">📋 Details</button>
+                        </div>
+                    </div>
+                `;
+        });
+        output.innerHTML = html;
+      }
+
+      function viewGigDetails(id) {
+        const gigs = getGigs();
+        const gig = gigs.find((g) => g.id === id);
+        if (!gig) {
+          showToast("Gig not found", "error");
+          return;
+        }
+
+        let html = `<h3>📋 Gig Details</h3>`;
+        html += `<div class="admin-card">`;
+        html += `<p><strong>Title:</strong> ${gig.title}</p>`;
+        html += `<p><strong>Skill:</strong> ${gig.skill}</p>`;
+        html += `<p><strong>Location:</strong> ${gig.location}</p>`;
+        html += `<p><strong>Budget:</strong> Ksh ${gig.budgetMin} - ${gig.budgetMax}</p>`;
+        html += `<p><strong>Urgency:</strong> ${gig.urgency}</p>`;
+        html += `<p><strong>Status:</strong> ${gig.status}</p>`;
+        html += `<p><strong>Client:</strong> ${gig.client} (${gig.clientPhone})</p>`;
+        if (gig.worker)
+          html += `<p><strong>Worker:</strong> ${gig.worker} (${gig.workerPhone})</p>`;
+        html += `<p><strong>Description:</strong> ${gig.description || "None"}</p>`;
+        if (gig.gpsLat && gig.gpsLon) {
+          html += `<p><strong>GPS:</strong> ${gig.gpsLat}, ${gig.gpsLon}</p>`;
+        }
+        html += `<p><strong>Posted:</strong> ${new Date(gig.createdAt).toLocaleString()}</p>`;
+        html += `</div>`;
+        document.getElementById("output").innerHTML = html;
+      }
+
+      function deleteGig(id) {
+        if (!confirm("Delete this gig?")) return;
+        let gigs = getGigs();
+        gigs = gigs.filter((g) => g.id !== id);
+        localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
+        showToast("🗑️ Gig deleted", "info");
+        addLog("Deleted gig: " + id);
+        viewGigs();
+        loadStats();
+      }
+
+      // ============================================
+      // VIEW COMPLAINTS
+      // ============================================
+      function viewComplaints() {
+        const complaints = getComplaints();
+        displayComplaints(complaints, "🚩 All Complaints");
+      }
+
+      function viewPendingComplaints() {
+        const complaints = getComplaints().filter((c) => !c.resolved);
+        if (complaints.length === 0) {
+          showToast("No pending complaints", "info");
+          return;
+        }
+        displayComplaints(complaints, "🟡 Pending Complaints");
+      }
+
+      function viewResolvedComplaints() {
+        const complaints = getComplaints().filter((c) => c.resolved);
+        if (complaints.length === 0) {
+          showToast("No resolved complaints", "info");
+          return;
+        }
+        displayComplaints(complaints, "✅ Resolved Complaints");
+      }
+
+      function displayComplaints(complaints, title) {
+        const output = document.getElementById("output");
+        if (complaints.length === 0) {
+          output.innerHTML = "<p>No complaints found.</p>";
+          return;
+        }
+
+        let html = `<h3>${title} (${complaints.length})</h3>`;
+        complaints.forEach((c) => {
+          const status = c.resolved ? "✅ Resolved" : "🟡 Pending";
+          const statusClass = c.resolved ? "status-resolved" : "status-pending";
+          html += `
+                    <div class="complaint-item">
+                        <div><strong>${c.reason}</strong> — <span class="${statusClass}">${status}</span></div>
+                        <div>📝 ${c.details}</div>
+                        <div>👤 User: ${c.userId} | Reporter: ${c.reporterId || "Unknown"}</div>
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(c.date).toLocaleString()}</div>
+                        ${!c.resolved ? `<button class="btn green btn-small" onclick="resolveComplaint('${c.id}')">✅ Resolve</button>` : ""}
+                        <button class="btn red btn-small" onclick="deleteComplaint('${c.id}')">🗑️ Delete</button>
+                    </div>
+                `;
+        });
+        output.innerHTML = html;
+      }
+
+      function resolveComplaint(id) {
+        let complaints = getComplaints();
+        complaints = complaints.map((c) => {
+          if (c.id === id) c.resolved = true;
+          return c;
+        });
+        localStorage.setItem("gkode_complaints", JSON.stringify(complaints));
+        showToast("✅ Complaint resolved", "success");
+        addLog("Resolved complaint: " + id);
+        viewComplaints();
+        loadStats();
+      }
+
+      function deleteComplaint(id) {
+        if (!confirm("Delete this complaint?")) return;
+        let complaints = getComplaints();
+        complaints = complaints.filter((c) => c.id !== id);
+        localStorage.setItem("gkode_complaints", JSON.stringify(complaints));
+        showToast("🗑️ Complaint deleted", "info");
+        viewComplaints();
+        loadStats();
+      }
+
+      // ============================================
+      // VIEW STRIKES
+      // ============================================
+      function viewStrikes() {
+        const users = getUsers().filter((u) => u.strikes > 0);
+        const output = document.getElementById("output");
+
+        if (users.length === 0) {
+          output.innerHTML = "<p>No users with strikes.</p>";
+          return;
+        }
+
+        let html = "<h3>⚠️ Strikes Report</h3>";
+        users.sort((a, b) => b.strikes - a.strikes);
+        users.forEach((u) => {
+          const warning =
+            u.strikes >= 5
+              ? "🔴 WARNING: Near ban!"
+              : u.strikes >= 3
+                ? "🟡 Warning"
+                : "🟢 Ok";
+          html += `
+                    <div class="user-item">
+                        <div class="name">${u.name}</div>
+                        <div class="phone">📞 ${u.phone}</div>
+                        <div>⚠️ ${u.strikes} strikes — ${warning}</div>
+                        <div>${u.isBanned ? "🚫 BANNED" : "Active"}</div>
+                    </div>
+                `;
+        });
+        output.innerHTML = html;
+      }
+
+      // ============================================
+      // VIEW PAYMENTS & REVENUE
+      // ============================================
+      function viewPayments() {
+        const payments = getPayments();
+        const output = document.getElementById("output");
+
+        if (payments.length === 0) {
+          output.innerHTML = "<p>No payments recorded.</p>";
+          return;
+        }
+
+        let html = "<h3>💰 Payments (" + payments.length + ")</h3>";
+        payments.forEach((p) => {
+          html += `
+                    <div class="user-item">
+                        <div>📞 ${p.phone}</div>
+                        <div>💰 Ksh ${p.amount} | Code: ${p.code}</div>
+                        <div>${p.verified ? "✅ Verified" : "❌ Pending"} | ${p.type || "User Fee"}</div>
+                        <div style="font-size:11px; color:#888;">📅 ${new Date(p.date).toLocaleString()}</div>
+                    </div>
+                `;
+        });
+        output.innerHTML = html;
+      }
+
+      function viewRevenueReport() {
+        const payments = getPayments();
+        const users = getUsers();
+        const gigs = getGigs();
+
+        let totalRevenue = 0;
+        let userFees = 0;
+        let commission = 0;
+        let totalOrders = 0;
+
+        payments.forEach((p) => {
+          if (p.verified) {
+            totalRevenue += p.amount;
+            if (p.type === "user_fee" || !p.type) userFees += p.amount;
+            if (p.type === "commission") commission += p.amount;
+          }
+        });
+
+        const paidUsers = users.filter((u) => u.isPaid).length;
+        const completedGigs = gigs.filter(
+          (g) => g.status === "Completed",
+        ).length;
+        const orders = getOrders();
+
+        let html = "<h3>📊 Revenue Report</h3>";
+        html += `<div class="admin-card">`;
+        html += `<p><strong>Total Revenue:</strong> Ksh ${totalRevenue.toLocaleString()}</p>`;
+        html += `<p><strong>User Fees:</strong> Ksh ${userFees.toLocaleString()}</p>`;
+        html += `<p><strong>Commission (3%):</strong> Ksh ${commission.toLocaleString()}</p>`;
+        html += `<p><strong>Paid Users:</strong> ${paidUsers}/${users.length}</p>`;
+        html += `<p><strong>Completed Gigs:</strong> ${completedGigs}</p>`;
+        html += `<p><strong>Total Orders:</strong> ${orders.length}</p>`;
+        html += `<p><strong>Potential Revenue:</strong> Ksh ${(users.length - paidUsers) * 300 + orders.length * 50}</p>`;
+        html += `</div>`;
+        document.getElementById("output").innerHTML = html;
+      }
+
+      // ============================================
+      // SYSTEM TOOLS
+      // ============================================
+      function downloadBackup() {
+        const data = {
+          exportedAt: new Date().toISOString(),
+          app: "G-KODE",
+          version: "3.0",
+          users: getUsers(),
+          gigs: getGigs(),
+          complaints: getComplaints(),
+          payments: getPayments(),
+          businesses: getBusinesses(),
+          products: getProducts(),
+          orders: getOrders(),
+          logs: getLogs(),
+          systemState: {
+            paymentEnabled: paymentEnabled,
+          },
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download =
+          "gkode-backup-" + new Date().toISOString().split("T")[0] + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        let backups = getBackups();
+        backups.push({
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          size: blob.size,
+        });
+        localStorage.setItem("gkode_backups", JSON.stringify(backups));
+
+        showToast("✅ Backup downloaded and saved", "success");
+        addLog("Backup created");
+      }
+
+      function viewBackups() {
+        const backups = getBackups();
+        const output = document.getElementById("output");
+
+        if (backups.length === 0) {
+          output.innerHTML = "<p>No backups found.</p>";
+          return;
+        }
+
+        let html = "<h3>📂 Backups (" + backups.length + ")</h3>";
+        backups
+          .slice()
+          .reverse()
+          .forEach((b) => {
+            html += `
+                    <div class="user-item">
+                        <div>📅 ${new Date(b.timestamp).toLocaleString()}</div>
+                        <div>📦 ${b.size ? (b.size / 1024).toFixed(2) + " KB" : "Unknown size"}</div>
+                        <div>🆔 ${b.id.slice(-6)}</div>
+                    </div>
+                `;
+          });
+        output.innerHTML = html;
+      }
+
+      function viewLogs() {
+        const logs = getLogs();
+        const output = document.getElementById("output");
+
+        if (logs.length === 0) {
+          output.innerHTML = "<p>No logs found.</p>";
+          return;
+        }
+
+        let html = "<h3>📜 Activity Logs (" + logs.length + ")</h3>";
+        logs
+          .slice()
+          .reverse()
+          .forEach((l) => {
+            html += `
+                    <div class="user-item" style="font-size:12px;">
+                        <div><strong>${l.action || l.type || "Action"}</strong></div>
+                        <div>👤 ${l.user || "Admin"} | 📅 ${new Date(l.time || l.timestamp).toLocaleString()}</div>
+                    </div>
+                `;
+          });
+        output.innerHTML = html;
+      }
+
+      function viewSystemHealth() {
+        const users = getUsers();
+        const gigs = getGigs();
+        const complaints = getComplaints();
+        const payments = getPayments();
+
+        let totalRevenue = 0;
+        payments.forEach((p) => {
+          if (p.verified) totalRevenue += p.amount;
+        });
+
+        let storageSize = 0;
+        for (let key in localStorage) {
+          if (localStorage.hasOwnProperty(key)) {
+            storageSize += localStorage[key].length;
+          }
+        }
+
+        const html = `
+                <h3>🏥 System Health</h3>
+                <div class="admin-card">
+                    <p>👥 Users: <strong>${users.length}</strong></p>
+                    <p>📋 Gigs: <strong>${gigs.length}</strong></p>
+                    <p>🚩 Complaints: <strong>${complaints.length}</strong></p>
+                    <p>💰 Revenue: <strong>Ksh ${totalRevenue.toLocaleString()}</strong></p>
+                    <p>💾 Storage: <strong>${(storageSize / 1024).toFixed(2)} KB</strong></p>
+                    <p>💳 Payment System: <strong>${paymentEnabled ? "✅ Active" : "⛔ Disabled"}</strong></p>
+                    <p>📅 Last Check: <strong>${new Date().toLocaleString()}</strong></p>
+                    <p style="color:#006400;">✅ System is healthy</p>
+                </div>
+            `;
+        document.getElementById("output").innerHTML = html;
+      }
+
+      function exportUsersCSV() {
+        const users = getUsers();
+        if (users.length === 0) {
+          showToast("No users to export", "error");
+          return;
+        }
+
+        let csv =
+          "Name,Phone,ID,Location,Profession,Rating,Strikes,Paid,Banned\n";
+        users.forEach((u) => {
+          csv += `${u.name},${u.phone},${u.id},${u.location},${u.profession},${u.rating || 0},${u.strikes || 0},${u.isPaid ? "Yes" : "No"},${u.isBanned ? "Yes" : "No"}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download =
+          "gkode-users-" + new Date().toISOString().split("T")[0] + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        showToast("✅ Users exported", "success");
+      }
+
+      // ============================================
+      // DANGER ZONE
+      // ============================================
+      function resetEverything() {
+        if (
+          !confirm(
+            "🔄 WARNING: This will reset ALL app data on this device!\n\nContinue?",
+          )
+        )
+          return;
+        if (!confirm("FINAL WARNING: This cannot be undone! Continue?")) return;
+
+        downloadBackup();
+        localStorage.removeItem("gkode_users");
+        localStorage.removeItem("gkode_gigs");
+        localStorage.removeItem("gkode_complaints");
+        localStorage.removeItem("gkode_payments");
+        localStorage.removeItem("gkode_companies");
+        localStorage.removeItem("gkode_products");
+        localStorage.removeItem("gkode_orders");
+        localStorage.removeItem("gkode_adminLogs");
+        localStorage.removeItem("gkode_professions");
+        localStorage.removeItem("gkode_categories");
+        localStorage.removeItem("gkode_user");
+        localStorage.removeItem("gkode_token");
+
+        showToast("🔄 All data reset. Backup saved.", "success");
+        addLog("All data reset by admin");
+        loadStats();
+        document.getElementById("output").innerHTML =
+          '<p style="color:#006400;">✅ All data has been reset. A backup was saved.</p>';
+      }
+
+      function clearAllData() {
+        if (!confirm("🔥 WARNING: This will DELETE ALL data! Continue?"))
+          return;
+        if (!confirm("FINAL WARNING: This cannot be undone! Continue?")) return;
+
+        downloadBackup();
+        localStorage.removeItem("gkode_users");
+        localStorage.removeItem("gkode_gigs");
+        localStorage.removeItem("gkode_complaints");
+        localStorage.removeItem("gkode_payments");
+        localStorage.removeItem("gkode_companies");
+        localStorage.removeItem("gkode_products");
+        localStorage.removeItem("gkode_orders");
+        localStorage.removeItem("gkode_adminLogs");
+        localStorage.removeItem("gkode_professions");
+        localStorage.removeItem("gkode_categories");
+        localStorage.removeItem("gkode_user");
+        localStorage.removeItem("gkode_token");
+
+        showToast("✅ All data cleared. Backup saved.", "success");
+        addLog("All data cleared by admin");
+        loadStats();
+        document.getElementById("output").innerHTML =
+          '<p style="color:#006400;">✅ All data has been cleared. A backup was saved.</p>';
+      }
+
+      function resetApp() {
+        if (
+          !confirm("🔄 Reset entire app? This will clear all data and reload.")
+        )
+          return;
+        if (!confirm("Final warning: This cannot be undone!")) return;
+
+        downloadBackup();
+        localStorage.clear();
+
+        showToast("🔄 App reset. Refreshing...", "info");
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 2000);
+      }
+
+      // ============================================
+      // ADD LOG
+      // ============================================
+      function addLog(action) {
+        let logs = getLogs();
+        logs.push({
+          type: "ADMIN_ACTION",
+          action: action,
+          user: "Admin",
+          time: new Date().toISOString(),
+        });
+        localStorage.setItem("gkode_adminLogs", JSON.stringify(logs));
+      }
+
+      // ============================================
+      // INIT
       // ============================================
       document.addEventListener("DOMContentLoaded", function () {
-        if (
-          document.getElementById("adminPanel") &&
-          document.getElementById("adminPanel").style.display !== "none"
-        ) {
-          loadPaymentSettings();
+        if (localStorage.getItem("adminLoggedIn") === "true") {
+          adminLogin();
         }
+        loadPaymentSettings();
       });
 
-      console.log(
-        "✅ Admin panel loaded with Advertising, Payment, and Escrow systems!",
-      );
-      console.log("🔒 Security active: AES-256 style encryption");
+      console.log("🔐 G-KODE Admin Panel loaded");
+      console.log("📊 Admin Key: MAYA");
+      console.log("🇰🇪 Kenya Helping Kenya");
     </script>
   </body>
-  <!-- ← CLOSING BODY TAG -->
 </html>
-<!-- ← CLOSING HTML TAG -->

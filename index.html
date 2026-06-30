@@ -7,10 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>G-KODE — Kenya Helping Kenya</title>
-    <meta name="csrf-token" content="" id="csrfMeta" />
-    <!-- ===== SECURITY & CAMERA SUPPORT ===== -->
-    <meta name="csrf-token" content="" id="csrfMeta" />
-
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -50,7 +46,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER (WITH CAMERA FIX) -->
+    <!-- SCREEN: REGISTER -->
     <!-- ============================================ -->
     <div id="register" class="screen">
       <h2>Create Account</h2>
@@ -59,7 +55,6 @@
       </p>
 
       <form id="registerForm" onsubmit="register(event)">
-        <!-- ===== PERSONAL DETAILS ===== -->
         <label
           for="regName"
           style="
@@ -129,7 +124,6 @@
           pattern="[0-9]{8}"
         />
 
-        <!-- ===== PASSWORD ===== -->
         <label
           for="regPassword"
           style="
@@ -203,7 +197,6 @@
           >
         </div>
 
-        <!-- ===== LOCATION & PROFESSION ===== -->
         <label
           for="regLocation"
           style="
@@ -286,7 +279,7 @@
           >Optional — add other skills you have</small
         >
 
-        <!-- ===== PROFILE PHOTO WITH CAMERA (FIXED) ===== -->
+        <!-- Profile Photo with Camera -->
         <label
           for="regPhoto"
           style="
@@ -358,7 +351,7 @@
           >Take a clear photo of your face</small
         >
 
-        <!-- ===== ID SCAN WITH CAMERA (FIXED) ===== -->
+        <!-- ID Scan with Camera -->
         <label
           for="regIDScan"
           style="
@@ -425,7 +418,7 @@
           >Upload a clear photo of your ID</small
         >
 
-        <!-- ===== EMAIL VERIFICATION NOTICE ===== -->
+        <!-- Email Verification Notice -->
         <div
           style="
             background: #e8f5e9;
@@ -443,7 +436,7 @@
           </p>
         </div>
 
-        <!-- ===== TERMS ===== -->
+        <!-- Terms -->
         <div
           style="
             display: flex;
@@ -482,7 +475,7 @@
           >
         </div>
 
-        <!-- ===== OTP SECTION ===== -->
+        <!-- OTP Section -->
         <div
           id="otpSection"
           style="
@@ -534,7 +527,6 @@
           >
         </div>
 
-        <!-- ===== BUTTONS ===== -->
         <button type="submit" class="btn green" id="registerBtn">
           REGISTER
         </button>
@@ -910,21 +902,64 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: HOME -->
+    <!-- SCREEN: PAYMENT (UPDATED)                   -->
+    <!-- ============================================ -->
+    <div id="payment" class="screen">
+      <h2>💳 Payment</h2>
+      <div
+        style="
+          background: #e8f5e9;
+          padding: 15px;
+          border-radius: 10px;
+          text-align: center;
+          margin-bottom: 15px;
+        "
+      >
+        <h3>ONE-TIME FEE: KSH 300</h3>
+        <p>For Life. No Subscriptions. No Hidden Charges.</p>
+      </div>
+
+      <p>
+        <strong>Till Number:</strong> <span id="displayTill">Loading...</span>
+      </p>
+      <p>
+        <strong>Paybill:</strong> <span id="displayPaybill">Loading...</span>
+      </p>
+      <p>
+        <strong>Account:</strong> <span id="displayAccount">Loading...</span>
+      </p>
+
+      <div
+        style="
+          background: #f5f5f5;
+          padding: 10px;
+          border-radius: 8px;
+          margin: 10px 0;
+        "
+      >
+        <p style="font-size: 12px; color: #888">
+          💰 Commission: <span id="displayCommission">3%</span> | 🏦 Bank:
+          <span id="displayGkodeBank">Loading...</span>
+        </p>
+      </div>
+
+      <input
+        type="text"
+        id="mpesaCode"
+        placeholder="Enter M-Pesa Confirmation Code"
+      />
+      <button class="btn green" onclick="verifyMpesaPayment()">
+        VERIFY PAYMENT
+      </button>
+      <button class="btn outline" onclick="showScreen('home')">
+        PAY LATER
+      </button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCREEN: HOME                                 -->
     <!-- ============================================ -->
     <div id="home" class="screen">
-        <!-- ===== 📢 AD BANNER - ADD THIS LINE ===== -->
-    <div id="adBannerContainer"></div>
-    
-    <h2>📍 Gigs Near You</h2>
-    <div class="tab-container">
-        <button id="tabOpen" class="active" onclick="switchTab('open')">🟢 OPEN</button>
-        <button id="tabTaken" onclick="switchTab('taken')">🔴 TAKEN</button>
-    </div>
-    <div id="gigsList">Loading...</div>
-    <button class="btn green" onclick="showScreen('postGig')">➕ POST A GIG</button>
-    <button class="btn outline" onclick="logout()">LOGOUT</button>
-</div>
       <h2>📍 Gigs Near You</h2>
       <div class="tab-container">
         <button id="tabOpen" class="active" onclick="switchTab('open')">
@@ -944,7 +979,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: POST GIG -->
+    <!-- SCREEN: POST GIG                            -->
     <!-- ============================================ -->
     <div id="postGig" class="screen">
       <h2>Post a Gig</h2>
@@ -1084,7 +1119,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: CHAT -->
+    <!-- SCREEN: CHAT                                -->
     <!-- ============================================ -->
     <div id="chat" class="screen">
       <h2>💬 Chat</h2>
@@ -1124,14 +1159,14 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: PROFILE -->
+    <!-- SCREEN: PROFILE                             -->
     <!-- ============================================ -->
     <div id="profile" class="screen">
       <h2>👤 My Profile</h2>
       <div class="text-center">
         <img
           id="profilePhoto"
-          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23006400'/%3E%3Ctext x='50' y='55' text-anchor='middle' fill='%23FFD700' font-size='30' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E"
+          src="https://via.placeholder.com/100"
           style="
             width: 100px;
             height: 100px;
@@ -1207,7 +1242,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: TERMS -->
+    <!-- SCREEN: TERMS                               -->
     <!-- ============================================ -->
     <div id="terms" class="screen">
       <h2>📄 Terms of Use</h2>
@@ -1274,7 +1309,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: PRIVACY -->
+    <!-- SCREEN: PRIVACY                             -->
     <!-- ============================================ -->
     <div id="privacy" class="screen">
       <h2>🔒 Privacy Policy</h2>
@@ -1321,7 +1356,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: GUIDE -->
+    <!-- SCREEN: GUIDE                               -->
     <!-- ============================================ -->
     <div id="guide" class="screen">
       <h2>📖 How G-KODE Works</h2>
@@ -1368,58 +1403,12 @@
       </button>
     </div>
 
-   <!-- ============================================ -->
-<!-- SCREEN: PAYMENT (WITH DYNAMIC NUMBERS)      -->
-<!-- ============================================ -->
-<div id="payment" class="screen">
-    <h2>💳 Payment</h2>
-    <div style="background:#e8f5e9; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px;">
-        <h3>ONE-TIME FEE: KSH 300</h3>
-        <p>For Life. No Subscriptions. No Hidden Charges.</p>
-    </div>
-
-    <!-- ===== SECURE PAYMENT INFO ===== -->
-    <div style="background:#fff3e0; padding:15px; border-radius:10px; margin-bottom:15px;">
-        <p style="font-weight:bold; color:#006400;">🔒 Secure Payment</p>
-        <p style="font-size:12px; color:#666;">Payment held in escrow until delivery confirmed.</p>
-        <p style="font-size:12px; color:#666;">Commission (3%) deducted automatically.</p>
-    </div>
-
-    <p><strong>Till Number:</strong> <span id="displayTill">Loading...</span></p>
-    <p><strong>Paybill:</strong> <span id="displayPaybill">Loading...</span></p>
-    <p><strong>Account:</strong> <span id="displayAccount">Loading...</span></p>
-
-    <div style="background:#f5f5f5; padding:10px; border-radius:8px; margin:10px 0;">
-        <p style="font-size:12px; color:#888;">
-            💰 Commission: <span id="displayCommission">3%</span>
-            | 🏦 Bank: <span id="displayGkodeBank">Loading...</span>
-        </p>
-    </div>
-
-    <label style="color:#006400;font-weight:bold;display:block;margin-bottom:5px;">M-Pesa Confirmation Code *</label>
-    <input type="text" id="mpesaCode" placeholder="Enter M-Pesa Confirmation Code" required />
-
-    <div id="paymentBreakdown" style="background:#f5f5f5; padding:10px; border-radius:8px; margin:10px 0; display:none;">
-        <p style="font-weight:bold;">💳 Payment Breakdown</p>
-        <p>💰 Total: Ksh <span id="payBreakdownTotal">300</span></p>
-        <p>📊 Commission (3%): Ksh <span id="payBreakdownCommission">9</span></p>
-        <p>🏦 Seller Gets: Ksh <span id="payBreakdownSeller">291</span></p>
-    </div>
-
-    <button class="btn green" onclick="secureInitiatePayment()">💳 PAY NOW</button>
-    <button class="btn outline" onclick="showScreen('home')">PAY LATER</button>
-</div>
     <!-- ============================================ -->
-    <!-- SCREEN: COMPANY REGISTER (COMPLETE) -->
+    <!-- SCREEN: COMPANY REGISTER                    -->
     <!-- ============================================ -->
     <div id="companyRegister" class="screen">
       <h2>🏢 Register Business</h2>
-      <p style="color: #666; font-size: 14px; margin-bottom: 15px">
-        Register your business to sell on G-KODE Marketplace
-      </p>
-
-      <form id="companyForm" onsubmit="registerBusiness(event)">
-        <!-- ===== BASIC BUSINESS INFO ===== -->
+      <form id="companyForm" onsubmit="registerCompany(event)">
         <label
           for="compName"
           style="
@@ -1448,22 +1437,15 @@
           >Business Type *</label
         >
         <select id="compType" required>
-          <option value="">-- Select Business Type --</option>
-          <option value="sole_proprietor">Sole Proprietor</option>
-          <option value="partnership">Partnership</option>
-          <option value="private_ltd">Private Limited Company (LTD)</option>
-          <option value="public_ltd">Public Limited Company (PLC)</option>
-          <option value="llp">Limited Liability Partnership (LLP)</option>
-          <option value="sacco">Co-operative Society (SACCO)</option>
-          <option value="ngo">Non-Governmental Organization (NGO)</option>
-          <option value="school">School</option>
-          <option value="church">Church / Religious</option>
-          <option value="government">Government Office</option>
-          <option value="hardware">Hardware Shop</option>
-          <option value="retail">Retail Shop</option>
-          <option value="hospital">Hospital / Clinic</option>
-          <option value="hotel">Hotel / Restaurant</option>
-          <option value="other">Other Business</option>
+          <option value="">-- Business Type --</option>
+          <option value="School">School</option>
+          <option value="Church">Church</option>
+          <option value="Government">Government</option>
+          <option value="Hardware">Hardware</option>
+          <option value="Retail">Retail</option>
+          <option value="Hospital">Hospital</option>
+          <option value="Hotel">Hotel</option>
+          <option value="Other">Other</option>
         </select>
 
         <label
@@ -1474,12 +1456,12 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Registration Number *</label
+          >Registration No *</label
         >
         <input
           type="text"
           id="compRegNo"
-          placeholder="Registration Number (e.g., C/12345/2024) *"
+          placeholder="Registration No *"
           required
         />
 
@@ -1491,47 +1473,15 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Business Location *</label
+          >Location *</label
         >
         <input
           type="text"
           id="compLocation"
-          placeholder="Business Location (e.g., Nairobi CBD) *"
+          placeholder="Location *"
           required
         />
 
-        <!-- ===== BUSINESS GPS LOCATION ===== -->
-        <label
-          style="
-            color: #006400;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-          "
-          >📍 Business GPS Location</label
-        >
-        <button
-          type="button"
-          class="btn outline"
-          onclick="captureBusinessLocation()"
-          style="margin-bottom: 10px"
-        >
-          📍 CAPTURE LOCATION
-        </button>
-        <input type="hidden" id="compGPSLat" />
-        <input type="hidden" id="compGPSLon" />
-        <small
-          id="compLocationStatus"
-          style="
-            color: #666;
-            display: block;
-            margin-top: -10px;
-            margin-bottom: 10px;
-          "
-          >No location captured yet</small
-        >
-
-        <!-- ===== CONTACT DETAILS ===== -->
         <label
           for="compPhone"
           style="
@@ -1540,14 +1490,9 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Business Phone *</label
+          >Phone *</label
         >
-        <input
-          type="tel"
-          id="compPhone"
-          placeholder="Business Phone *"
-          required
-        />
+        <input type="tel" id="compPhone" placeholder="Phone *" required />
 
         <label
           for="compEmail"
@@ -1557,424 +1502,10 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Business Email *</label
+          >Email (optional)</label
         >
-        <input
-          type="email"
-          id="compEmail"
-          placeholder="Business Email *"
-          required
-        />
+        <input type="email" id="compEmail" placeholder="Email" />
 
-        <label
-          for="compWebsite"
-          style="
-            color: #006400;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-          "
-          >Business Website (optional)</label
-        >
-        <input
-          type="url"
-          id="compWebsite"
-          placeholder="https://yourbusiness.com"
-        />
-
-        <!-- ===== BUSINESS STATS ===== -->
-        <label
-          for="compYears"
-          style="
-            color: #006400;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-          "
-          >Years in Operation *</label
-        >
-        <input
-          type="number"
-          id="compYears"
-          placeholder="Years in Operation *"
-          required
-          min="0"
-          step="1"
-        />
-
-        <label
-          for="compEmployees"
-          style="
-            color: #006400;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-          "
-          >Number of Employees</label
-        >
-        <input
-          type="number"
-          id="compEmployees"
-          placeholder="Number of Employees (optional)"
-          min="0"
-          step="1"
-        />
-
-        <!-- ===== BUSINESS LOGO ===== -->
-        <label
-          for="compLogo"
-          style="
-            color: #006400;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-          "
-          >Business Logo *</label
-        >
-        <div style="display: flex; gap: 5px; margin-bottom: 5px">
-          <input
-            type="file"
-            id="compLogo"
-            accept="image/*"
-            style="flex: 1; padding: 10px"
-            required
-          />
-          <button
-            type="button"
-            onclick="openCamera('compLogo')"
-            style="
-              background: #006400;
-              color: #ffd700;
-              border: none;
-              padding: 10px 15px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: bold;
-              white-space: nowrap;
-            "
-          >
-            📸 Camera
-          </button>
-        </div>
-        <div
-          id="logoPreviewContainer"
-          style="display: none; margin-bottom: 10px"
-        >
-          <img
-            id="logoPreview"
-            style="
-              width: 60px;
-              height: 60px;
-              border-radius: 8px;
-              object-fit: cover;
-              border: 2px solid #006400;
-            "
-          />
-          <button
-            type="button"
-            onclick="
-              clearImage('compLogo', 'logoPreview', 'logoPreviewContainer')
-            "
-            style="
-              background: #cc0000;
-              color: #fff;
-              border: none;
-              padding: 2px 10px;
-              border-radius: 50%;
-              cursor: pointer;
-              margin-left: 5px;
-            "
-          >
-            ✕
-          </button>
-        </div>
-        <small style="color: #888; display: block; margin-bottom: 10px"
-          >Upload a clear business logo</small
-        >
-
-        <!-- ===== DOCUMENT UPLOADS ===== -->
-        <div
-          style="
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-          "
-        >
-          <p style="font-weight: bold; color: #006400">📄 Required Documents</p>
-          <p style="font-size: 12px; color: #666; margin-bottom: 10px">
-            Upload clear photos or PDFs of each document
-          </p>
-
-          <!-- Certificate of Incorporation -->
-          <label
-            for="compCertificate"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >Certificate of Incorporation/Registration *</label
-          >
-          <div style="display: flex; gap: 5px; margin-bottom: 5px">
-            <input
-              type="file"
-              id="compCertificate"
-              accept="image/*,.pdf"
-              style="flex: 1; padding: 10px"
-              required
-            />
-            <button
-              type="button"
-              onclick="openCamera('compCertificate')"
-              style="
-                background: #006400;
-                color: #ffd700;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: bold;
-                white-space: nowrap;
-              "
-            >
-              📸 Camera
-            </button>
-          </div>
-          <div
-            id="certPreviewContainer"
-            style="display: none; margin-bottom: 10px"
-          >
-            <img
-              id="certPreview"
-              style="
-                width: 60px;
-                height: 60px;
-                border-radius: 8px;
-                object-fit: cover;
-                border: 2px solid #006400;
-              "
-            />
-            <button
-              type="button"
-              onclick="
-                clearImage(
-                  'compCertificate',
-                  'certPreview',
-                  'certPreviewContainer',
-                )
-              "
-              style="
-                background: #cc0000;
-                color: #fff;
-                border: none;
-                padding: 2px 10px;
-                border-radius: 50%;
-                cursor: pointer;
-                margin-left: 5px;
-              "
-            >
-              ✕
-            </button>
-          </div>
-          <small style="color: #888; display: block; margin-bottom: 10px"
-            >Upload your business registration certificate</small
-          >
-
-          <!-- KRA PIN Certificate -->
-          <label
-            for="compKRA"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >KRA PIN Certificate *</label
-          >
-          <div style="display: flex; gap: 5px; margin-bottom: 5px">
-            <input
-              type="file"
-              id="compKRA"
-              accept="image/*,.pdf"
-              style="flex: 1; padding: 10px"
-              required
-            />
-            <button
-              type="button"
-              onclick="openCamera('compKRA')"
-              style="
-                background: #006400;
-                color: #ffd700;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: bold;
-                white-space: nowrap;
-              "
-            >
-              📸 Camera
-            </button>
-          </div>
-          <div
-            id="kraPreviewContainer"
-            style="display: none; margin-bottom: 10px"
-          >
-            <img
-              id="kraPreview"
-              style="
-                width: 60px;
-                height: 60px;
-                border-radius: 8px;
-                object-fit: cover;
-                border: 2px solid #006400;
-              "
-            />
-            <button
-              type="button"
-              onclick="
-                clearImage('compKRA', 'kraPreview', 'kraPreviewContainer')
-              "
-              style="
-                background: #cc0000;
-                color: #fff;
-                border: none;
-                padding: 2px 10px;
-                border-radius: 50%;
-                cursor: pointer;
-                margin-left: 5px;
-              "
-            >
-              ✕
-            </button>
-          </div>
-          <small style="color: #888; display: block; margin-bottom: 10px"
-            >Upload your KRA PIN certificate</small
-          >
-
-          <!-- Single Business Permit -->
-          <label
-            for="compPermit"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >Single Business Permit *</label
-          >
-          <div style="display: flex; gap: 5px; margin-bottom: 5px">
-            <input
-              type="file"
-              id="compPermit"
-              accept="image/*,.pdf"
-              style="flex: 1; padding: 10px"
-              required
-            />
-            <button
-              type="button"
-              onclick="openCamera('compPermit')"
-              style="
-                background: #006400;
-                color: #ffd700;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: bold;
-                white-space: nowrap;
-              "
-            >
-              📸 Camera
-            </button>
-          </div>
-          <div
-            id="permitPreviewContainer"
-            style="display: none; margin-bottom: 10px"
-          >
-            <img
-              id="permitPreview"
-              style="
-                width: 60px;
-                height: 60px;
-                border-radius: 8px;
-                object-fit: cover;
-                border: 2px solid #006400;
-              "
-            />
-            <button
-              type="button"
-              onclick="
-                clearImage(
-                  'compPermit',
-                  'permitPreview',
-                  'permitPreviewContainer',
-                )
-              "
-              style="
-                background: #cc0000;
-                color: #fff;
-                border: none;
-                padding: 2px 10px;
-                border-radius: 50%;
-                cursor: pointer;
-                margin-left: 5px;
-              "
-            >
-              ✕
-            </button>
-          </div>
-          <small style="color: #888; display: block; margin-bottom: 10px"
-            >Upload your county business permit</small
-          >
-
-          <!-- Director IDs (only for companies) -->
-          <div id="directorIdsSection">
-            <label
-              for="compDirectorIds"
-              style="
-                color: #006400;
-                font-weight: bold;
-                display: block;
-                margin-bottom: 5px;
-              "
-              >Director/Partner IDs *</label
-            >
-            <div style="display: flex; gap: 5px; margin-bottom: 5px">
-              <input
-                type="file"
-                id="compDirectorIds"
-                accept="image/*"
-                style="flex: 1; padding: 10px"
-                multiple
-              />
-              <button
-                type="button"
-                onclick="openCamera('compDirectorIds')"
-                style="
-                  background: #006400;
-                  color: #ffd700;
-                  border: none;
-                  padding: 10px 15px;
-                  border-radius: 8px;
-                  cursor: pointer;
-                  font-weight: bold;
-                  white-space: nowrap;
-                "
-              >
-                📸 Camera
-              </button>
-            </div>
-            <small style="color: #888; display: block; margin-bottom: 10px"
-              >Upload IDs of all directors/partners (multiple files
-              allowed)</small
-            >
-          </div>
-        </div>
-
-        <!-- ===== BUSINESS DESCRIPTION ===== -->
         <label
           for="compDesc"
           style="
@@ -1983,133 +1514,21 @@
             display: block;
             margin-bottom: 5px;
           "
-          >Business Description *</label
+          >Description</label
         >
-        <textarea
-          id="compDesc"
-          placeholder="Describe your business, products, and services..."
-          required
-        ></textarea>
+        <textarea id="compDesc" placeholder="Description"></textarea>
 
-        <!-- ===== BANK DETAILS ===== -->
-        <div
-          style="
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-          "
-        >
-          <p style="font-weight: bold; color: #006400">
-            🏦 Bank Details (For Payments)
-          </p>
-          <p style="font-size: 12px; color: #666; margin-bottom: 10px">
-            This is where your commission payments will be sent
-          </p>
-
-          <label
-            for="compBankName"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >Bank Name *</label
-          >
-          <input
-            type="text"
-            id="compBankName"
-            placeholder="e.g., Equity Bank"
-            required
-          />
-
-          <label
-            for="compAccountName"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >Account Name *</label
-          >
-          <input
-            type="text"
-            id="compAccountName"
-            placeholder="Account Name as per bank"
-            required
-          />
-
-          <label
-            for="compAccountNumber"
-            style="
-              color: #006400;
-              font-weight: bold;
-              display: block;
-              margin-bottom: 5px;
-            "
-            >Account Number *</label
-          >
-          <input
-            type="text"
-            id="compAccountNumber"
-            placeholder="Bank Account Number"
-            required
-          />
-        </div>
-
-        <!-- ===== TERMS ===== -->
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-          "
-        >
-          <input
-            type="checkbox"
-            id="compTerms"
-            required
-            style="width: auto; margin: 0"
-          />
-          <label for="compTerms" style="font-size: 13px; color: #666"
-            >I confirm that all information provided is accurate and complete. I
-            agree to G-KODE's
-            <a
-              href="#"
-              onclick="
-                showScreen('terms');
-                return false;
-              "
-              style="color: #006400"
-              >Terms of Service</a
-            >
-            and
-            <a
-              href="#"
-              onclick="
-                showScreen('privacy');
-                return false;
-              "
-              style="color: #006400"
-              >Privacy Policy</a
-            ></label
-          >
-        </div>
-
-        <!-- ===== SUBMIT ===== -->
         <button type="submit" class="btn green" id="compRegisterBtn">
-          REGISTER BUSINESS
+          REGISTER
         </button>
         <button type="button" class="btn outline" onclick="showScreen('home')">
           BACK
         </button>
       </form>
     </div>
+
     <!-- ============================================ -->
-    <!-- SCREEN: COMPANY DASHBOARD -->
+    <!-- SCREEN: COMPANY DASHBOARD                   -->
     <!-- ============================================ -->
     <div id="companyDashboard" class="screen">
       <h2>🏢 My Business</h2>
@@ -2143,7 +1562,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: ADD PRODUCT -->
+    <!-- SCREEN: ADD PRODUCT                         -->
     <!-- ============================================ -->
     <div id="addProduct" class="screen">
       <h2>📦 Add Product</h2>
@@ -2269,7 +1688,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: MARKETPLACE -->
+    <!-- SCREEN: MARKETPLACE                         -->
     <!-- ============================================ -->
     <div id="marketplace" class="screen">
       <h2>🛒 Marketplace</h2>
@@ -2281,7 +1700,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- BOTTOM NAV -->
+    <!-- BOTTOM NAV                                  -->
     <!-- ============================================ -->
     <div id="bottomNav" class="bottom-nav hidden">
       <button onclick="showScreen('home')">
@@ -2299,7 +1718,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCRIPTS -->
+    <!-- SCRIPTS                                      -->
     <!-- ============================================ -->
     <script src="app.js"></script>
   </body>
