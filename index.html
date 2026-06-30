@@ -44,9 +44,8 @@
         >
       </p>
     </div>
-
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER -->
+    <!-- SCREEN: REGISTER (WITH CAMERA BUTTONS)      -->
     <!-- ============================================ -->
     <div id="register" class="screen">
       <h2>Create Account</h2>
@@ -55,6 +54,7 @@
       </p>
 
       <form id="registerForm" onsubmit="register(event)">
+        <!-- PERSONAL DETAILS -->
         <label
           for="regName"
           style="
@@ -124,6 +124,7 @@
           pattern="[0-9]{8}"
         />
 
+        <!-- PASSWORD -->
         <label
           for="regPassword"
           style="
@@ -197,6 +198,7 @@
           >
         </div>
 
+        <!-- LOCATION & PROFESSION -->
         <label
           for="regLocation"
           style="
@@ -279,7 +281,7 @@
           >Optional — add other skills you have</small
         >
 
-        <!-- Profile Photo with Camera -->
+        <!-- ===== PROFILE PHOTO WITH CAMERA ===== -->
         <label
           for="regPhoto"
           style="
@@ -351,7 +353,7 @@
           >Take a clear photo of your face</small
         >
 
-        <!-- ID Scan with Camera -->
+        <!-- ===== ID SCAN WITH CAMERA ===== -->
         <label
           for="regIDScan"
           style="
@@ -418,7 +420,7 @@
           >Upload a clear photo of your ID</small
         >
 
-        <!-- Email Verification Notice -->
+        <!-- EMAIL VERIFICATION NOTICE -->
         <div
           style="
             background: #e8f5e9;
@@ -436,7 +438,7 @@
           </p>
         </div>
 
-        <!-- Terms -->
+        <!-- TERMS -->
         <div
           style="
             display: flex;
@@ -475,7 +477,7 @@
           >
         </div>
 
-        <!-- OTP Section -->
+        <!-- OTP SECTION -->
         <div
           id="otpSection"
           style="
@@ -527,6 +529,7 @@
           >
         </div>
 
+        <!-- BUTTONS -->
         <button type="submit" class="btn green" id="registerBtn">
           REGISTER
         </button>
@@ -539,7 +542,6 @@
         </button>
       </form>
     </div>
-
     <!-- ============================================ -->
     <!-- SCREEN: LOGIN -->
     <!-- ============================================ -->

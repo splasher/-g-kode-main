@@ -190,6 +190,92 @@ function togglePassword(fieldId, icon) {
     field.type = "password";
     icon.textContent = "👁️";
   }
+  // ============================================
+  // 📸 CAMERA FUNCTIONS - FIX
+  // ============================================
+
+  // ===== OPEN CAMERA =====
+  function openCamera(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) {
+      showToast("Error: Input not found.", "error");
+      return;
+    }
+
+    // Clear previous selection
+    input.value = "";
+
+    // Check if on mobile device
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      // Force camera on mobile
+      input.setAttribute("capture", "environment");
+      input.setAttribute("accept", "image/*");
+      input.click();
+    } else {
+      // On desktop - use file picker
+      input.removeAttribute("capture");
+      input.setAttribute("accept", "image/*");
+      input.click();
+      showToast('📸 Select "Camera" from the file picker', "info");
+    }
+  }
+
+  // ===== CLEAR IMAGE =====
+  function clearImage(inputId, previewId, containerId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const container = document.getElementById(containerId);
+
+    if (input) input.value = "";
+    if (preview) {
+      preview.src = "";
+      preview.style.display = "none";
+    }
+    if (container) container.style.display = "none";
+  }
+
+  // ===== SETUP FILE PREVIEW =====
+  function setupFilePreview(inputId, previewId, containerId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const container = document.getElementById(containerId);
+    if (!input) return;
+
+    input.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) {
+        if (container) container.style.display = "none";
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        showToast("Please select an image file.", "error");
+        input.value = "";
+        if (container) container.style.display = "none";
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast("Image too large. Maximum 5MB.", "error");
+        input.value = "";
+        if (container) container.style.display = "none";
+        return;
+      }
+
+      // Show preview
+      if (preview && container) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = "block";
+          container.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
 }
 
 // ============ PROFESSIONS ============
