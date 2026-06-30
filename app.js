@@ -44,6 +44,94 @@ function initSupabase() {
   }
 }
 initSupabase();
+// ============================================
+// 📤 UPLOAD TO SUPABASE STORAGE
+// ============================================
+
+async function uploadToSupabase(file, bucket, folder) {
+  if (!supabaseInitialized) {
+    console.log("⚠️ Supabase not ready, using base64 fallback");
+    return readFileAsDataURL(file);
+  }
+
+  try {
+    // Compress image first (reduce to ~100KB)
+    const compressedDataUrl = await compressImage(file);
+
+    // Convert data URL to blob
+    const response = await fetch(compressedDataUrl);
+    const blob = await response.blob();
+
+    // Create file name
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const fileName = `${folder}/${Date.now()}.${fileExt}`;
+    const fileObj = new File([blob], fileName, { type: "image/jpeg" });
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, fileObj, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    console.log("✅ Image uploaded to Supabase:", urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error("Upload error:", error);
+    // Fallback to base64
+    return readFileAsDataURL(file);
+  }
+}
+
+// ============================================
+// 🖼️ COMPRESS IMAGE (Reduce to ~100KB)
+// ============================================
+
+function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        // Calculate new dimensions
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+
+        // Create canvas and compress
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG with quality
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 // ============ TOAST ============
 function showToast(message, type = "info") {
@@ -757,9 +845,17 @@ async function register(e) {
       }
     }
 
-    btn.textContent = "⏳ PROCESSING IMAGES...";
-    const photoData = await readFileAsDataURL(photoFile);
-    const idData = await readFileAsDataURL(idScanFile);
+    btn.textContent = "⏳ UPLOADING IMAGES...";
+    const photoUrl = await uploadToSupabase(
+      photoFile,
+      "profiles",
+      `user_${phone}`,
+    );
+    const idScanUrl = await uploadToSupabase(
+      idScanFile,
+      "ids",
+      `user_${phone}`,
+    );
 
     const user = {
       name,
@@ -770,8 +866,8 @@ async function register(e) {
       location,
       profession: finalProfession,
       skills: skills || "",
-      photo: photoData,
-      idScan: idData,
+      photo: photoUrl,
+      idScan: idScanUrl,
       isPaid: false,
       isBanned: false,
       strikes: 0,

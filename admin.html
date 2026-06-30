@@ -318,6 +318,16 @@
         border-bottom-color: #cc0000;
         color: #cc0000;
       }
+      .cloud-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: bold;
+        background: #2196f3;
+        color: #fff;
+        margin-left: 5px;
+      }
       @media (max-width: 480px) {
         .admin-card .stats {
           grid-template-columns: 1fr 1fr;
@@ -405,7 +415,14 @@
           <button class="btn-small green" onclick="viewPaidUsers()">
             ✅ Paid
           </button>
+          <button class="btn-small blue" onclick="viewCloudUsers()">
+            ☁️ Cloud Users
+          </button>
         </div>
+        <p style="font-size: 11px; color: #888; margin-top: 5px">
+          ⚡ "Cloud Users" shows ALL users from Supabase (including those on
+          other devices)
+        </p>
       </div>
 
       <!-- ===== GIG MANAGEMENT ===== -->
@@ -656,11 +673,35 @@
     <!-- ============================================ -->
     <script>
       // ============================================
+      // SUPABASE CONFIG
+      // ============================================
+      const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
+      let supabase = null;
+      let supabaseInitialized = false;
+
+      function initSupabase() {
+        if (supabaseInitialized) return;
+        try {
+          supabase = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+          );
+          supabaseInitialized = true;
+          console.log("✅ Supabase connected");
+        } catch (e) {
+          console.log("⚠️ Supabase not available");
+        }
+      }
+
+      // ============================================
       // ADMIN CONFIG
       // ============================================
       const ADMIN_KEY = "MAYA";
       let adminLoggedIn = false;
       let paymentEnabled = true;
+      let currentAdmin = null;
 
       // ============================================
       // TOAST
@@ -706,6 +747,7 @@
           adminLoggedIn = true;
           document.getElementById("loginBox").style.display = "none";
           document.getElementById("adminPanel").classList.remove("hidden");
+          initSupabase();
           loadStats();
           updatePaymentStatus();
           loadPaymentSettings();
@@ -734,7 +776,7 @@
           return [];
         }
       }
-      function getUsers() {
+      function getUsersLocal() {
         return getData("gkode_users");
       }
       function getGigs() {
@@ -763,10 +805,45 @@
       }
 
       // ============================================
+      // SUPABASE USER FUNCTIONS
+      // ============================================
+      async function getUsersFromSupabase() {
+        if (!supabaseInitialized) return [];
+        try {
+          const { data, error } = await supabase
+            .from("users")
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        } catch (e) {
+          console.error("Error fetching users:", e);
+          return [];
+        }
+      }
+
+      async function updateUserInSupabase(phone, updates) {
+        if (!supabaseInitialized) return false;
+        try {
+          const { data, error } = await supabase
+            .from("users")
+            .update(updates)
+            .eq("phone", phone)
+            .select();
+          if (error) throw error;
+          return true;
+        } catch (e) {
+          console.error("Error updating user:", e);
+          return false;
+        }
+      }
+
+      // ============================================
       // LOAD STATS
       // ============================================
-      function loadStats() {
-        const users = getUsers();
+      async function loadStats() {
+        // Get users from Supabase
+        const users = await getUsersFromSupabase();
         const gigs = getGigs();
         const complaints = getComplaints();
         const payments = getPayments();
@@ -778,7 +855,7 @@
           if (p.verified) totalRevenue += p.amount;
         });
 
-        document.getElementById("statUsers").textContent = users.length;
+        document.getElementById("statUsers").textContent = users.length || 0;
         document.getElementById("statGigs").textContent = gigs.length;
         document.getElementById("statRevenue").textContent =
           "Ksh " + totalRevenue.toLocaleString();
@@ -787,6 +864,320 @@
         document.getElementById("statBusinesses").textContent =
           businesses.length;
         document.getElementById("statProducts").textContent = products.length;
+      }
+
+      // ============================================
+      // 👥 VIEW USERS - FROM SUPABASE!
+      // ============================================
+      async function viewUsers() {
+        const output = document.getElementById("output");
+        output.innerHTML =
+          '<div style="text-align:center;padding:20px;"><div class="loader" style="display:inline-block;width:24px;height:24px;border:3px solid #f3f3f3;border-top:3px solid #006400;border-radius:50%;animation:spin 0.8s linear infinite;"></div><p>Loading users from cloud...</p></div>';
+
+        const users = await getUsersFromSupabase();
+
+        if (!users || users.length === 0) {
+          output.innerHTML = "<p>No users found in cloud database.</p>";
+          return;
+        }
+
+        let html =
+          '<h3>👥 All Users (<span style="color:#2196F3;">' +
+          users.length +
+          '</span>) <span class="cloud-badge">☁️ CLOUD</span></h3>';
+        html +=
+          '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
+        html += '<div id="userList">';
+
+        users.forEach(function (u) {
+          const statusClass = u.is_banned
+            ? "badge-banned"
+            : u.is_paid
+              ? "badge-paid"
+              : "badge-unpaid";
+          const statusText = u.is_banned
+            ? "🚫 Banned"
+            : u.is_paid
+              ? "✅ Paid"
+              : "🟡 Unpaid";
+
+          html +=
+            '<div class="user-item" data-name="' +
+            (u.full_name || "").toLowerCase() +
+            '" data-phone="' +
+            (u.phone || "") +
+            '">';
+          html += '<div class="name">' + (u.full_name || "Unknown") + "</div>";
+          html +=
+            '<div class="phone">📞 ' +
+            (u.phone || "N/A") +
+            " | 🆔 " +
+            (u.national_id || "N/A") +
+            "</div>";
+          html +=
+            "<div>📍 " +
+            (u.location || "N/A") +
+            " | 👔 " +
+            (u.profession || "N/A") +
+            "</div>";
+          html += "<div>📧 " + (u.email || "N/A") + "</div>";
+          html +=
+            "<div>⭐ " +
+            (u.rating || 0) +
+            " (" +
+            (u.review_count || 0) +
+            " reviews) | ⚠️ " +
+            (u.strikes || 0) +
+            " strikes</div>";
+          html +=
+            '<div><span class="badge ' +
+            statusClass +
+            '">' +
+            statusText +
+            "</span></div>";
+          html += '<div style="margin-top:5px;">';
+          if (!u.is_banned) {
+            html +=
+              '<button class="btn-small red" onclick="banUser(\'' +
+              u.phone +
+              "')\">🚫 Ban</button>";
+          } else {
+            html +=
+              '<button class="btn-small green" onclick="unbanUser(\'' +
+              u.phone +
+              "')\">✅ Unban</button>";
+          }
+          html +=
+            ' <button class="btn-small red" onclick="deleteUser(\'' +
+            u.phone +
+            "')\">🗑️ Delete</button>";
+          html +=
+            ' <button class="btn-small blue" onclick="viewUserDetails(\'' +
+            u.phone +
+            "')\">📋 Details</button>";
+          html += "</div></div>";
+        });
+
+        html += "</div>";
+        output.innerHTML = html;
+      }
+
+      // ============================================
+      // VIEW CLOUD USERS (Same as viewUsers but explicit)
+      // ============================================
+      function viewCloudUsers() {
+        viewUsers();
+      }
+
+      // ============================================
+      // SEARCH USERS
+      // ============================================
+      function searchUsers() {
+        const query = document.getElementById("userSearch").value.toLowerCase();
+        const items = document.querySelectorAll(".user-item");
+        items.forEach(function (item) {
+          const name = item.dataset.name || "";
+          const phone = item.dataset.phone || "";
+          const match = name.includes(query) || phone.includes(query);
+          item.style.display = match ? "block" : "none";
+        });
+      }
+
+      // ============================================
+      // VIEW BANNED USERS
+      // ============================================
+      async function viewBannedUsers() {
+        const users = await getUsersFromSupabase();
+        const banned = users.filter(function (u) {
+          return u.is_banned;
+        });
+        if (banned.length === 0) {
+          showToast("No banned users", "info");
+          return;
+        }
+        displayUsers(banned, "🚫 Banned Users");
+      }
+
+      // ============================================
+      // VIEW PAID USERS
+      // ============================================
+      async function viewPaidUsers() {
+        const users = await getUsersFromSupabase();
+        const paid = users.filter(function (u) {
+          return u.is_paid;
+        });
+        if (paid.length === 0) {
+          showToast("No paid users", "info");
+          return;
+        }
+        displayUsers(paid, "✅ Paid Users");
+      }
+
+      // ============================================
+      // DISPLAY USERS
+      // ============================================
+      function displayUsers(users, title) {
+        var html = "<h3>" + title + " (" + users.length + ")</h3>";
+        users.forEach(function (u) {
+          html +=
+            '<div class="user-item"><div class="name">' +
+            (u.full_name || "Unknown") +
+            "</div>";
+          html += '<div class="phone">📞 ' + (u.phone || "N/A") + "</div>";
+          html +=
+            "<div>📍 " +
+            (u.location || "N/A") +
+            " | 👔 " +
+            (u.profession || "N/A") +
+            "</div>";
+          html +=
+            "<div>⭐ " +
+            (u.rating || 0) +
+            " | ⚠️ " +
+            (u.strikes || 0) +
+            " strikes</div></div>";
+        });
+        document.getElementById("output").innerHTML = html;
+      }
+
+      // ============================================
+      // VIEW USER DETAILS
+      // ============================================
+      async function viewUserDetails(phone) {
+        const users = await getUsersFromSupabase();
+        const user = users.find(function (u) {
+          return u.phone === phone;
+        });
+        if (!user) {
+          showToast("User not found", "error");
+          return;
+        }
+
+        const gigs = getGigs().filter(function (g) {
+          return g.clientPhone === phone || g.workerPhone === phone;
+        });
+        const complaints = getComplaints().filter(function (c) {
+          return c.userId === phone || c.reporterId === phone;
+        });
+
+        var html =
+          "<h3>📋 User Details: " + (user.full_name || "Unknown") + "</h3>";
+        html +=
+          '<div class="admin-card"><p><strong>Phone:</strong> ' +
+          (user.phone || "N/A") +
+          "</p>";
+        html +=
+          "<p><strong>ID:</strong> " + (user.national_id || "N/A") + "</p>";
+        html +=
+          "<p><strong>Location:</strong> " + (user.location || "N/A") + "</p>";
+        html +=
+          "<p><strong>Profession:</strong> " +
+          (user.profession || "N/A") +
+          "</p>";
+        html +=
+          "<p><strong>Skills:</strong> " +
+          ((user.skills || []).join(", ") || "None") +
+          "</p>";
+        html +=
+          "<p><strong>Rating:</strong> ⭐ " +
+          (user.rating || 0) +
+          " (" +
+          (user.review_count || 0) +
+          " reviews)</p>";
+        html +=
+          "<p><strong>Strikes:</strong> ⚠️ " + (user.strikes || 0) + "</p>";
+        html +=
+          "<p><strong>Status:</strong> " +
+          (user.is_banned
+            ? "🚫 Banned"
+            : user.is_paid
+              ? "✅ Paid"
+              : "🟡 Unpaid") +
+          "</p>";
+        html +=
+          "<p><strong>Joined:</strong> " +
+          new Date(user.created_at).toLocaleString() +
+          "</p></div>";
+
+        html += "<h4>📋 Gigs (" + gigs.length + ")</h4>";
+        gigs.forEach(function (g) {
+          html +=
+            '<div class="user-item">' +
+            g.title +
+            " — " +
+            g.status +
+            " (" +
+            g.location +
+            ")</div>";
+        });
+
+        html += "<h4>🚩 Complaints (" + complaints.length + ")</h4>";
+        complaints.forEach(function (c) {
+          html +=
+            '<div class="user-item">' +
+            c.reason +
+            " — " +
+            (c.resolved ? "✅ Resolved" : "🟡 Pending") +
+            "</div>";
+        });
+
+        document.getElementById("output").innerHTML = html;
+      }
+
+      // ============================================
+      // USER ACTIONS (Now update Supabase!)
+      // ============================================
+      async function banUser(phone) {
+        if (!confirm("Ban user " + phone + "? They will lose all access."))
+          return;
+        const success = await updateUserInSupabase(phone, { is_banned: true });
+        if (success) {
+          showToast("✅ User banned in cloud!", "success");
+          addLog("Banned user: " + phone);
+          viewUsers();
+          loadStats();
+        } else {
+          showToast("❌ Failed to ban user", "error");
+        }
+      }
+
+      async function unbanUser(phone) {
+        if (!confirm("Unban user " + phone + "?")) return;
+        const success = await updateUserInSupabase(phone, { is_banned: false });
+        if (success) {
+          showToast("✅ User unbanned in cloud!", "success");
+          addLog("Unbanned user: " + phone);
+          viewUsers();
+          loadStats();
+        } else {
+          showToast("❌ Failed to unban user", "error");
+        }
+      }
+
+      async function deleteUser(phone) {
+        if (
+          !confirm(
+            "⚠️ Delete user " + phone + " permanently? This cannot be undone!",
+          )
+        )
+          return;
+        if (!supabaseInitialized) {
+          showToast("Supabase not connected", "error");
+          return;
+        }
+        try {
+          const { error } = await supabase
+            .from("users")
+            .delete()
+            .eq("phone", phone);
+          if (error) throw error;
+          showToast("🗑️ User deleted from cloud!", "info");
+          addLog("Deleted user: " + phone);
+          viewUsers();
+          loadStats();
+        } catch (e) {
+          showToast("Error deleting user: " + e.message, "error");
+        }
       }
 
       // ============================================
@@ -904,6 +1295,18 @@
       // ============================================
       // 📢 AD FUNCTIONS
       // ============================================
+
+      function getAds() {
+        try {
+          return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function setAds(ads) {
+        localStorage.setItem("gkode_ads", JSON.stringify(ads));
+      }
 
       function showAdForm() {
         var container = document.getElementById("adFormContainer");
@@ -1053,260 +1456,6 @@
           (totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0) +
           "%";
         alert(msg);
-      }
-
-      // ============================================
-      // VIEW USERS
-      // ============================================
-      function viewUsers() {
-        var users = getUsers();
-        var output = document.getElementById("output");
-
-        if (users.length === 0) {
-          output.innerHTML = "<p>No users found.</p>";
-          return;
-        }
-
-        var html = "<h3>👥 All Users (" + users.length + ")</h3>";
-        html +=
-          '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
-        html += '<div id="userList">';
-
-        users.forEach(function (u) {
-          var statusClass = u.isBanned
-            ? "badge-banned"
-            : u.isPaid
-              ? "badge-paid"
-              : "badge-unpaid";
-          var statusText = u.isBanned
-            ? "🚫 Banned"
-            : u.isPaid
-              ? "✅ Paid"
-              : "🟡 Unpaid";
-
-          html +=
-            '<div class="user-item" data-name="' +
-            u.name.toLowerCase() +
-            '" data-phone="' +
-            u.phone +
-            '">';
-          html += '<div class="name">' + u.name + "</div>";
-          html +=
-            '<div class="phone">📞 ' + u.phone + " | 🆔 " + u.id + "</div>";
-          html += "<div>📍 " + u.location + " | 👔 " + u.profession + "</div>";
-          html +=
-            "<div>⭐ " +
-            (u.rating || 0) +
-            " (" +
-            (u.reviewCount || 0) +
-            " reviews) | ⚠️ " +
-            (u.strikes || 0) +
-            " strikes</div>";
-          html +=
-            '<div><span class="badge ' +
-            statusClass +
-            '">' +
-            statusText +
-            "</span></div>";
-          html += '<div style="margin-top:5px;">';
-          if (!u.isBanned) {
-            html +=
-              '<button class="btn-small red" onclick="banUser(\'' +
-              u.phone +
-              "')\">🚫 Ban</button>";
-          } else {
-            html +=
-              '<button class="btn-small green" onclick="unbanUser(\'' +
-              u.phone +
-              "')\">✅ Unban</button>";
-          }
-          html +=
-            ' <button class="btn-small red" onclick="deleteUser(\'' +
-            u.phone +
-            "')\">🗑️ Delete</button>";
-          html +=
-            ' <button class="btn-small blue" onclick="viewUserDetails(\'' +
-            u.phone +
-            "')\">📋 Details</button>";
-          html += "</div></div>";
-        });
-
-        html += "</div>";
-        output.innerHTML = html;
-      }
-
-      function searchUsers() {
-        var query = document.getElementById("userSearch").value.toLowerCase();
-        var items = document.querySelectorAll(".user-item");
-        items.forEach(function (item) {
-          var name = item.dataset.name || "";
-          var phone = item.dataset.phone || "";
-          var match = name.includes(query) || phone.includes(query);
-          item.style.display = match ? "block" : "none";
-        });
-      }
-
-      function viewBannedUsers() {
-        var users = getUsers().filter(function (u) {
-          return u.isBanned;
-        });
-        if (users.length === 0) {
-          showToast("No banned users", "info");
-          return;
-        }
-        displayUsers(users, "🚫 Banned Users");
-      }
-
-      function viewPaidUsers() {
-        var users = getUsers().filter(function (u) {
-          return u.isPaid;
-        });
-        if (users.length === 0) {
-          showToast("No paid users", "info");
-          return;
-        }
-        displayUsers(users, "✅ Paid Users");
-      }
-
-      function displayUsers(users, title) {
-        var html = "<h3>" + title + " (" + users.length + ")</h3>";
-        users.forEach(function (u) {
-          html +=
-            '<div class="user-item"><div class="name">' + u.name + "</div>";
-          html += '<div class="phone">📞 ' + u.phone + "</div>";
-          html += "<div>📍 " + u.location + " | 👔 " + u.profession + "</div>";
-          html +=
-            "<div>⭐ " +
-            (u.rating || 0) +
-            " | ⚠️ " +
-            (u.strikes || 0) +
-            " strikes</div></div>";
-        });
-        document.getElementById("output").innerHTML = html;
-      }
-
-      function viewUserDetails(phone) {
-        var users = getUsers();
-        var user = null;
-        for (var i = 0; i < users.length; i++) {
-          if (users[i].phone === phone) {
-            user = users[i];
-            break;
-          }
-        }
-        if (!user) {
-          showToast("User not found", "error");
-          return;
-        }
-
-        var gigs = getGigs().filter(function (g) {
-          return g.clientPhone === phone || g.workerPhone === phone;
-        });
-        var complaints = getComplaints().filter(function (c) {
-          return c.userId === phone || c.reporterId === phone;
-        });
-
-        var html = "<h3>📋 User Details: " + user.name + "</h3>";
-        html +=
-          '<div class="admin-card"><p><strong>Phone:</strong> ' +
-          user.phone +
-          "</p>";
-        html += "<p><strong>ID:</strong> " + user.id + "</p>";
-        html += "<p><strong>Location:</strong> " + user.location + "</p>";
-        html += "<p><strong>Profession:</strong> " + user.profession + "</p>";
-        html +=
-          "<p><strong>Skills:</strong> " + (user.skills || "None") + "</p>";
-        html +=
-          "<p><strong>Rating:</strong> ⭐ " +
-          (user.rating || 0) +
-          " (" +
-          (user.reviewCount || 0) +
-          " reviews)</p>";
-        html +=
-          "<p><strong>Strikes:</strong> ⚠️ " + (user.strikes || 0) + "</p>";
-        html +=
-          "<p><strong>Status:</strong> " +
-          (user.isBanned
-            ? "🚫 Banned"
-            : user.isPaid
-              ? "✅ Paid"
-              : "🟡 Unpaid") +
-          "</p>";
-        html +=
-          "<p><strong>Joined:</strong> " +
-          new Date(user.registeredAt).toLocaleString() +
-          "</p></div>";
-
-        html += "<h4>📋 Gigs (" + gigs.length + ")</h4>";
-        gigs.forEach(function (g) {
-          html +=
-            '<div class="user-item">' +
-            g.title +
-            " — " +
-            g.status +
-            " (" +
-            g.location +
-            ")</div>";
-        });
-
-        html += "<h4>🚩 Complaints (" + complaints.length + ")</h4>";
-        complaints.forEach(function (c) {
-          html +=
-            '<div class="user-item">' +
-            c.reason +
-            " — " +
-            (c.resolved ? "✅ Resolved" : "🟡 Pending") +
-            "</div>";
-        });
-
-        document.getElementById("output").innerHTML = html;
-      }
-
-      // ============================================
-      // USER ACTIONS
-      // ============================================
-      function banUser(phone) {
-        if (!confirm("Ban user " + phone + "? They will lose all access."))
-          return;
-        var users = getUsers().map(function (u) {
-          if (u.phone === phone) u.isBanned = true;
-          return u;
-        });
-        localStorage.setItem("gkode_users", JSON.stringify(users));
-        showToast("✅ User banned", "success");
-        addLog("Banned user: " + phone);
-        viewUsers();
-        loadStats();
-      }
-
-      function unbanUser(phone) {
-        if (!confirm("Unban user " + phone + "?")) return;
-        var users = getUsers().map(function (u) {
-          if (u.phone === phone) u.isBanned = false;
-          return u;
-        });
-        localStorage.setItem("gkode_users", JSON.stringify(users));
-        showToast("✅ User unbanned", "success");
-        addLog("Unbanned user: " + phone);
-        viewUsers();
-        loadStats();
-      }
-
-      function deleteUser(phone) {
-        if (
-          !confirm(
-            "⚠️ Delete user " + phone + " permanently? This cannot be undone!",
-          )
-        )
-          return;
-        var users = getUsers().filter(function (u) {
-          return u.phone !== phone;
-        });
-        localStorage.setItem("gkode_users", JSON.stringify(users));
-        showToast("🗑️ User deleted", "info");
-        addLog("Deleted user: " + phone);
-        viewUsers();
-        loadStats();
       }
 
       // ============================================
@@ -1553,22 +1702,23 @@
       // ============================================
       // VIEW STRIKES
       // ============================================
-      function viewStrikes() {
-        var users = getUsers().filter(function (u) {
+      async function viewStrikes() {
+        const users = await getUsersFromSupabase();
+        const withStrikes = users.filter(function (u) {
           return u.strikes > 0;
         });
         var output = document.getElementById("output");
 
-        if (users.length === 0) {
+        if (withStrikes.length === 0) {
           output.innerHTML = "<p>No users with strikes.</p>";
           return;
         }
 
         var html = "<h3>⚠️ Strikes Report</h3>";
-        users.sort(function (a, b) {
+        withStrikes.sort(function (a, b) {
           return b.strikes - a.strikes;
         });
-        users.forEach(function (u) {
+        withStrikes.forEach(function (u) {
           var warning =
             u.strikes >= 5
               ? "🔴 WARNING: Near ban!"
@@ -1576,11 +1726,13 @@
                 ? "🟡 Warning"
                 : "🟢 Ok";
           html +=
-            '<div class="user-item"><div class="name">' + u.name + "</div>";
-          html += '<div class="phone">📞 ' + u.phone + "</div>";
+            '<div class="user-item"><div class="name">' +
+            (u.full_name || "Unknown") +
+            "</div>";
+          html += '<div class="phone">📞 ' + (u.phone || "N/A") + "</div>";
           html += "<div>⚠️ " + u.strikes + " strikes — " + warning + "</div>";
           html +=
-            "<div>" + (u.isBanned ? "🚫 BANNED" : "Active") + "</div></div>";
+            "<div>" + (u.is_banned ? "🚫 BANNED" : "Active") + "</div></div>";
         });
         output.innerHTML = html;
       }
@@ -1619,7 +1771,7 @@
 
       function viewRevenueReport() {
         var payments = getPayments();
-        var users = getUsers();
+        var users = getUsersLocal();
         var gigs = getGigs();
 
         var totalRevenue = 0;
@@ -1681,7 +1833,7 @@
           exportedAt: new Date().toISOString(),
           app: "G-KODE",
           version: "3.0",
-          users: getUsers(),
+          users: getUsersLocal(),
           gigs: getGigs(),
           complaints: getComplaints(),
           payments: getPayments(),
@@ -1774,7 +1926,7 @@
       }
 
       function viewSystemHealth() {
-        var users = getUsers();
+        var users = getUsersLocal();
         var gigs = getGigs();
         var complaints = getComplaints();
         var payments = getPayments();
@@ -1819,7 +1971,7 @@
       }
 
       function exportUsersCSV() {
-        var users = getUsers();
+        var users = getUsersLocal();
         if (users.length === 0) {
           showToast("No users to export", "error");
           return;
@@ -1951,21 +2103,6 @@
       }
 
       // ============================================
-      // AD DATA HELPERS (USED BY AD FUNCTIONS)
-      // ============================================
-      function getAds() {
-        try {
-          return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
-        } catch {
-          return [];
-        }
-      }
-
-      function setAds(ads) {
-        localStorage.setItem("gkode_ads", JSON.stringify(ads));
-      }
-
-      // ============================================
       // INIT
       // ============================================
       document.addEventListener("DOMContentLoaded", function () {
@@ -1977,6 +2114,7 @@
 
       console.log("🔐 G-KODE Admin Panel loaded");
       console.log("📊 Admin Key: MAYA");
+      console.log("☁️ Now reading users from Supabase Cloud!");
       console.log("🇰🇪 Kenya Helping Kenya");
     </script>
   </body>
