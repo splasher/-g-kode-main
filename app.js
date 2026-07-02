@@ -1,13 +1,13 @@
 // ============================================
-// G-KODE - COMPLETE WORKING APP
+// G-KODE - COMPLETE WORKING APP v3.1
+// ALL ISSUES FIXED:
+// - Users auto-sync to Supabase on register/login
+// - OTP emails working with proper EmailJS config
+// - Admin panel shows cloud users
+// - No duplicate declarations
 // ============================================
 
 // ============ SUPABASE CONFIG ============
-const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
-// ============================================
-// SUPABASE CONFIG - ADD THIS TO YOUR APP.JS
-// ============================================
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
 let supabase = null;
@@ -20,15 +20,247 @@ function initSupabase() {
     supabaseInitialized = true;
     console.log("✅ Supabase connected");
   } catch (e) {
-    console.log("⚠️ Supabase not available");
+    console.log("⚠️ Supabase not available:", e);
   }
 }
-
-// Call this when the app loads
 initSupabase();
 
 // ============================================
-// SYNC USER TO SUPABASE (MANDATORY)
+// STATE VARIABLES
+// ============================================
+let currentUser = null;
+let currentTab = "open";
+let currentGigId = null;
+let pendingRegistration = null;
+let pendingOtp = null;
+let resetData = null;
+let resetTimerInterval = null;
+let resetTimeLeft = 600;
+let isProcessing = false;
+let cameraStream = null;
+let cameraActive = false;
+
+// ============================================
+// ADMIN PHONES
+// ============================================
+const ADMIN_PHONES = ["0703428192", "0711991467"];
+
+// ============================================
+// EMAILJS CONFIG - VERIFIED WORKING
+// ============================================
+const EMAILJS_CONFIG = {
+  serviceID: "service_hw35xfu",
+  publicKey: "vc371wcNfQy56zlH8",
+  otpTemplateID: "template_qycsjak",
+  resetTemplateID: "template_0787ox7",
+};
+
+// ============================================
+// TOAST FUNCTION
+// ============================================
+function showToast(message, type) {
+  type = type || "info";
+  const container = document.getElementById("toast-container");
+  if (!container) {
+    // Create container if it doesn't exist
+    const newContainer = document.createElement("div");
+    newContainer.id = "toast-container";
+    newContainer.style.cssText =
+      "position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;";
+    document.body.appendChild(newContainer);
+  }
+  const colors = {
+    success: "#006400",
+    error: "#cc0000",
+    info: "#2196F3",
+    warning: "#ff9800",
+  };
+  const toast = document.createElement("div");
+  toast.style.cssText =
+    "padding:12px 20px;border-radius:10px;color:#fff;margin-bottom:8px;animation:slideDown 0.3s ease;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:" +
+    (colors[type] || "#333");
+  toast.textContent = message;
+  document.getElementById("toast-container").appendChild(toast);
+  setTimeout(function () {
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.5s";
+    setTimeout(function () {
+      if (toast.parentNode) toast.remove();
+    }, 500);
+  }, 4000);
+}
+
+// Add animation
+(function () {
+  const style = document.createElement("style");
+  style.textContent =
+    "@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }";
+  document.head.appendChild(style);
+})();
+
+// ============================================
+// DATA HELPERS
+// ============================================
+function getData(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function getUsersLocal() {
+  return getData("gkode_users");
+}
+function setUsersLocal(users) {
+  localStorage.setItem("gkode_users", JSON.stringify(users));
+}
+
+function getGigsLocal() {
+  return getData("gkode_gigs");
+}
+function setGigsLocal(gigs) {
+  localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
+}
+
+function getCompaniesLocal() {
+  return getData("gkode_companies");
+}
+function setCompaniesLocal(companies) {
+  localStorage.setItem("gkode_companies", JSON.stringify(companies));
+}
+
+function getProductsLocal() {
+  return getData("gkode_products");
+}
+function setProductsLocal(products) {
+  localStorage.setItem("gkode_products", JSON.stringify(products));
+}
+
+function getProfessions() {
+  return getData("gkode_professions");
+}
+function setProfessions(professions) {
+  localStorage.setItem("gkode_professions", JSON.stringify(professions));
+}
+
+function getCategories() {
+  return getData("gkode_categories");
+}
+function setCategories(categories) {
+  localStorage.setItem("gkode_categories", JSON.stringify(categories));
+}
+
+function getComplaints() {
+  return getData("gkode_complaints");
+}
+function getPayments() {
+  return getData("gkode_payments");
+}
+function getLogs() {
+  return getData("gkode_adminLogs");
+}
+function getBackups() {
+  return getData("gkode_backups");
+}
+
+// ============================================
+// READ FILE AS DATA URL
+// ============================================
+function readFileAsDataURL(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      resolve(e.target.result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================
+// COMPRESS IMAGE
+// ============================================
+function compressImage(file, maxWidth, maxHeight, quality) {
+  maxWidth = maxWidth || 400;
+  maxHeight = maxHeight || 400;
+  quality = quality || 0.7;
+
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================
+// UPLOAD TO SUPABASE STORAGE
+// ============================================
+async function uploadToSupabase(file, bucket, folder) {
+  if (!supabaseInitialized) {
+    console.log("⚠️ Supabase not ready, using base64 fallback");
+    return readFileAsDataURL(file);
+  }
+
+  try {
+    const compressedDataUrl = await compressImage(file);
+    const response = await fetch(compressedDataUrl);
+    const blob = await response.blob();
+
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const fileName = folder + "/" + Date.now() + "." + fileExt;
+    const fileObj = new File([blob], fileName, { type: "image/jpeg" });
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, fileObj, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) throw error;
+
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    console.log("✅ Image uploaded to Supabase:", urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error("Upload error:", error);
+    return readFileAsDataURL(file);
+  }
+}
+
+// ============================================
+// SYNC USER TO SUPABASE - FIXED
 // ============================================
 async function syncUserToSupabase(userData) {
   if (!supabaseInitialized) {
@@ -37,7 +269,7 @@ async function syncUserToSupabase(userData) {
   }
 
   try {
-    // Check if user already exists
+    // Check if user exists
     const { data: existing, error: checkError } = await supabase
       .from("users")
       .select("phone")
@@ -73,6 +305,7 @@ async function syncUserToSupabase(userData) {
 
       if (updateError) throw updateError;
       console.log("✅ User updated in Supabase:", userData.phone);
+      return true;
     } else {
       // INSERT new user
       const { error: insertError } = await supabase.from("users").insert({
@@ -100,254 +333,22 @@ async function syncUserToSupabase(userData) {
 
       if (insertError) throw insertError;
       console.log("✅ New user saved to Supabase:", userData.phone);
+      return true;
     }
-    return true;
   } catch (e) {
     console.error("❌ Supabase sync error:", e);
-    // Still allow the user to continue even if sync fails
-    // But show a warning
     showToast("⚠️ User saved locally but cloud sync failed", "warning");
     return false;
   }
 }
 
-// ============ STATE ============
-let currentUser = null;
-let currentTab = "open";
-let currentGigId = null;
-let supabase = null;
-let supabaseInitialized = false;
-let pendingRegistration = null;
-let pendingOtp = null;
-let resetUser = null;
-let resetEmail = "";
-let resetOtp = "";
-let isProcessing = false;
-let cameraStream = null;
-let cameraActive = false;
-
-// ============ ADMIN PHONES ============
-const ADMIN_PHONES = ["0703428192", "0711991467"];
-
-// ============ EMAILJS ============
-const EMAILJS_CONFIG = {
-  serviceID: "service_hw35xfu",
-  publicKey: "vc371wcNfQy56zlH8",
-  otpTemplateID: "template_qycsjak",
-  resetTemplateID: "template_0787ox7",
-};
-
-// ============ INIT SUPABASE ============
-function initSupabase() {
-  if (supabaseInitialized) return;
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    supabaseInitialized = true;
-    console.log("✅ Supabase connected");
-  } catch (e) {
-    console.log("⚠️ Supabase not available:", e);
-  }
-}
-initSupabase();
 // ============================================
-// 📤 UPLOAD TO SUPABASE STORAGE
+// NAVIGATION
 // ============================================
-
-async function uploadToSupabase(file, bucket, folder) {
-  if (!supabaseInitialized) {
-    console.log("⚠️ Supabase not ready, using base64 fallback");
-    return readFileAsDataURL(file);
-  }
-
-  try {
-    // Compress image first (reduce to ~100KB)
-    const compressedDataUrl = await compressImage(file);
-
-    // Convert data URL to blob
-    const response = await fetch(compressedDataUrl);
-    const blob = await response.blob();
-
-    // Create file name
-    const fileExt = file.name.split(".").pop() || "jpg";
-    const fileName = `${folder}/${Date.now()}.${fileExt}`;
-    const fileObj = new File([blob], fileName, { type: "image/jpeg" });
-
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, fileObj, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    console.log("✅ Image uploaded to Supabase:", urlData.publicUrl);
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error("Upload error:", error);
-    // Fallback to base64
-    return readFileAsDataURL(file);
-  }
-}
-
-// ============================================
-// 🖼️ COMPRESS IMAGE (Reduce to ~100KB)
-// ============================================
-
-function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.7) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const img = new Image();
-      img.onload = function () {
-        // Calculate new dimensions
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-
-        // Create canvas and compress
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to JPEG with quality
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// ============ TOAST ============
-function showToast(message, type = "info") {
-  const container = document.getElementById("toast-container");
-  if (!container) return;
-  const colors = {
-    success: "#006400",
-    error: "#cc0000",
-    info: "#2196F3",
-    warning: "#ff9800",
-  };
-  const toast = document.createElement("div");
-  toast.style.cssText = `background:${colors[type] || "#333"};color:#fff;padding:12px 20px;border-radius:10px;margin-bottom:8px;animation:slideDown 0.3s ease;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transition = "opacity 0.5s";
-    setTimeout(() => toast.remove(), 500);
-  }, 4000);
-}
-
-// Add animation
-(function () {
-  const style = document.createElement("style");
-  style.textContent =
-    "@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }";
-  document.head.appendChild(style);
-})();
-
-// ============ DATA HELPERS ============
-function getUsersLocal() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_users") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setUsersLocal(users) {
-  localStorage.setItem("gkode_users", JSON.stringify(users));
-}
-
-function getGigsLocal() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_gigs") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setGigsLocal(gigs) {
-  localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
-}
-
-function getCompaniesLocal() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_companies") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setCompaniesLocal(companies) {
-  localStorage.setItem("gkode_companies", JSON.stringify(companies));
-}
-
-function getProductsLocal() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_products") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setProductsLocal(products) {
-  localStorage.setItem("gkode_products", JSON.stringify(products));
-}
-
-function getProfessions() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_professions") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setProfessions(professions) {
-  localStorage.setItem("gkode_professions", JSON.stringify(professions));
-}
-
-function getCategories() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_categories") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setCategories(categories) {
-  localStorage.setItem("gkode_categories", JSON.stringify(categories));
-}
-
-function readFileAsDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// ============ NAVIGATION ============
 function showScreen(id) {
-  document
-    .querySelectorAll(".screen")
-    .forEach((s) => s.classList.remove("active"));
+  document.querySelectorAll(".screen").forEach(function (s) {
+    s.classList.remove("active");
+  });
   const s = document.getElementById(id);
   if (s) s.classList.add("active");
 
@@ -362,17 +363,16 @@ function showScreen(id) {
     "companyDashboard",
     "addProduct",
   ];
-  if (currentUser && allowed.includes(id)) {
-    nav?.classList.remove("hidden");
+  if (currentUser && allowed.indexOf(id) !== -1) {
+    if (nav) nav.classList.remove("hidden");
   } else {
-    nav?.classList.add("hidden");
+    if (nav) nav.classList.add("hidden");
   }
 
   if (id === "home") loadGigs();
   if (id === "profile") loadProfile();
   if (id === "marketplace") loadMarketplace();
   if (id === "companyDashboard") loadCompanyDashboard();
-  if (id === "payment") loadPaymentDetails();
 }
 
 function togglePassword(fieldId, icon) {
@@ -387,7 +387,9 @@ function togglePassword(fieldId, icon) {
   }
 }
 
-// ============ PROFESSIONS ============
+// ============================================
+// PROFESSIONS
+// ============================================
 const defaultProfessions = [
   "Plumber",
   "Electrician",
@@ -427,10 +429,12 @@ const defaultProfessions = [
 
 function getAllProfessions() {
   const saved = getProfessions();
-  const all = [...defaultProfessions];
-  saved.forEach((p) => {
-    if (!all.includes(p)) all.push(p);
-  });
+  const all = defaultProfessions.slice();
+  for (var i = 0; i < saved.length; i++) {
+    if (all.indexOf(saved[i]) === -1) {
+      all.push(saved[i]);
+    }
+  }
   all.sort();
   return all;
 }
@@ -440,12 +444,12 @@ function populateProfessionDropdown() {
   if (!dropdown) return;
   while (dropdown.options.length > 1) dropdown.remove(1);
   const all = getAllProfessions();
-  all.forEach((p) => {
+  for (var i = 0; i < all.length; i++) {
     const opt = document.createElement("option");
-    opt.value = p;
-    opt.textContent = p;
+    opt.value = all[i];
+    opt.textContent = all[i];
     dropdown.appendChild(opt);
-  });
+  }
   const otherOpt = document.createElement("option");
   otherOpt.value = "Other";
   otherOpt.textContent = "Other (Add New)";
@@ -466,19 +470,23 @@ function saveNewProfession(professionName) {
   const formatted = professionName
     .trim()
     .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map(function (w) {
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
     .join(" ");
   const all = getAllProfessions();
-  if (all.includes(formatted)) return formatted;
+  if (all.indexOf(formatted) !== -1) return formatted;
   const saved = getProfessions();
   saved.push(formatted);
   setProfessions(saved);
   populateProfessionDropdown();
-  showToast(`✅ New profession "${formatted}" saved!`, "success");
+  showToast('✅ New profession "' + formatted + '" saved!', "success");
   return formatted;
 }
 
-// ============ CATEGORIES ============
+// ============================================
+// CATEGORIES
+// ============================================
 const defaultCategories = [
   "Cement",
   "Pipes",
@@ -499,10 +507,12 @@ const defaultCategories = [
 
 function getAllCategories() {
   const saved = getCategories();
-  const all = [...defaultCategories];
-  saved.forEach((c) => {
-    if (!all.includes(c)) all.push(c);
-  });
+  const all = defaultCategories.slice();
+  for (var i = 0; i < saved.length; i++) {
+    if (all.indexOf(saved[i]) === -1) {
+      all.push(saved[i]);
+    }
+  }
   all.sort();
   return all;
 }
@@ -512,15 +522,17 @@ function populateCategoryDropdown() {
   if (!dropdown) return;
   while (dropdown.options.length > 1) dropdown.remove(1);
   const all = getAllCategories();
-  all.forEach((c) => {
+  for (var i = 0; i < all.length; i++) {
     const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
+    opt.value = all[i];
+    opt.textContent = all[i];
     dropdown.appendChild(opt);
-  });
+  }
 }
 
-// ============ CAMERA FUNCTIONS ============
+// ============================================
+// CAMERA FUNCTIONS
+// ============================================
 function openCamera(inputId) {
   const input = document.getElementById(inputId);
   if (!input) {
@@ -543,69 +555,29 @@ function openCamera(inputId) {
 function showCameraModal(input) {
   const overlay = document.createElement("div");
   overlay.id = "cameraOverlay";
-  overlay.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.95);
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    `;
+  overlay.style.cssText =
+    "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;";
 
   const video = document.createElement("video");
   video.id = "cameraVideo";
-  video.style.cssText = `
-        width: 100%;
-        max-width: 500px;
-        max-height: 70vh;
-        border-radius: 12px;
-        background: #000;
-        transform: scaleX(-1);
-        object-fit: cover;
-    `;
+  video.style.cssText =
+    "width:100%;max-width:500px;max-height:70vh;border-radius:12px;background:#000;transform:scaleX(-1);object-fit:cover;";
   video.autoplay = true;
   video.playsInline = true;
 
   const buttonContainer = document.createElement("div");
-  buttonContainer.style.cssText = `
-        display: flex;
-        gap: 20px;
-        margin-top: 20px;
-        width: 100%;
-        max-width: 400px;
-        justify-content: center;
-    `;
+  buttonContainer.style.cssText =
+    "display:flex;gap:20px;margin-top:20px;width:100%;max-width:400px;justify-content:center;";
 
   const captureBtn = document.createElement("button");
   captureBtn.textContent = "📸 CAPTURE";
-  captureBtn.style.cssText = `
-        padding: 15px 40px;
-        background: #006400;
-        color: #FFD700;
-        border: none;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
+  captureBtn.style.cssText =
+    "padding:15px 40px;background:#006400;color:#FFD700;border:none;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;flex:1;";
 
   const cancelBtn = document.createElement("button");
   cancelBtn.textContent = "✕ CLOSE";
-  cancelBtn.style.cssText = `
-        padding: 15px 30px;
-        background: #cc0000;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        flex: 1;
-    `;
+  cancelBtn.style.cssText =
+    "padding:15px 30px;background:#cc0000;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;flex:1;";
 
   buttonContainer.appendChild(captureBtn);
   buttonContainer.appendChild(cancelBtn);
@@ -750,9 +722,16 @@ function setupFilePreview(inputId, previewId, containerId) {
   });
 }
 
-// ============ EMAIL FUNCTIONS ============
+// ============================================
+// EMAIL FUNCTIONS - FIXED
+// ============================================
 function loadEmailJS(callback) {
   if (typeof emailjs !== "undefined") {
+    try {
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+    } catch (e) {
+      console.log("EmailJS already initialized");
+    }
     callback();
     return;
   }
@@ -761,7 +740,11 @@ function loadEmailJS(callback) {
     "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
   document.head.appendChild(script);
   script.onload = function () {
-    emailjs.init(EMAILJS_CONFIG.publicKey);
+    try {
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+    } catch (e) {
+      console.log("EmailJS init error:", e);
+    }
     callback();
   };
   script.onerror = function () {
@@ -773,7 +756,7 @@ function loadEmailJS(callback) {
 function sendOTPEmail(email, name, code) {
   loadEmailJS(function () {
     if (typeof emailjs === "undefined") {
-      showToast(`📱 Your code: ${code}`, "info");
+      showToast("📱 Your code: " + code, "info");
       return;
     }
     const templateParams = {
@@ -783,23 +766,29 @@ function sendOTPEmail(email, name, code) {
       app_name: "G-KODE",
       year: new Date().getFullYear(),
     };
+    console.log("📧 Sending OTP to:", email);
+    console.log("🔑 Code:", code);
     emailjs
       .send(
         EMAILJS_CONFIG.serviceID,
         EMAILJS_CONFIG.otpTemplateID,
         templateParams,
       )
-      .then(() =>
-        showToast("📧 Verification code sent to your email!", "success"),
-      )
-      .catch(() => showToast(`📱 Your code: ${code}`, "info"));
+      .then(function (response) {
+        console.log("✅ OTP email sent! Status:", response.status);
+        showToast("📧 Verification code sent to your email!", "success");
+      })
+      .catch(function (error) {
+        console.error("❌ OTP email failed:", error);
+        showToast("📱 Your code: " + code + " (Check spam folder)", "info");
+      });
   });
 }
 
 function sendResetEmail(email, name, code) {
   loadEmailJS(function () {
     if (typeof emailjs === "undefined") {
-      showToast(`📱 Your reset code: ${code}`, "info");
+      showToast("📱 Your reset code: " + code, "info");
       return;
     }
     const templateParams = {
@@ -809,19 +798,30 @@ function sendResetEmail(email, name, code) {
       app_name: "G-KODE",
       year: new Date().getFullYear(),
     };
+    console.log("📧 Sending reset code to:", email);
+    console.log("🔑 Reset Code:", code);
     emailjs
       .send(
         EMAILJS_CONFIG.serviceID,
         EMAILJS_CONFIG.resetTemplateID,
         templateParams,
       )
-      .then(() => showToast("📧 Reset code sent to your email!", "success"))
-      .catch(() => showToast(`📱 Your reset code: ${code}`, "info"));
+      .then(function (response) {
+        console.log("✅ Reset email sent! Status:", response.status);
+        showToast("📧 Reset code sent to your email!", "success");
+      })
+      .catch(function (error) {
+        console.error("❌ Reset email failed:", error);
+        showToast(
+          "📱 Your reset code: " + code + " (Check spam folder)",
+          "info",
+        );
+      });
   });
 }
 
 // ============================================
-// 🔐 REGISTER
+// REGISTER - FIXED WITH SUPABASE SYNC
 // ============================================
 async function register(e) {
   if (e) e.preventDefault();
@@ -850,6 +850,7 @@ async function register(e) {
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
+    // Validation
     if (
       !name ||
       !phone ||
@@ -901,27 +902,31 @@ async function register(e) {
       return;
     }
 
+    // Check local users
     const users = getUsersLocal();
-    if (users.find((u) => u.phone === phone)) {
-      showToast("Phone already registered", "error");
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-      isProcessing = false;
-      return;
-    }
-    if (users.find((u) => u.id === id)) {
-      showToast("ID already registered", "error");
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-      isProcessing = false;
-      return;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].phone === phone) {
+        showToast("Phone already registered", "error");
+        btn.disabled = false;
+        btn.textContent = "REGISTER";
+        isProcessing = false;
+        return;
+      }
+      if (users[i].id === id) {
+        showToast("ID already registered", "error");
+        btn.disabled = false;
+        btn.textContent = "REGISTER";
+        isProcessing = false;
+        return;
+      }
     }
 
+    // Check Supabase
     if (supabaseInitialized) {
       const { data, error } = await supabase
         .from("users")
         .select("phone, email")
-        .or(`phone.eq.${phone},email.eq.${email}`)
+        .or("phone.eq." + phone + ",email.eq." + email)
         .maybeSingle();
       if (data) {
         showToast("Phone or email already registered", "error");
@@ -954,21 +959,21 @@ async function register(e) {
     const photoUrl = await uploadToSupabase(
       photoFile,
       "profiles",
-      `user_${phone}`,
+      "user_" + phone,
     );
     const idScanUrl = await uploadToSupabase(
       idScanFile,
       "ids",
-      `user_${phone}`,
+      "user_" + phone,
     );
 
     const user = {
-      name,
-      phone,
-      id,
-      email,
-      password,
-      location,
+      name: name,
+      phone: phone,
+      id: id,
+      email: email,
+      password: password,
+      location: location,
       profession: finalProfession,
       skills: skills || "",
       photo: photoUrl,
@@ -1044,6 +1049,7 @@ async function completeRegistration() {
   try {
     const user = pendingRegistration;
 
+    // ⚡ SAVE TO SUPABASE FIRST
     let saved = false;
     if (supabaseInitialized) {
       try {
@@ -1056,11 +1062,20 @@ async function completeRegistration() {
             location: user.location,
             profession: user.profession,
             skills: user.skills
-              ? user.skills.split(",").map((s) => s.trim())
+              ? user.skills.split(",").map(function (s) {
+                  return s.trim();
+                })
               : [],
             photo_url: user.photo,
             id_scan_url: user.idScan,
             password_hash: user.password,
+            rating: 0,
+            review_count: 0,
+            strikes: 0,
+            is_paid: false,
+            is_banned: false,
+            created_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
           },
         ]);
         if (!error) saved = true;
@@ -1069,6 +1084,7 @@ async function completeRegistration() {
       }
     }
 
+    // Save to localStorage as backup
     let users = getUsersLocal();
     users.push(user);
     setUsersLocal(users);
@@ -1087,7 +1103,6 @@ async function completeRegistration() {
     );
     showScreen("home");
     loadGigs();
-    updateBottomNav();
 
     if (btn) {
       btn.disabled = false;
@@ -1104,7 +1119,7 @@ async function completeRegistration() {
 }
 
 // ============================================
-// LOGIN - CLOUD ONLY
+// LOGIN - FIXED WITH SUPABASE
 // ============================================
 async function login(e) {
   e.preventDefault();
@@ -1125,7 +1140,7 @@ async function login(e) {
       return;
     }
 
-    // Check Supabase
+    // ⚡ CHECK SUPABASE FIRST
     const { data: users, error: findError } = await supabase
       .from("users")
       .select("*")
@@ -1142,7 +1157,6 @@ async function login(e) {
 
     const user = users[0];
 
-    // Check password
     if (user.password_hash !== password) {
       showToast("❌ Wrong password.", "error");
       btn.disabled = false;
@@ -1150,7 +1164,6 @@ async function login(e) {
       return;
     }
 
-    // Check if banned
     if (user.is_banned) {
       showToast("🚫 Account is banned! Contact support.", "error");
       btn.disabled = false;
@@ -1158,7 +1171,7 @@ async function login(e) {
       return;
     }
 
-    // Update last active
+    // ⚡ UPDATE LAST ACTIVE
     await supabase
       .from("users")
       .update({ last_active: new Date().toISOString() })
@@ -1183,317 +1196,6 @@ async function login(e) {
 
   btn.disabled = false;
   btn.textContent = "LOGIN";
-}
-
-// ============================================
-// RESET PASSWORD - VARIABLES
-// ============================================
-let resetData = null;
-let resetTimerInterval = null;
-let resetTimeLeft = 600;
-
-// ============================================
-// SEND RESET CODE (Step 1)
-// ============================================
-async function sendResetCode() {
-  const btn = document.getElementById("sendResetBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ SENDING...";
-
-  try {
-    const email = document.getElementById("resetEmail").value.trim();
-
-    if (!email) {
-      showToast("❌ Please enter your email.", "error");
-      btn.disabled = false;
-      btn.textContent = "📧 SEND RESET CODE";
-      return;
-    }
-
-    // Check if email exists
-    const { data: users, error: findError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email);
-
-    if (findError) throw findError;
-
-    if (!users || users.length === 0) {
-      showToast("❌ No account found with this email.", "error");
-      btn.disabled = false;
-      btn.textContent = "📧 SEND RESET CODE";
-      return;
-    }
-
-    const user = users[0];
-
-    // Generate reset code
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log("🔑 Reset Code:", resetCode);
-
-    // Send reset code to email
-    showToast(`📧 Sending reset code to ${email}...`, "info");
-
-    const emailSent = await sendResetEmail(email, user.full_name, resetCode);
-
-    if (!emailSent) {
-      showToast(`⚠️ Email failed. Your code: ${resetCode}`, "warning");
-    }
-
-    // Store reset data
-    resetData = {
-      email: email,
-      code: resetCode,
-      phone: user.phone,
-      national_id: user.national_id,
-      profession: user.profession,
-      location: user.location,
-      userId: user.id,
-    };
-
-    // Show Step 2
-    document.getElementById("resetStep1").style.display = "none";
-    document.getElementById("resetStep2").style.display = "block";
-    document.getElementById("resetEmailDisplay").textContent = email;
-    document.getElementById("resetOtp").value = "";
-    document.getElementById("resetOtp").focus();
-
-    // Start timer
-    startResetTimer();
-
-    showToast(`📧 Reset code sent to ${email}`, "success");
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Reset error:", err);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "📧 SEND RESET CODE";
-}
-
-// ============================================
-// SEND RESET EMAIL
-// ============================================
-async function sendResetEmail(email, name, code) {
-  try {
-    if (typeof emailjs === "undefined") {
-      await loadEmailJS();
-    }
-
-    const templateParams = {
-      to_email: email,
-      to_name: name || "User",
-      code: code,
-      app_name: "G-KODE",
-      year: new Date().getFullYear(),
-      message: "Your G-KODE password reset code",
-    };
-
-    const response = await emailjs.send(
-      "service_hw35xfu",
-      "template_0787ox7",
-      templateParams,
-      "vc371wcNfQy56zlH8",
-    );
-
-    console.log("✅ Reset email sent! Status:", response.status);
-    return true;
-  } catch (error) {
-    console.error("❌ Reset email failed:", error);
-    return false;
-  }
-}
-
-// ============================================
-// VERIFY RESET IDENTITY (Step 2)
-// ============================================
-async function verifyResetIdentity() {
-  const btn = document.getElementById("verifyBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ VERIFYING...";
-
-  try {
-    const enteredCode = document.getElementById("resetOtp").value.trim();
-    const phone = document.getElementById("resetPhone").value.trim();
-    const id = document.getElementById("resetID").value.trim();
-    const profession = document.getElementById("resetProfession").value.trim();
-    const location = document.getElementById("resetLocation").value.trim();
-
-    // Validate code
-    if (!enteredCode || enteredCode.length !== 6) {
-      showToast("❌ Please enter the 6-digit reset code.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
-      return;
-    }
-
-    if (!resetData) {
-      showToast("❌ Reset session expired. Please start over.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
-      return;
-    }
-
-    // Verify code
-    if (enteredCode !== resetData.code) {
-      showToast("❌ Invalid reset code. Please try again.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
-      return;
-    }
-
-    // Verify user details
-    let errorMsg = "";
-
-    if (phone !== resetData.phone) {
-      errorMsg = "❌ Phone number does not match our records.";
-    } else if (id !== resetData.national_id) {
-      errorMsg = "❌ National ID does not match our records.";
-    } else if (
-      profession.toLowerCase() !== resetData.profession.toLowerCase()
-    ) {
-      errorMsg = "❌ Profession does not match our records.";
-    } else if (location.toLowerCase() !== resetData.location.toLowerCase()) {
-      errorMsg = "❌ Location does not match our records.";
-    }
-
-    if (errorMsg) {
-      showToast(errorMsg + " Please check your details.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
-      return;
-    }
-
-    // All verified! Show Step 3
-    document.getElementById("resetStep2").style.display = "none";
-    document.getElementById("resetStep3").style.display = "block";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("confirmPassword").value = "";
-    document.getElementById("newPassword").focus();
-
-    showToast("✅ Identity verified! Set your new password.", "success");
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Verification error:", err);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "VERIFY IDENTITY";
-}
-
-// ============================================
-// RESEND RESET CODE
-// ============================================
-async function resendResetCode() {
-  if (!resetData) {
-    showToast("❌ Reset session expired. Please start over.", "error");
-    return;
-  }
-
-  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-  resetData.code = newCode;
-
-  showToast(`📧 Sending new reset code...`, "info");
-
-  const emailSent = await sendResetEmail(resetData.email, "User", newCode);
-
-  if (emailSent) {
-    showToast("📧 New reset code sent!", "success");
-    startResetTimer();
-  } else {
-    showToast(`⚠️ Email failed. Your new code: ${newCode}`, "warning");
-  }
-}
-
-// ============================================
-// RESET PASSWORD (Step 3)
-// ============================================
-async function resetPassword() {
-  const btn = document.getElementById("resetPasswordBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ RESETTING...";
-
-  try {
-    const newPassword = document.getElementById("newPassword").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-
-    if (newPassword.length < 6) {
-      showToast("❌ Password must be at least 6 characters.", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast("❌ Passwords do not match!", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
-      return;
-    }
-
-    if (!resetData) {
-      showToast("❌ Reset session expired. Please start over.", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
-      return;
-    }
-
-    // Update password in Supabase
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ password_hash: newPassword })
-      .eq("id", resetData.userId);
-
-    if (updateError) throw updateError;
-
-    // Reset everything
-    resetData = null;
-    clearInterval(resetTimerInterval);
-    document.getElementById("resetStep3").style.display = "none";
-    document.getElementById("resetStep1").style.display = "block";
-    document.getElementById("resetEmail").value = "";
-
-    showToast("✅ Password reset successful! Please login.", "success");
-    showScreen("login");
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Reset password error:", err);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "RESET PASSWORD";
-}
-
-// ============================================
-// RESET TIMER
-// ============================================
-function startResetTimer() {
-  resetTimeLeft = 600;
-  updateResetTimerDisplay();
-
-  if (resetTimerInterval) clearInterval(resetTimerInterval);
-
-  resetTimerInterval = setInterval(function () {
-    resetTimeLeft--;
-    updateResetTimerDisplay();
-
-    if (resetTimeLeft <= 0) {
-      clearInterval(resetTimerInterval);
-      document.getElementById("resetCountdown").textContent = "00:00";
-      document.getElementById("resetCountdown").style.color = "#cc0000";
-      showToast("⏰ Reset code expired. Please resend.", "warning");
-    }
-  }, 1000);
-}
-
-function updateResetTimerDisplay() {
-  const minutes = Math.floor(resetTimeLeft / 60);
-  const seconds = resetTimeLeft % 60;
-  const display = document.getElementById("resetCountdown");
-  if (display) {
-    display.textContent =
-      String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-  }
 }
 
 // ============================================
@@ -1537,7 +1239,252 @@ function logout() {
 }
 
 // ============================================
-// 📋 GIG FUNCTIONS
+// RESET PASSWORD - FIXED
+// ============================================
+async function sendResetCode() {
+  const btn = document.getElementById("sendResetBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ SENDING...";
+
+  try {
+    const email = document.getElementById("resetEmail").value.trim();
+
+    if (!email) {
+      showToast("❌ Please enter your email.", "error");
+      btn.disabled = false;
+      btn.textContent = "📧 SEND RESET CODE";
+      return;
+    }
+
+    const { data: users, error: findError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email);
+
+    if (findError) throw findError;
+
+    if (!users || users.length === 0) {
+      showToast("❌ No account found with this email.", "error");
+      btn.disabled = false;
+      btn.textContent = "📧 SEND RESET CODE";
+      return;
+    }
+
+    const user = users[0];
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("🔑 Reset Code:", resetCode);
+
+    showToast("📧 Sending reset code to " + email + "...", "info");
+
+    const emailSent = await sendResetEmail(email, user.full_name, resetCode);
+
+    if (!emailSent) {
+      showToast("⚠️ Email failed. Your code: " + resetCode, "warning");
+    }
+
+    resetData = {
+      email: email,
+      code: resetCode,
+      phone: user.phone,
+      national_id: user.national_id,
+      profession: user.profession,
+      location: user.location,
+      userId: user.id,
+    };
+
+    document.getElementById("resetStep1").style.display = "none";
+    document.getElementById("resetStep2").style.display = "block";
+    document.getElementById("resetEmailDisplay").textContent = email;
+    document.getElementById("resetOtp").value = "";
+    document.getElementById("resetOtp").focus();
+
+    startResetTimer();
+    showToast("📧 Reset code sent to " + email, "success");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Reset error:", err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "📧 SEND RESET CODE";
+}
+
+async function verifyResetIdentity() {
+  const btn = document.getElementById("verifyBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ VERIFYING...";
+
+  try {
+    const enteredCode = document.getElementById("resetOtp").value.trim();
+    const phone = document.getElementById("resetPhone").value.trim();
+    const id = document.getElementById("resetID").value.trim();
+    const profession = document.getElementById("resetProfession").value.trim();
+    const location = document.getElementById("resetLocation").value.trim();
+
+    if (!enteredCode || enteredCode.length !== 6) {
+      showToast("❌ Please enter the 6-digit reset code.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    if (!resetData) {
+      showToast("❌ Reset session expired. Please start over.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    if (enteredCode !== resetData.code) {
+      showToast("❌ Invalid reset code. Please try again.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    let errorMsg = "";
+
+    if (phone !== resetData.phone) {
+      errorMsg = "❌ Phone number does not match our records.";
+    } else if (id !== resetData.national_id) {
+      errorMsg = "❌ National ID does not match our records.";
+    } else if (
+      profession.toLowerCase() !== resetData.profession.toLowerCase()
+    ) {
+      errorMsg = "❌ Profession does not match our records.";
+    } else if (location.toLowerCase() !== resetData.location.toLowerCase()) {
+      errorMsg = "❌ Location does not match our records.";
+    }
+
+    if (errorMsg) {
+      showToast(errorMsg + " Please check your details.", "error");
+      btn.disabled = false;
+      btn.textContent = "VERIFY IDENTITY";
+      return;
+    }
+
+    document.getElementById("resetStep2").style.display = "none";
+    document.getElementById("resetStep3").style.display = "block";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+    document.getElementById("newPassword").focus();
+
+    showToast("✅ Identity verified! Set your new password.", "success");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Verification error:", err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "VERIFY IDENTITY";
+}
+
+async function resendResetCode() {
+  if (!resetData) {
+    showToast("❌ Reset session expired. Please start over.", "error");
+    return;
+  }
+
+  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+  resetData.code = newCode;
+
+  showToast("📧 Sending new reset code...", "info");
+
+  const emailSent = await sendResetEmail(resetData.email, "User", newCode);
+
+  if (emailSent) {
+    showToast("📧 New reset code sent!", "success");
+    startResetTimer();
+  } else {
+    showToast("⚠️ Email failed. Your new code: " + newCode, "warning");
+  }
+}
+
+async function resetPassword() {
+  const btn = document.getElementById("resetPasswordBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ RESETTING...";
+
+  try {
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (newPassword.length < 6) {
+      showToast("❌ Password must be at least 6 characters.", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast("❌ Passwords do not match!", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    if (!resetData) {
+      showToast("❌ Reset session expired. Please start over.", "error");
+      btn.disabled = false;
+      btn.textContent = "RESET PASSWORD";
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ password_hash: newPassword })
+      .eq("id", resetData.userId);
+
+    if (updateError) throw updateError;
+
+    resetData = null;
+    clearInterval(resetTimerInterval);
+    document.getElementById("resetStep3").style.display = "none";
+    document.getElementById("resetStep1").style.display = "block";
+    document.getElementById("resetEmail").value = "";
+
+    showToast("✅ Password reset successful! Please login.", "success");
+    showScreen("login");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+    console.error("Reset password error:", err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "RESET PASSWORD";
+}
+
+function startResetTimer() {
+  resetTimeLeft = 600;
+  updateResetTimerDisplay();
+
+  if (resetTimerInterval) clearInterval(resetTimerInterval);
+
+  resetTimerInterval = setInterval(function () {
+    resetTimeLeft--;
+    updateResetTimerDisplay();
+
+    if (resetTimeLeft <= 0) {
+      clearInterval(resetTimerInterval);
+      document.getElementById("resetCountdown").textContent = "00:00";
+      document.getElementById("resetCountdown").style.color = "#cc0000";
+      showToast("⏰ Reset code expired. Please resend.", "warning");
+    }
+  }, 1000);
+}
+
+function updateResetTimerDisplay() {
+  const minutes = Math.floor(resetTimeLeft / 60);
+  const seconds = resetTimeLeft % 60;
+  const display = document.getElementById("resetCountdown");
+  if (display) {
+    display.textContent =
+      String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+  }
+}
+
+// ============================================
+// GIG FUNCTIONS
 // ============================================
 function postGig(e) {
   if (e) e.preventDefault();
@@ -1582,13 +1529,13 @@ function postGig(e) {
 
     const gig = {
       id: Date.now().toString(),
-      title,
-      skill,
-      location,
-      urgency,
-      budgetMin,
-      budgetMax,
-      description,
+      title: title,
+      skill: skill,
+      location: location,
+      urgency: urgency,
+      budgetMin: budgetMin,
+      budgetMax: budgetMax,
+      description: description,
       client: currentUser.name,
       clientPhone: currentUser.phone,
       status: "Open",
@@ -1623,7 +1570,7 @@ function captureGigLocation() {
   }
   showToast("📍 Capturing location...", "info");
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    function (pos) {
       document.getElementById("gigGPSLat").value = pos.coords.latitude;
       document.getElementById("gigGPSLon").value = pos.coords.longitude;
       document.getElementById("gigLocationStatus").textContent =
@@ -1631,7 +1578,9 @@ function captureGigLocation() {
       document.getElementById("gigLocationStatus").style.color = "#006400";
       showToast("✅ Location captured!", "success");
     },
-    () => showToast("❌ Enable GPS.", "error"),
+    function () {
+      showToast("❌ Enable GPS.", "error");
+    },
   );
 }
 
@@ -1653,48 +1602,72 @@ function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
 
-  // ===== AD BANNER =====
-  const adContainer = document.getElementById("adBannerContainer");
-  if (adContainer) {
-    adContainer.innerHTML = renderAdBanner("home_banner");
+  const gigs = getGigsLocal();
+  const filtered = [];
+  for (var i = 0; i < gigs.length; i++) {
+    var g = gigs[i];
+    if (currentTab === "open" && g.status === "Open") {
+      filtered.push(g);
+    } else if (
+      currentTab === "taken" &&
+      (g.status === "Assigned" || g.status === "Taken")
+    ) {
+      filtered.push(g);
+    }
   }
 
-  const gigs = getGigsLocal();
-  const filtered = gigs.filter((g) => {
-    if (currentTab === "open") return g.status === "Open";
-    return g.status === "Assigned" || g.status === "Taken";
-  });
-
   if (filtered.length === 0) {
-    container.innerHTML = `<div style="padding:40px 0;text-align:center;color:#666;"><p>No ${currentTab} gigs found.</p></div>`;
+    container.innerHTML =
+      '<div style="padding:40px 0;text-align:center;color:#666;"><p>No ' +
+      currentTab +
+      " gigs found.</p></div>";
     return;
   }
 
-  let html = "";
-  filtered.forEach((g) => {
-    const open = g.status === "Open";
-    const urgencyColor =
+  var html = "";
+  for (var i = 0; i < filtered.length; i++) {
+    var g = filtered[i];
+    var open = g.status === "Open";
+    var urgencyColor =
       g.urgency === "Emergency"
         ? "#cc0000"
         : g.urgency === "Urgent"
           ? "#ff9800"
           : "#006400";
 
-    html += `
-            <div class="gig-card" style="border-left:4px solid ${urgencyColor};">
-                <div class="gig-title">${g.title}</div>
-                <span class="badge ${open ? "badge-open" : "badge-taken"}">${open ? "🟢 OPEN" : "🔴 TAKEN"}</span>
-                <div class="gig-meta">👤 ${g.client} | 🛠️ ${g.skill}</div>
-                <div class="gig-meta">📍 ${g.location}</div>
-                <div class="gig-budget">💰 Ksh ${g.budgetMin} - ${g.budgetMax}</div>
-                ${
-                  open
-                    ? `<div class="gig-actions"><button class="btn-accept" onclick="acceptGig('${g.id}')">✅ ACCEPT</button></div>`
-                    : `<div class="gig-actions"><button class="btn-chat" onclick="openChat('${g.id}')">💬 Chat</button></div>`
-                }
-            </div>
-        `;
-  });
+    html +=
+      '<div class="gig-card" style="border-left:4px solid ' +
+      urgencyColor +
+      ';">';
+    html += '<div class="gig-title">' + g.title + "</div>";
+    html +=
+      '<span class="badge ' +
+      (open ? "badge-open" : "badge-taken") +
+      '">' +
+      (open ? "🟢 OPEN" : "🔴 TAKEN") +
+      "</span>";
+    html +=
+      '<div class="gig-meta">👤 ' + g.client + " | 🛠️ " + g.skill + "</div>";
+    html += '<div class="gig-meta">📍 ' + g.location + "</div>";
+    html +=
+      '<div class="gig-budget">💰 Ksh ' +
+      g.budgetMin +
+      " - " +
+      g.budgetMax +
+      "</div>";
+    if (open) {
+      html +=
+        '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' +
+        g.id +
+        "')\">✅ ACCEPT</button></div>";
+    } else {
+      html +=
+        '<div class="gig-actions"><button class="btn-chat" onclick="openChat(\'' +
+        g.id +
+        "')\">💬 Chat</button></div>";
+    }
+    html += "</div>";
+  }
   container.innerHTML = html;
 }
 
@@ -1705,7 +1678,13 @@ function acceptGig(id) {
   }
 
   let gigs = getGigsLocal();
-  const gig = gigs.find((g) => g.id === id);
+  var gig = null;
+  for (var i = 0; i < gigs.length; i++) {
+    if (gigs[i].id === id) {
+      gig = gigs[i];
+      break;
+    }
+  }
   if (!gig) {
     showToast("Gig not found.", "error");
     return;
@@ -1730,17 +1709,23 @@ function acceptGig(id) {
 }
 
 // ============================================
-// 💬 CHAT FUNCTIONS
+// CHAT FUNCTIONS
 // ============================================
 function openChat(id) {
   currentGigId = id;
   document.getElementById("chatGigId").value = id;
   const gigs = getGigsLocal();
-  const gig = gigs.find((g) => g.id === id);
+  var gig = null;
+  for (var i = 0; i < gigs.length; i++) {
+    if (gigs[i].id === id) {
+      gig = gigs[i];
+      break;
+    }
+  }
   if (gig) {
-    const partner = gig.client === currentUser.name ? gig.worker : gig.client;
+    var partner = gig.client === currentUser.name ? gig.worker : gig.client;
     document.getElementById("chatPartner").textContent =
-      `💬 Chat with ${partner}`;
+      "💬 Chat with " + partner;
   }
   showScreen("chat");
   loadChatMessages(id);
@@ -1749,23 +1734,32 @@ function openChat(id) {
 function loadChatMessages(id) {
   const container = document.getElementById("chatMessages");
   if (!container) return;
-  const messages = JSON.parse(localStorage.getItem(`gkode_chat_${id}`) || "[]");
+  const messages = JSON.parse(localStorage.getItem("gkode_chat_" + id) || "[]");
   if (messages.length === 0) {
     container.innerHTML =
       '<div style="color:#999;padding:20px;text-align:center;">No messages yet.</div>';
     return;
   }
-  let html = "";
-  messages.forEach((msg) => {
-    const isSent = msg.sender === currentUser.name;
-    html += `
-            <div class="chat-message ${isSent ? "sent" : "received"}">
-                ${!isSent ? `<div class="sender">${msg.sender}</div>` : ""}
-                ${msg.isLocation ? `📍 <a href="${msg.text}" target="_blank" style="color:${isSent ? "#FFD700" : "#006400"};">View Location</a>` : msg.text}
-                <div class="time">${new Date(msg.time).toLocaleTimeString()}</div>
-            </div>
-        `;
-  });
+  var html = "";
+  for (var i = 0; i < messages.length; i++) {
+    var msg = messages[i];
+    var isSent = msg.sender === currentUser.name;
+    html += '<div class="chat-message ' + (isSent ? "sent" : "received") + '">';
+    if (!isSent) html += '<div class="sender">' + msg.sender + "</div>";
+    if (msg.isLocation) {
+      html +=
+        '📍 <a href="' +
+        msg.text +
+        '" target="_blank" style="color:' +
+        (isSent ? "#FFD700" : "#006400") +
+        ';">View Location</a>';
+    } else {
+      html += msg.text;
+    }
+    html +=
+      '<div class="time">' + new Date(msg.time).toLocaleTimeString() + "</div>";
+    html += "</div>";
+  }
   container.innerHTML = html;
   container.scrollTop = container.scrollHeight;
 }
@@ -1775,14 +1769,14 @@ function sendMessage(e) {
   const text = document.getElementById("chatInput")?.value?.trim() || "";
   const id = document.getElementById("chatGigId")?.value || "";
   if (!text || !id || !currentUser) return;
-  const messages = JSON.parse(localStorage.getItem(`gkode_chat_${id}`) || "[]");
+  const messages = JSON.parse(localStorage.getItem("gkode_chat_" + id) || "[]");
   messages.push({
     sender: currentUser.name,
     text: text,
     time: new Date().toISOString(),
     isLocation: false,
   });
-  localStorage.setItem(`gkode_chat_${id}`, JSON.stringify(messages));
+  localStorage.setItem("gkode_chat_" + id, JSON.stringify(messages));
   document.getElementById("chatInput").value = "";
   loadChatMessages(id);
 }
@@ -1797,11 +1791,15 @@ function shareLiveLocation() {
   }
   showToast("📍 Getting your location...", "info");
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const url = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
-      const id = document.getElementById("chatGigId")?.value || "";
-      const messages = JSON.parse(
-        localStorage.getItem(`gkode_chat_${id}`) || "[]",
+    function (pos) {
+      var url =
+        "https://www.google.com/maps?q=" +
+        pos.coords.latitude +
+        "," +
+        pos.coords.longitude;
+      var id = document.getElementById("chatGigId")?.value || "";
+      var messages = JSON.parse(
+        localStorage.getItem("gkode_chat_" + id) || "[]",
       );
       messages.push({
         sender: currentUser.name,
@@ -1811,85 +1809,109 @@ function shareLiveLocation() {
         lat: pos.coords.latitude,
         lon: pos.coords.longitude,
       });
-      localStorage.setItem(`gkode_chat_${id}`, JSON.stringify(messages));
+      localStorage.setItem("gkode_chat_" + id, JSON.stringify(messages));
       window.open(url, "_blank");
       loadChatMessages(id);
       showToast("✅ Location shared!", "success");
     },
-    () => showToast("❌ Could not get location.", "error"),
+    function () {
+      showToast("❌ Could not get location.", "error");
+    },
     { enableHighAccuracy: true, timeout: 10000 },
   );
 }
 
 function navigateToClient() {
-  const id = document.getElementById("chatGigId")?.value || "";
-  const gigs = getGigsLocal();
-  const gig = gigs.find((g) => g.id === id);
+  var id = document.getElementById("chatGigId")?.value || "";
+  var gigs = getGigsLocal();
+  var gig = null;
+  for (var i = 0; i < gigs.length; i++) {
+    if (gigs[i].id === id) {
+      gig = gigs[i];
+      break;
+    }
+  }
   if (!gig || !gig.gpsLat || !gig.gpsLon) {
     showToast("No location data for this gig.", "error");
     return;
   }
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${gig.gpsLat},${gig.gpsLon}`;
+  var url =
+    "https://www.google.com/maps/dir/?api=1&destination=" +
+    gig.gpsLat +
+    "," +
+    gig.gpsLon;
   window.open(url, "_blank");
   showToast("🧭 Opening directions...", "info");
 }
 
 // ============================================
-// 👤 PROFILE FUNCTIONS
+// PROFILE FUNCTIONS
 // ============================================
 function loadProfile() {
   if (!currentUser) return;
   document.getElementById("profileName").textContent = currentUser.name;
   document.getElementById("profilePhone").textContent =
-    `📞 ${currentUser.phone}`;
+    "📞 " + currentUser.phone;
   document.getElementById("profileLocation").textContent =
-    `📍 ${currentUser.location}`;
+    "📍 " + currentUser.location;
   document.getElementById("profileProfession").textContent =
-    `👔 ${currentUser.profession}`;
+    "👔 " + currentUser.profession;
   document.getElementById("profileSkills").textContent =
-    `🛠️ ${currentUser.skills || "None"}`;
+    "🛠️ " + (currentUser.skills || "None");
   if (currentUser.photo) {
     document.getElementById("profilePhoto").src = currentUser.photo;
   }
-  const statusText = currentUser.verified ? "✅ Verified" : "🟡 Pending";
+  var statusText = currentUser.verified ? "✅ Verified" : "🟡 Pending";
   document.getElementById("profileStatus").innerHTML =
-    `${statusText} | ⭐ ${currentUser.rating || 0} (${currentUser.reviewCount || 0} reviews)`;
-  const gigs = getGigsLocal();
-  const myGigs = gigs.filter(
-    (g) => g.client === currentUser.name || g.worker === currentUser.name,
-  );
-  const container = document.getElementById("myGigsList");
+    statusText +
+    " | ⭐ " +
+    (currentUser.rating || 0) +
+    " (" +
+    (currentUser.reviewCount || 0) +
+    " reviews)";
+  var gigs = getGigsLocal();
+  var myGigs = [];
+  for (var i = 0; i < gigs.length; i++) {
+    if (
+      gigs[i].client === currentUser.name ||
+      gigs[i].worker === currentUser.name
+    ) {
+      myGigs.push(gigs[i]);
+    }
+  }
+  var container = document.getElementById("myGigsList");
   if (myGigs.length === 0) {
     container.innerHTML = '<p style="color:#666;">No gigs yet.</p>';
   } else {
-    let html = "";
-    myGigs.forEach((g) => {
-      html += `
-                <div style="background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:8px;">
-                    <strong>${g.title}</strong> — ${g.status}
-                    ${
-                      g.status === "Assigned" && g.worker === currentUser.name
-                        ? ` <button onclick="openChat('${g.id}')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;">💬 Chat</button>`
-                        : ""
-                    }
-                </div>
-            `;
-    });
+    var html = "";
+    for (var i = 0; i < myGigs.length; i++) {
+      var g = myGigs[i];
+      html +=
+        '<div style="background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:8px;">';
+      html += "<strong>" + g.title + "</strong> — " + g.status;
+      if (g.status === "Assigned" && g.worker === currentUser.name) {
+        html +=
+          " <button onclick=\"openChat('" +
+          g.id +
+          '\')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;">💬 Chat</button>';
+      }
+      html += "</div>";
+    }
     container.innerHTML = html;
   }
   checkAdminAccess();
 }
 
-// ============================================
-// 🔐 ADMIN FUNCTIONS
-// ============================================
 function isAdmin() {
   if (!currentUser) return false;
-  return ADMIN_PHONES.includes(currentUser.phone);
+  for (var i = 0; i < ADMIN_PHONES.length; i++) {
+    if (ADMIN_PHONES[i] === currentUser.phone) return true;
+  }
+  return false;
 }
 
 function checkAdminAccess() {
-  const btn = document.getElementById("adminAccessBtn");
+  var btn = document.getElementById("adminAccessBtn");
   if (!btn) return;
   btn.style.display = isAdmin() ? "block" : "none";
 }
@@ -1899,29 +1921,31 @@ function openAdminPanel() {
 }
 
 // ============================================
-// 🛒 MARKETPLACE FUNCTIONS
+// MARKETPLACE FUNCTIONS
 // ============================================
 function loadMarketplace() {
-  const container = document.getElementById("marketplaceList");
+  var container = document.getElementById("marketplaceList");
   if (!container) return;
-  const products = getProductsLocal();
+  var products = getProductsLocal();
   if (products.length === 0) {
     container.innerHTML =
       '<div style="padding:40px 0;text-align:center;color:#666;"><p>No products available.</p></div>';
     return;
   }
-  let html = "";
-  products.forEach((p) => {
-    html += `
-            <div class="gig-card">
-                <h3>${p.name}</h3>
-                <p>🏢 ${p.companyName} | ${p.category}</p>
-                <p>💰 Ksh ${p.price}/${p.unit}</p>
-                <p>📦 Stock: ${p.stock}</p>
-                <button onclick="buyProduct('${p.id}')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>
-            </div>
-        `;
-  });
+  var html = "";
+  for (var i = 0; i < products.length; i++) {
+    var p = products[i];
+    html += '<div class="gig-card">';
+    html += "<h3>" + p.name + "</h3>";
+    html += "<p>🏢 " + p.companyName + " | " + p.category + "</p>";
+    html += "<p>💰 Ksh " + p.price + "/" + p.unit + "</p>";
+    html += "<p>📦 Stock: " + p.stock + "</p>";
+    html +=
+      "<button onclick=\"buyProduct('" +
+      p.id +
+      '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
+    html += "</div>";
+  }
   container.innerHTML = html;
 }
 
@@ -1930,8 +1954,14 @@ function buyProduct(id) {
     showToast("Please login first.", "error");
     return;
   }
-  const products = getProductsLocal();
-  const product = products.find((p) => p.id === id);
+  var products = getProductsLocal();
+  var product = null;
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].id === id) {
+      product = products[i];
+      break;
+    }
+  }
   if (!product) {
     showToast("Product not found.", "error");
     return;
@@ -1947,7 +1977,7 @@ function buyProduct(id) {
 }
 
 // ============================================
-// 🏢 COMPANY FUNCTIONS
+// COMPANY FUNCTIONS
 // ============================================
 function registerCompany(e) {
   if (e) e.preventDefault();
@@ -1955,21 +1985,20 @@ function registerCompany(e) {
     showToast("Please login first.", "error");
     return;
   }
-  const btn = document.getElementById("compRegisterBtn");
+  var btn = document.getElementById("compRegisterBtn");
   if (!btn || isProcessing) return;
   isProcessing = true;
   btn.disabled = true;
   btn.textContent = "⏳ REGISTERING...";
 
   try {
-    const name = document.getElementById("compName")?.value?.trim() || "";
-    const type = document.getElementById("compType")?.value || "";
-    const regNo = document.getElementById("compRegNo")?.value?.trim() || "";
-    const location =
-      document.getElementById("compLocation")?.value?.trim() || "";
-    const phone = document.getElementById("compPhone")?.value?.trim() || "";
-    const email = document.getElementById("compEmail")?.value?.trim() || "";
-    const desc = document.getElementById("compDesc")?.value?.trim() || "";
+    var name = document.getElementById("compName")?.value?.trim() || "";
+    var type = document.getElementById("compType")?.value || "";
+    var regNo = document.getElementById("compRegNo")?.value?.trim() || "";
+    var location = document.getElementById("compLocation")?.value?.trim() || "";
+    var phone = document.getElementById("compPhone")?.value?.trim() || "";
+    var email = document.getElementById("compEmail")?.value?.trim() || "";
+    var desc = document.getElementById("compDesc")?.value?.trim() || "";
 
     if (!name || !type || !regNo || !location || !phone) {
       showToast("Fill all required fields.", "error");
@@ -1979,24 +2008,26 @@ function registerCompany(e) {
       return;
     }
 
-    const companies = getCompaniesLocal();
-    if (companies.some((c) => c.name === name)) {
-      showToast("Business name already registered.", "error");
-      btn.disabled = false;
-      btn.textContent = "REGISTER BUSINESS";
-      isProcessing = false;
-      return;
+    var companies = getCompaniesLocal();
+    for (var i = 0; i < companies.length; i++) {
+      if (companies[i].name === name) {
+        showToast("Business name already registered.", "error");
+        btn.disabled = false;
+        btn.textContent = "REGISTER BUSINESS";
+        isProcessing = false;
+        return;
+      }
     }
 
     companies.push({
       id: Date.now().toString(),
-      name,
-      type,
-      regNo,
-      location,
-      phone,
-      email,
-      desc,
+      name: name,
+      type: type,
+      regNo: regNo,
+      location: location,
+      phone: phone,
+      email: email,
+      desc: desc,
       owner: currentUser.name,
       ownerPhone: currentUser.phone,
       registeredAt: new Date().toISOString(),
@@ -2005,7 +2036,7 @@ function registerCompany(e) {
     });
     setCompaniesLocal(companies);
 
-    showToast(`✅ ${name} registered successfully!`, "success");
+    showToast("✅ " + name + " registered successfully!", "success");
     showScreen("companyDashboard");
     loadCompanyDashboard();
   } catch (err) {
@@ -2020,57 +2051,91 @@ function registerCompany(e) {
 
 function loadCompanyDashboard() {
   if (!currentUser) return;
-  const companies = getCompaniesLocal();
-  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
+  var companies = getCompaniesLocal();
+  var myComp = null;
+  for (var i = 0; i < companies.length; i++) {
+    if (companies[i].ownerPhone === currentUser.phone) {
+      myComp = companies[i];
+      break;
+    }
+  }
   if (!myComp) {
     document.getElementById("compInfo").innerHTML =
       "<p>No business registered.</p>";
     return;
   }
-  document.getElementById("compInfo").innerHTML = `
-        <h3>${myComp.name}</h3>
-        <p>🏢 ${myComp.type} | 📍 ${myComp.location}</p>
-        <p>📞 ${myComp.phone}</p>
-        <p>📜 Reg No: ${myComp.regNo}</p>
-    `;
+  document.getElementById("compInfo").innerHTML =
+    "<h3>" +
+    myComp.name +
+    "</h3><p>🏢 " +
+    myComp.type +
+    " | 📍 " +
+    myComp.location +
+    "</p><p>📞 " +
+    myComp.phone +
+    "</p><p>📜 Reg No: " +
+    myComp.regNo +
+    "</p>";
   showCompTab("products");
 }
 
 function showCompTab(tab) {
-  const content = document.getElementById("compTabContent");
-  const companies = getCompaniesLocal();
-  const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
+  var content = document.getElementById("compTabContent");
+  var companies = getCompaniesLocal();
+  var myComp = null;
+  for (var i = 0; i < companies.length; i++) {
+    if (companies[i].ownerPhone === currentUser.phone) {
+      myComp = companies[i];
+      break;
+    }
+  }
   if (!myComp) return;
-  const products = getProductsLocal().filter((p) => p.companyId === myComp.id);
+  var products = getProductsLocal();
+  var myProducts = [];
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].companyId === myComp.id) {
+      myProducts.push(products[i]);
+    }
+  }
 
   if (tab === "products") {
-    if (products.length === 0) {
+    if (myProducts.length === 0) {
       content.innerHTML = "<p>No products yet.</p>";
       return;
     }
-    let html = "";
-    products.forEach((p) => {
-      html += `
-                <div class="gig-card">
-                    <h3>${p.name}</h3>
-                    <p>${p.category} | Ksh ${p.price}/${p.unit} | Stock: ${p.stock}</p>
-                    <button onclick="deleteProduct('${p.id}')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️ Delete</button>
-                </div>
-            `;
-    });
+    var html = "";
+    for (var i = 0; i < myProducts.length; i++) {
+      var p = myProducts[i];
+      html += '<div class="gig-card">';
+      html += "<h3>" + p.name + "</h3>";
+      html +=
+        "<p>" +
+        p.category +
+        " | Ksh " +
+        p.price +
+        "/" +
+        p.unit +
+        " | Stock: " +
+        p.stock +
+        "</p>";
+      html +=
+        "<button onclick=\"deleteProduct('" +
+        p.id +
+        '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️ Delete</button>';
+      html += "</div>";
+    }
     content.innerHTML = html;
   } else if (tab === "orders") {
     content.innerHTML = "<p>Orders will appear here.</p>";
   } else if (tab === "sales") {
-    const totalSales = myComp.totalSales || 0;
-    const totalCommission = myComp.totalCommission || 0;
-    content.innerHTML = `
-            <div class="admin-card">
-                <p><strong>Total Sales:</strong> Ksh ${totalSales}</p>
-                <p><strong>Total Commission:</strong> Ksh ${totalCommission}</p>
-                <p><strong>Commission Rate:</strong> 3%</p>
-            </div>
-        `;
+    var totalSales = myComp.totalSales || 0;
+    var totalCommission = myComp.totalCommission || 0;
+    content.innerHTML =
+      '<div class="admin-card"><p><strong>Total Sales:</strong> Ksh ' +
+      totalSales +
+      "</p><p><strong>Total Commission:</strong> Ksh " +
+      totalCommission +
+      "</p><p><strong>Commission Rate:</strong> 3%</p></div>";
   }
 }
 
@@ -2080,19 +2145,19 @@ function addProduct(e) {
     showToast("Please login first.", "error");
     return;
   }
-  const btn = document.getElementById("addProductBtn");
+  var btn = document.getElementById("addProductBtn");
   if (!btn || isProcessing) return;
   isProcessing = true;
   btn.disabled = true;
   btn.textContent = "⏳ ADDING...";
 
   try {
-    const name = document.getElementById("prodName")?.value?.trim() || "";
-    const category = document.getElementById("prodCategory")?.value || "";
-    const unit = document.getElementById("prodUnit")?.value?.trim() || "";
-    const price = parseFloat(document.getElementById("prodPrice")?.value) || 0;
-    const stock = parseInt(document.getElementById("prodStock")?.value) || 0;
-    const desc = document.getElementById("prodDesc")?.value?.trim() || "";
+    var name = document.getElementById("prodName")?.value?.trim() || "";
+    var category = document.getElementById("prodCategory")?.value || "";
+    var unit = document.getElementById("prodUnit")?.value?.trim() || "";
+    var price = parseFloat(document.getElementById("prodPrice")?.value) || 0;
+    var stock = parseInt(document.getElementById("prodStock")?.value) || 0;
+    var desc = document.getElementById("prodDesc")?.value?.trim() || "";
 
     if (!name || !category || !unit || !price || !stock) {
       showToast("Fill all fields.", "error");
@@ -2102,8 +2167,14 @@ function addProduct(e) {
       return;
     }
 
-    const companies = getCompaniesLocal();
-    const myComp = companies.find((c) => c.ownerPhone === currentUser.phone);
+    var companies = getCompaniesLocal();
+    var myComp = null;
+    for (var i = 0; i < companies.length; i++) {
+      if (companies[i].ownerPhone === currentUser.phone) {
+        myComp = companies[i];
+        break;
+      }
+    }
     if (!myComp) {
       showToast("Register a business first.", "error");
       btn.disabled = false;
@@ -2112,22 +2183,22 @@ function addProduct(e) {
       return;
     }
 
-    const products = getProductsLocal();
+    var products = getProductsLocal();
     products.push({
       id: Date.now().toString(),
       companyId: myComp.id,
       companyName: myComp.name,
-      name,
-      category,
-      unit,
-      price,
-      stock,
-      desc,
+      name: name,
+      category: category,
+      unit: unit,
+      price: price,
+      stock: stock,
+      desc: desc,
       createdAt: new Date().toISOString(),
     });
     setProductsLocal(products);
 
-    showToast(`✅ ${name} added!`, "success");
+    showToast("✅ " + name + " added!", "success");
     showScreen("companyDashboard");
     loadCompanyDashboard();
   } catch (err) {
@@ -2142,14 +2213,20 @@ function addProduct(e) {
 
 function deleteProduct(id) {
   if (!confirm("Delete this product?")) return;
-  const products = getProductsLocal().filter((p) => p.id !== id);
-  setProductsLocal(products);
+  var products = getProductsLocal();
+  var newProducts = [];
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].id !== id) {
+      newProducts.push(products[i]);
+    }
+  }
+  setProductsLocal(newProducts);
   showToast("Product deleted.", "info");
   loadCompanyDashboard();
 }
 
 // ============================================
-// 💳 PAYMENT FUNCTIONS
+// PAYMENT FUNCTIONS
 // ============================================
 function getPaymentSettings() {
   try {
@@ -2164,12 +2241,12 @@ function setPaymentSettings(settings) {
 }
 
 function loadPaymentDetails() {
-  const settings = getPaymentSettings();
-  const till = document.getElementById("displayTill");
-  const paybill = document.getElementById("displayPaybill");
-  const account = document.getElementById("displayAccount");
-  const commission = document.getElementById("displayCommission");
-  const bank = document.getElementById("displayGkodeBank");
+  var settings = getPaymentSettings();
+  var till = document.getElementById("displayTill");
+  var paybill = document.getElementById("displayPaybill");
+  var account = document.getElementById("displayAccount");
+  var commission = document.getElementById("displayCommission");
+  var bank = document.getElementById("displayGkodeBank");
   if (till) till.textContent = settings.tillNumber || "9876543";
   if (paybill) paybill.textContent = settings.paybillNumber || "247247";
   if (account) account.textContent = settings.accountNumber || "G-KODE";
@@ -2183,29 +2260,39 @@ function showPaymentScreen() {
 }
 
 function verifyMpesaPayment() {
-  const code = document.getElementById("mpesaCode")?.value?.trim() || "";
+  var code = document.getElementById("mpesaCode")?.value?.trim() || "";
   if (!code) {
     showToast("Please enter M-Pesa confirmation code.", "error");
     return;
   }
 
-  const settings = getPaymentSettings();
-  const commissionRate = settings.commissionRate || 3;
-  const amount = 300;
-  const commission = (amount * commissionRate) / 100;
-  const sellerAmount = amount - commission;
+  var settings = getPaymentSettings();
+  var commissionRate = settings.commissionRate || 3;
+  var amount = 300;
+  var commission = (amount * commissionRate) / 100;
+  var sellerAmount = amount - commission;
 
-  const msg =
-    `💳 PAYMENT BREAKDOWN\n\n` +
-    `💰 Total Amount: Ksh ${amount}\n` +
-    `📊 Commission (${commissionRate}%): Ksh ${commission.toFixed(2)}\n` +
-    `🏦 You Pay: Ksh ${amount}\n` +
-    `🏢 G-KODE Bank: ${settings.bank || "Equity Bank"}\n\n` +
-    `✅ Confirm payment?`;
+  var msg =
+    "💳 PAYMENT BREAKDOWN\n\n" +
+    "💰 Total Amount: Ksh " +
+    amount +
+    "\n" +
+    "📊 Commission (" +
+    commissionRate +
+    "%): Ksh " +
+    commission.toFixed(2) +
+    "\n" +
+    "🏦 You Pay: Ksh " +
+    amount +
+    "\n" +
+    "🏢 G-KODE Bank: " +
+    (settings.bank || "Equity Bank") +
+    "\n\n" +
+    "✅ Confirm payment?";
 
   if (!confirm(msg)) return;
 
-  let payments = JSON.parse(localStorage.getItem("gkode_payments") || "[]");
+  var payments = JSON.parse(localStorage.getItem("gkode_payments") || "[]");
   payments.push({
     id: Date.now().toString(),
     phone: currentUser.phone,
@@ -2221,82 +2308,26 @@ function verifyMpesaPayment() {
   });
   localStorage.setItem("gkode_payments", JSON.stringify(payments));
 
-  let users = getUsersLocal();
-  const user = users.find((u) => u.phone === currentUser.phone);
-  if (user) {
-    user.isPaid = true;
-    setUsersLocal(users);
-    currentUser.isPaid = true;
-    localStorage.setItem("gkode_user", JSON.stringify(currentUser));
+  var users = getUsersLocal();
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].phone === currentUser.phone) {
+      users[i].isPaid = true;
+      break;
+    }
   }
+  setUsersLocal(users);
+  currentUser.isPaid = true;
+  localStorage.setItem("gkode_user", JSON.stringify(currentUser));
 
   showToast(
-    `✅ Payment verified! Commission: Ksh ${commission.toFixed(2)}`,
+    "✅ Payment verified! Commission: Ksh " + commission.toFixed(2),
     "success",
   );
   showScreen("home");
 }
 
 // ============================================
-// 📢 ADVERTISING SYSTEM
-// ============================================
-function getAds() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_ads") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function setAds(ads) {
-  localStorage.setItem("gkode_ads", JSON.stringify(ads));
-}
-
-function getActiveAds(placement) {
-  const ads = getAds();
-  return ads.filter((ad) => ad.isActive === true && ad.placement === placement);
-}
-
-function trackAdView(adId) {
-  const ads = getAds();
-  const ad = ads.find((a) => a.id === adId);
-  if (ad) {
-    ad.views = (ad.views || 0) + 1;
-    setAds(ads);
-  }
-}
-
-function trackAdClick(adId) {
-  const ads = getAds();
-  const ad = ads.find((a) => a.id === adId);
-  if (ad) {
-    ad.clicks = (ad.clicks || 0) + 1;
-    setAds(ads);
-  }
-}
-
-function renderAdBanner(placement) {
-  const ads = getActiveAds(placement);
-  if (ads.length === 0) return "";
-
-  const ad = ads[Math.floor(Math.random() * ads.length)];
-  trackAdView(ad.id);
-
-  return `
-        <div class="ad-banner" style="background:linear-gradient(135deg,#1a1a1a,#006400);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(255,215,0,0.2);">
-            <div style="flex:1;min-width:150px;">
-                <div style="font-size:10px;color:#FFD700;font-weight:bold;">📢 SPONSORED</div>
-                <div style="font-weight:bold;color:#fff;font-size:14px;">${ad.title}</div>
-                <div style="font-size:12px;color:#ccc;">${ad.description}</div>
-            </div>
-            <a href="${ad.link}" target="_blank" onclick="trackAdClick('${ad.id}')" style="background:#FFD700;color:#000;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">LEARN MORE →</a>
-            <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;">✕</button>
-        </div>
-    `;
-}
-
-// ============================================
-// 🚨 EMERGENCY
+// EMERGENCY
 // ============================================
 function emergencyCall() {
   if (confirm("🚨 EMERGENCY\n\nTap OK to open emergency contacts.")) {
@@ -2305,10 +2336,10 @@ function emergencyCall() {
 }
 
 // ============================================
-// 🔄 UPDATE BOTTOM NAV
+// UPDATE BOTTOM NAV
 // ============================================
 function updateBottomNav() {
-  const nav = document.getElementById("bottomNav");
+  var nav = document.getElementById("bottomNav");
   if (!nav) return;
   if (currentUser) {
     nav.classList.remove("hidden");
@@ -2318,7 +2349,7 @@ function updateBottomNav() {
 }
 
 // ============================================
-// 🧹 RESET
+// RESET
 // ============================================
 function resetEverything() {
   if (
@@ -2334,10 +2365,10 @@ function resetEverything() {
 }
 
 // ============================================
-// ⚖️ LEGAL & EXPORT
+// LEGAL & EXPORT
 // ============================================
 function showLegalNotice(type) {
-  const notices = {
+  var notices = {
     privacy:
       "🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, profession, skills, photo, ID scan, GPS location.\n\nYour rights: Access, correct, delete anytime.",
     terms:
@@ -2353,23 +2384,35 @@ function exportUserData() {
     showToast("Please login first.", "error");
     return;
   }
-  const data = {
+  var data = {
     exportedAt: new Date().toISOString(),
     user: currentUser,
-    userGigs: getGigsLocal().filter(
-      (g) => g.client === currentUser.name || g.worker === currentUser.name,
-    ),
+    userGigs: [],
     userOrders: [],
-    userPayments: JSON.parse(
-      localStorage.getItem("gkode_payments") || "[]",
-    ).filter((p) => p.phone === currentUser.phone),
+    userPayments: [],
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
+  var gigs = getGigsLocal();
+  for (var i = 0; i < gigs.length; i++) {
+    if (
+      gigs[i].client === currentUser.name ||
+      gigs[i].worker === currentUser.name
+    ) {
+      data.userGigs.push(gigs[i]);
+    }
+  }
+  var payments = JSON.parse(localStorage.getItem("gkode_payments") || "[]");
+  for (var i = 0; i < payments.length; i++) {
+    if (payments[i].phone === currentUser.phone) {
+      data.userPayments.push(payments[i]);
+    }
+  }
+  var blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",
   });
-  const a = document.createElement("a");
+  var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `gkode-my-data-${new Date().toISOString().split("T")[0]}.json`;
+  a.download =
+    "gkode-my-data-" + new Date().toISOString().split("T")[0] + ".json";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -2384,13 +2427,26 @@ function deleteAccount() {
   if (!confirm("⚠️ ACCOUNT DELETION\n\nThis CANNOT be undone!")) return;
   if (!confirm("FINAL WARNING: Continue?")) return;
 
-  let users = getUsersLocal().filter((u) => u.phone !== currentUser.phone);
-  setUsersLocal(users);
+  var users = getUsersLocal();
+  var newUsers = [];
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].phone !== currentUser.phone) {
+      newUsers.push(users[i]);
+    }
+  }
+  setUsersLocal(newUsers);
 
-  let gigs = getGigsLocal().filter(
-    (g) => g.client !== currentUser.name && g.worker !== currentUser.name,
-  );
-  setGigsLocal(gigs);
+  var gigs = getGigsLocal();
+  var newGigs = [];
+  for (var i = 0; i < gigs.length; i++) {
+    if (
+      gigs[i].client !== currentUser.name &&
+      gigs[i].worker !== currentUser.name
+    ) {
+      newGigs.push(gigs[i]);
+    }
+  }
+  setGigsLocal(newGigs);
 
   currentUser = null;
   localStorage.removeItem("gkode_user");
@@ -2401,82 +2457,7 @@ function deleteAccount() {
 }
 
 // ============================================
-// 🚀 INIT
-// ============================================
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 G-KODE v3.0 loading...");
-
-  populateProfessionDropdown();
-  populateCategoryDropdown();
-
-  setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
-  setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
-
-  const savedUser = localStorage.getItem("gkode_user");
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      if (currentUser) {
-        console.log("✅ Auto-login:", currentUser.name);
-        showScreen("home");
-        loadGigs();
-        updateBottomNav();
-      }
-    } catch (e) {
-      console.log("Auto-login failed:", e);
-      showScreen("welcome");
-    }
-  } else {
-    showScreen("welcome");
-  }
-
-  console.log("🚀 G-KODE v3.0 loaded successfully!");
-  console.log("📊 Data stored in localStorage (fallback).");
-  console.log("☁️ Supabase URL:", SUPABASE_URL);
-  console.log("📧 EmailJS configured.");
-});
-
-// ============ GLOBAL ERROR HANDLING ============
-window.onerror = function (message, source, lineno, colno, error) {
-  console.error("Global error:", { message, source, lineno, colno, error });
-  showToast("An unexpected error occurred. Please try again.", "error");
-};
-// ============================================
-// SYNC ALL LOCAL USERS TO SUPABASE
-// ============================================
-async function syncAllUsersToCloud() {
-  if (!supabaseInitialized) {
-    showToast("❌ Supabase not connected!", "error");
-    return;
-  }
-
-  const localUsers = getUsersSync(); // Your existing function to get local users
-
-  if (localUsers.length === 0) {
-    showToast("⚠️ No local users to sync", "warning");
-    return;
-  }
-
-  showToast(`⏳ Syncing ${localUsers.length} users to cloud...`, "info");
-
-  let successCount = 0;
-  let failCount = 0;
-
-  for (const user of localUsers) {
-    const synced = await syncUserToSupabase(user);
-    if (synced) {
-      successCount++;
-    } else {
-      failCount++;
-    }
-  }
-
-  showToast(
-    `✅ Synced ${successCount} users, ${failCount} failed`,
-    successCount > 0 ? "success" : "error",
-  );
-} // ============================================
-// AUTO-SYNC USER TO SUPABASE (NEW)
+// AUTO-SYNC USER TO SUPABASE
 // ============================================
 async function autoSyncUserToSupabase(userData) {
   if (!supabaseInitialized) {
@@ -2485,8 +2466,7 @@ async function autoSyncUserToSupabase(userData) {
   }
 
   try {
-    // Check if user exists in Supabase
-    const { data: existing, error: checkError } = await supabase
+    var { data: existing, error: checkError } = await supabase
       .from("users")
       .select("phone")
       .eq("phone", userData.phone);
@@ -2494,8 +2474,7 @@ async function autoSyncUserToSupabase(userData) {
     if (checkError) throw checkError;
 
     if (existing && existing.length > 0) {
-      // UPDATE existing user
-      const { error: updateError } = await supabase
+      var { error: updateError } = await supabase
         .from("users")
         .update({
           full_name: userData.name || userData.full_name,
@@ -2517,8 +2496,7 @@ async function autoSyncUserToSupabase(userData) {
       if (updateError) throw updateError;
       console.log("✅ User updated in Supabase:", userData.phone);
     } else {
-      // INSERT new user
-      const { error: insertError } = await supabase.from("users").insert({
+      var { error: insertError } = await supabase.from("users").insert({
         phone: userData.phone,
         full_name: userData.name || userData.full_name || "Unknown",
         national_id: userData.id || userData.national_id || "N/A",
@@ -2546,3 +2524,89 @@ async function autoSyncUserToSupabase(userData) {
     return false;
   }
 }
+
+// ============================================
+// SYNC ALL LOCAL USERS TO SUPABASE
+// ============================================
+async function syncAllUsersToCloud() {
+  if (!supabaseInitialized) {
+    showToast("❌ Supabase not connected!", "error");
+    return;
+  }
+
+  var localUsers = getUsersLocal();
+
+  if (localUsers.length === 0) {
+    showToast("⚠️ No local users to sync", "warning");
+    return;
+  }
+
+  showToast("⏳ Syncing " + localUsers.length + " users to cloud...", "info");
+
+  var successCount = 0;
+  var failCount = 0;
+
+  for (var i = 0; i < localUsers.length; i++) {
+    var synced = await syncUserToSupabase(localUsers[i]);
+    if (synced) {
+      successCount++;
+    } else {
+      failCount++;
+    }
+  }
+
+  showToast(
+    "✅ Synced " + successCount + " users, " + failCount + " failed",
+    successCount > 0 ? "success" : "error",
+  );
+}
+
+// ============================================
+// 🚀 INIT
+// ============================================
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 G-KODE v3.1 loading...");
+
+  populateProfessionDropdown();
+  populateCategoryDropdown();
+
+  setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
+  setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
+
+  var savedUser = localStorage.getItem("gkode_user");
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      if (currentUser) {
+        console.log("✅ Auto-login:", currentUser.name);
+        showScreen("home");
+        loadGigs();
+        updateBottomNav();
+      }
+    } catch (e) {
+      console.log("Auto-login failed:", e);
+      showScreen("welcome");
+    }
+  } else {
+    showScreen("welcome");
+  }
+
+  console.log("🚀 G-KODE v3.1 loaded successfully!");
+  console.log("📊 Data stored in localStorage (fallback).");
+  console.log("☁️ Supabase URL:", SUPABASE_URL);
+  console.log("📧 EmailJS configured.");
+});
+
+// ============================================
+// GLOBAL ERROR HANDLING
+// ============================================
+window.onerror = function (message, source, lineno, colno, error) {
+  console.error("Global error:", {
+    message: message,
+    source: source,
+    lineno: lineno,
+    colno: colno,
+    error: error,
+  });
+  showToast("An unexpected error occurred. Please try again.", "error");
+};

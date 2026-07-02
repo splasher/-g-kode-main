@@ -8,8 +8,6 @@
     />
     <title>G-KODE — Kenya Helping Kenya</title>
     <link rel="stylesheet" href="style.css" />
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   </head>
   <body>
     <!-- ===== EMERGENCY FLOAT ===== -->
@@ -48,7 +46,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SCREEN: REGISTER - UPDATED WITH EMAILJS      -->
+    <!-- SCREEN: REGISTER -->
     <!-- ============================================ -->
     <div id="register" class="screen">
       <h2>Create Account</h2>
@@ -65,9 +63,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Full Name *</label
         >
-          Full Name *
-        </label>
         <input
           type="text"
           id="regName"
@@ -83,9 +80,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Phone Number *</label
         >
-          Phone Number *
-        </label>
         <input
           type="tel"
           id="regPhone"
@@ -101,9 +97,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Email Address *</label
         >
-          Email Address *
-        </label>
         <input
           type="email"
           id="regEmail"
@@ -119,9 +114,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >National ID Number *</label
         >
-          National ID Number *
-        </label>
         <input
           type="text"
           id="regID"
@@ -138,9 +132,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Password *</label
         >
-          Password *
-        </label>
         <div style="position: relative">
           <input
             type="password"
@@ -169,9 +162,8 @@
             margin-top: -10px;
             margin-bottom: 10px;
           "
+          >⚠️ Required: 6+ characters with both letters and numbers</small
         >
-          ⚠️ Required: 6+ characters with both letters and numbers
-        </small>
 
         <label
           for="regConfirmPassword"
@@ -181,9 +173,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Confirm Password *</label
         >
-          Confirm Password *
-        </label>
         <div style="position: relative">
           <input
             type="password"
@@ -214,9 +205,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Location *</label
         >
-          Location *
-        </label>
         <input
           type="text"
           id="regLocation"
@@ -232,9 +222,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Profession *</label
         >
-          Profession *
-        </label>
         <select id="regProfession" required onchange="checkProfession()">
           <option value="">-- Select Profession * --</option>
         </select>
@@ -247,9 +236,8 @@
               display: block;
               margin-bottom: 5px;
             "
+            >Specify Profession *</label
           >
-            Specify Profession *
-          </label>
           <input
             type="text"
             id="regOtherProfession"
@@ -262,9 +250,8 @@
               margin-top: -10px;
               margin-bottom: 10px;
             "
+            >Your new profession will be saved for future users</small
           >
-            Your new profession will be saved for future users
-          </small>
         </div>
 
         <label
@@ -275,9 +262,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Additional Skills (optional)</label
         >
-          Additional Skills (optional)
-        </label>
         <input
           type="text"
           id="regSkills"
@@ -290,9 +276,8 @@
             margin-top: -10px;
             margin-bottom: 10px;
           "
+          >Optional — add other skills you have</small
         >
-          Optional — add other skills you have
-        </small>
 
         <!-- Profile Photo with Camera -->
         <label
@@ -303,9 +288,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >Profile Photo *</label
         >
-          Profile Photo *
-        </label>
         <div style="display: flex; gap: 5px; margin-bottom: 5px">
           <input
             type="file"
@@ -363,9 +347,9 @@
             ✕
           </button>
         </div>
-        <small style="color: #888; display: block; margin-bottom: 10px">
-          Take a clear photo of your face
-        </small>
+        <small style="color: #888; display: block; margin-bottom: 10px"
+          >Take a clear photo of your face</small
+        >
 
         <!-- ID Scan with Camera -->
         <label
@@ -376,9 +360,8 @@
             display: block;
             margin-bottom: 5px;
           "
+          >National ID Scan (Front) *</label
         >
-          National ID Scan (Front) *
-        </label>
         <div style="display: flex; gap: 5px; margin-bottom: 5px">
           <input
             type="file"
@@ -431,38 +414,25 @@
             ✕
           </button>
         </div>
-        <small style="color: #888; display: block; margin-bottom: 10px">
-          Upload a clear photo of your ID
-        </small>
+        <small style="color: #888; display: block; margin-bottom: 10px"
+          >Upload a clear photo of your ID</small
+        >
 
-        <!-- ============================================ -->
-        <!-- 📧 EMAIL VERIFICATION NOTICE - UPDATED       -->
-        <!-- ============================================ -->
+        <!-- Email Verification Notice -->
         <div
           style="
             background: #e8f5e9;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
-            border-left: 4px solid #006400;
           "
         >
-          <p
-            style="
-              font-size: 13px;
-              color: #006400;
-              margin-bottom: 8px;
-              font-weight: bold;
-            "
-          >
-            📧 Real Email Verification
+          <p style="font-size: 13px; color: #006400; margin-bottom: 8px">
+            📧 Email Verification
           </p>
-          <p style="font-size: 12px; color: #555; margin-bottom: 5px">
-            We'll send a 6-digit verification code to
-            <strong id="emailDisplay">your email</strong>.
-          </p>
-          <p style="font-size: 11px; color: #888">
-            ✅ Check your inbox and spam folder. The code expires in 10 minutes.
+          <p style="font-size: 12px; color: #666">
+            We'll send a verification code to your email. You'll need to enter
+            it to complete registration.
           </p>
         </div>
 
@@ -481,8 +451,8 @@
             required
             style="width: auto; margin: 0"
           />
-          <label for="regTerms" style="font-size: 13px; color: #666">
-            I agree to the
+          <label for="regTerms" style="font-size: 13px; color: #666"
+            >I agree to the
             <a
               href="#"
               onclick="
@@ -501,13 +471,11 @@
               "
               style="color: #006400"
               >Privacy Policy</a
-            >
-          </label>
+            ></label
+          >
         </div>
 
-        <!-- ============================================ -->
-        <!-- OTP SECTION - UPDATED WITH BETTER UI         -->
-        <!-- ============================================ -->
+        <!-- OTP Section -->
         <div
           id="otpSection"
           style="
@@ -516,17 +484,15 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
-            border-left: 4px solid #ff9800;
           "
         >
-          <p style="font-weight: bold; color: #006400; font-size: 14px">
+          <p style="font-weight: bold; color: #006400">
             📧 Verification Code Sent
           </p>
-          <p style="font-size: 13px; color: #555; margin-bottom: 10px">
-            Enter the 6-digit code sent to
-            <strong id="otpEmailDisplay">your email</strong>:
+          <p style="font-size: 13px; color: #666; margin-bottom: 10px">
+            Enter the 6-digit code sent to your email:
           </p>
-          <div style="display: flex; gap: 10px; margin-bottom: 10px">
+          <div style="display: flex; gap: 10px">
             <input
               type="text"
               id="regOtp"
@@ -535,10 +501,8 @@
               style="
                 flex: 1;
                 text-align: center;
-                font-size: 24px;
-                letter-spacing: 8px;
-                font-weight: bold;
-                padding: 14px;
+                font-size: 20px;
+                letter-spacing: 5px;
               "
             />
             <button
@@ -550,32 +514,17 @@
               VERIFY
             </button>
           </div>
-          <div
-            style="
-              display: flex;
-              gap: 10px;
-              align-items: center;
-              flex-wrap: wrap;
-            "
+          <button
+            type="button"
+            class="btn outline"
+            onclick="resendOtp()"
+            style="font-size: 12px; padding: 8px; margin-top: 5px"
           >
-            <button
-              type="button"
-              class="btn outline"
-              onclick="resendOtp()"
-              style="font-size: 12px; padding: 8px 15px; margin: 0"
-            >
-              🔄 Resend Code
-            </button>
-            <span style="font-size: 12px; color: #888">
-              Didn't receive it? Check spam folder
-            </span>
-          </div>
-          <div
-            id="otpTimer"
-            style="font-size: 12px; color: #ff9800; margin-top: 8px"
+            🔄 Resend Code
+          </button>
+          <small style="color: #888; display: block; margin-top: 5px"
+            >Check your spam folder if you don't see the email</small
           >
-            ⏱️ Code expires in <span id="otpCountdown">10:00</span>
-          </div>
         </div>
 
         <button type="submit" class="btn green" id="registerBtn">
@@ -590,173 +539,368 @@
         </button>
       </form>
     </div>
-    // ============================================ // LOGIN - CLOUD ONLY //
-    ============================================ async function login(e) {
-    e.preventDefault(); const btn = document.getElementById('loginBtn');
-    btn.disabled = true; btn.textContent = '⏳ LOGGING IN...'; try { const phone
-    = document.getElementById('loginPhone').value.trim(); const password =
-    document.getElementById('loginPassword').value; const rememberMe =
-    document.getElementById('rememberMe').checked; if (!phone || !password) {
-    showToast('❌ Enter phone and password.', 'error'); btn.disabled = false;
-    btn.textContent = 'LOGIN'; return; } // ============ CHECK SUPABASE
-    ============ const { data: users, error: findError } = await supabase
-    .from('users') .select('*') .eq('phone', phone); if (findError) throw
-    findError; if (!users || users.length === 0) { showToast('❌ Phone not
-    registered.', 'error'); btn.disabled = false; btn.textContent = 'LOGIN';
-    return; } const user = users[0]; // Check password if (user.password_hash
-    !== password) { showToast('❌ Wrong password.', 'error'); btn.disabled =
-    false; btn.textContent = 'LOGIN'; return; } // Check if banned if
-    (user.is_banned) { showToast('🚫 Account is banned! Contact support.',
-    'error'); btn.disabled = false; btn.textContent = 'LOGIN'; return; } //
-    ============ UPDATE LAST ACTIVE ============ await supabase .from('users')
-    .update({ last_active: new Date().toISOString() }) .eq('id', user.id); //
-    Store user currentUser = user; if (rememberMe) {
-    localStorage.setItem('gkode_currentUser', JSON.stringify(user)); } else {
-    sessionStorage.setItem('gkode_currentUser', JSON.stringify(user)); } //
-    Reset form document.getElementById('loginForm').reset(); showToast('Welcome
-    back, ' + user.full_name + '!', 'success'); showScreen('home'); loadGigs();
-    } catch (err) { showToast('Login error: ' + err.message, 'error');
-    console.error('Login error:', err); } btn.disabled = false; btn.textContent
-    = 'LOGIN'; } // ============================================ // RESET
-    PASSWORD - VARIABLES // ============================================ let
-    resetData = null; let resetTimerInterval = null; let resetTimeLeft = 600; //
-    ============================================ // SEND RESET CODE (Step 1) //
-    ============================================ async function sendResetCode()
-    { const btn = document.getElementById('sendResetBtn'); btn.disabled = true;
-    btn.textContent = '⏳ SENDING...'; try { const email =
-    document.getElementById('resetEmail').value.trim(); if (!email) {
-    showToast('❌ Please enter your email.', 'error'); btn.disabled = false;
-    btn.textContent = '📧 SEND RESET CODE'; return; } // ============ CHECK IF
-    EMAIL EXISTS ============ const { data: users, error: findError } = await
-    supabase .from('users') .select('*') .eq('email', email); if (findError)
-    throw findError; if (!users || users.length === 0) { showToast('❌ No
-    account found with this email.', 'error'); btn.disabled = false;
-    btn.textContent = '📧 SEND RESET CODE'; return; } const user = users[0]; //
-    ============ GENERATE RESET CODE ============ const resetCode =
-    Math.floor(100000 + Math.random() * 900000).toString(); console.log('🔑
-    Reset Code:', resetCode); // ============ SEND RESET CODE TO EMAIL
-    ============ showToast(`📧 Sending reset code to ${email}...`, 'info');
-    const emailSent = await sendResetEmail(email, user.full_name, resetCode); if
-    (!emailSent) { showToast(`⚠️ Email failed. Your code: ${resetCode}`,
-    'warning'); } // ============ STORE RESET DATA ============ resetData = {
-    email: email, code: resetCode, phone: user.phone, national_id:
-    user.national_id, profession: user.profession, location: user.location,
-    userId: user.id }; // ============ SHOW STEP 2 ============
-    document.getElementById('resetStep1').style.display = 'none';
-    document.getElementById('resetStep2').style.display = 'block';
-    document.getElementById('resetEmailDisplay').textContent = email;
-    document.getElementById('resetOtp').value = '';
-    document.getElementById('resetOtp').focus(); // Start timer
-    startResetTimer(); showToast(`📧 Reset code sent to ${email}`, 'success'); }
-    catch (err) { showToast('Error: ' + err.message, 'error');
-    console.error('Reset error:', err); } btn.disabled = false; btn.textContent
-    = '📧 SEND RESET CODE'; } // ============================================ //
-    SEND RESET EMAIL // ============================================ async
-    function sendResetEmail(email, name, code) { try { if (typeof emailjs ===
-    'undefined') { await loadEmailJS(); } const templateParams = { to_email:
-    email, to_name: name || 'User', code: code, app_name: 'G-KODE', year: new
-    Date().getFullYear(), message: 'Your G-KODE password reset code' };
-    console.log('📧 Sending reset code to:', email); const response = await
-    emailjs.send( 'service_hw35xfu', 'template_0787ox7', templateParams,
-    'vc371wcNfQy56zlH8' ); console.log('✅ Reset email sent! Status:',
-    response.status); return true; } catch (error) { console.error('❌ Reset
-    email failed:', error); return false; } } //
-    ============================================ // VERIFY RESET IDENTITY (Step
-    2) // ============================================ async function
-    verifyResetIdentity() { const btn = document.querySelector('#resetStep2
-    .btn.green'); btn.disabled = true; btn.textContent = '⏳ VERIFYING...'; try
-    { const enteredCode = document.getElementById('resetOtp').value.trim();
-    const phone = document.getElementById('resetPhone').value.trim(); const id =
-    document.getElementById('resetID').value.trim(); const profession =
-    document.getElementById('resetProfession').value.trim(); const location =
-    document.getElementById('resetLocation').value.trim(); if (!enteredCode ||
-    enteredCode.length !== 6) { showToast('❌ Please enter the 6-digit reset
-    code.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY IDENTITY';
-    return; } if (!resetData) { showToast('❌ Reset session expired. Please
-    start over.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY
-    IDENTITY'; return; } // ============ VERIFY CODE ============ if
-    (enteredCode !== resetData.code) { showToast('❌ Invalid reset code. Please
-    try again.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY
-    IDENTITY'; return; } // ============ VERIFY USER DETAILS ============ if
-    (phone !== resetData.phone) { showToast('❌ Phone number does not match our
-    records.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY
-    IDENTITY'; return; } if (id !== resetData.national_id) { showToast('❌
-    National ID does not match our records.', 'error'); btn.disabled = false;
-    btn.textContent = 'VERIFY IDENTITY'; return; } if (profession.toLowerCase()
-    !== resetData.profession.toLowerCase()) { showToast('❌ Profession does not
-    match our records.', 'error'); btn.disabled = false; btn.textContent =
-    'VERIFY IDENTITY'; return; } if (location.toLowerCase() !==
-    resetData.location.toLowerCase()) { showToast('❌ Location does not match
-    our records.', 'error'); btn.disabled = false; btn.textContent = 'VERIFY
-    IDENTITY'; return; } // ============ ALL VERIFIED! SHOW STEP 3 ============
-    document.getElementById('resetStep2').style.display = 'none';
-    document.getElementById('resetStep3').style.display = 'block';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmPassword').value = '';
-    document.getElementById('newPassword').focus(); showToast('✅ Identity
-    verified! Set your new password.', 'success'); } catch (err) {
-    showToast('Error: ' + err.message, 'error'); console.error('Verification
-    error:', err); } btn.disabled = false; btn.textContent = 'VERIFY IDENTITY';
-    } // ============================================ // RESEND RESET CODE //
-    ============================================ async function
-    resendResetCode() { if (!resetData) { showToast('❌ Reset session expired.
-    Please start over.', 'error'); return; } const newCode = Math.floor(100000 +
-    Math.random() * 900000).toString(); resetData.code = newCode; showToast(`📧
-    Sending new reset code...`, 'info'); const emailSent = await sendResetEmail(
-    resetData.email, 'User', newCode ); if (emailSent) { showToast('📧 New reset
-    code sent!', 'success'); startResetTimer(); } else { showToast(`⚠️ Email
-    failed. Your new code: ${newCode}`, 'warning'); } } //
-    ============================================ // RESET PASSWORD (Step 3) //
-    ============================================ async function resetPassword()
-    { const btn = document.querySelector('#resetStep3 .btn.green'); btn.disabled
-    = true; btn.textContent = '⏳ RESETTING...'; try { const newPassword =
-    document.getElementById('newPassword').value; const confirmPassword =
-    document.getElementById('confirmPassword').value; if (newPassword.length <
-    6) { showToast('❌ Password must be at least 6 characters.', 'error');
-    btn.disabled = false; btn.textContent = 'RESET PASSWORD'; return; } if
-    (newPassword !== confirmPassword) { showToast('❌ Passwords do not match!',
-    'error'); btn.disabled = false; btn.textContent = 'RESET PASSWORD'; return;
-    } if (!resetData) { showToast('❌ Reset session expired. Please start
-    over.', 'error'); btn.disabled = false; btn.textContent = 'RESET PASSWORD';
-    return; } // ============ UPDATE PASSWORD IN SUPABASE ============ const {
-    error: updateError } = await supabase .from('users') .update({
-    password_hash: newPassword }) .eq('id', resetData.userId); if (updateError)
-    throw updateError; // Reset everything resetData = null;
-    clearInterval(resetTimerInterval);
-    document.getElementById('resetStep3').style.display = 'none';
-    document.getElementById('resetStep1').style.display = 'block';
-    document.getElementById('resetForm')?.reset(); showToast('✅ Password reset
-    successful! Please login.', 'success'); showScreen('login'); } catch (err) {
-    showToast('Error: ' + err.message, 'error'); console.error('Reset password
-    error:', err); } btn.disabled = false; btn.textContent = 'RESET PASSWORD'; }
-    // ============================================ // RESET TIMER //
-    ============================================ function startResetTimer() {
-    resetTimeLeft = 600; updateResetTimerDisplay(); if (resetTimerInterval)
-    clearInterval(resetTimerInterval); resetTimerInterval =
-    setInterval(function() { resetTimeLeft--; updateResetTimerDisplay(); if
-    (resetTimeLeft <= 0) { clearInterval(resetTimerInterval); const timerDisplay
-    = document.querySelector('#resetStep2 .btn.outline'); if (timerDisplay) {
-    timerDisplay.textContent = '⏰ CODE EXPIRED - RESEND';
-    timerDisplay.style.color = '#cc0000'; } showToast('⏰ Reset code expired.
-    Please resend.', 'warning'); } }, 1000); } function
-    updateResetTimerDisplay() { const minutes = Math.floor(resetTimeLeft / 60);
-    const seconds = resetTimeLeft % 60; // Find the resend button to show timer
-    const resendBtn = document.querySelector('#resetStep2 .btn.outline'); if
-    (resendBtn && resetTimeLeft > 0) { resendBtn.textContent = `🔄 Resend Code
-    (${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')})`;
-    } } // ============================================ // CHECK SESSION //
-    ============================================ async function checkSession() {
-    const savedUser = sessionStorage.getItem('gkode_currentUser') ||
-    localStorage.getItem('gkode_currentUser'); if (savedUser) { try { const user
-    = JSON.parse(savedUser); const { data, error } = await supabase
-    .from('users') .select('*') .eq('id', user.id); if (!error && data &&
-    data.length > 0) { currentUser = data[0]; showScreen('home'); loadGigs();
-    return; } } catch (e) { console.log('Session expired'); } }
-    showScreen('welcome'); } // ============================================ //
-    LOGOUT // ============================================ function logout() {
-    currentUser = null; localStorage.removeItem('gkode_currentUser');
-    sessionStorage.removeItem('gkode_currentUser'); showToast('Logged out.',
-    'info'); showScreen('welcome'); }
+
+    <!-- ============================================ -->
+    <!-- SCREEN: LOGIN -->
+    <!-- ============================================ -->
+    <div id="login" class="screen">
+      <h2>Login</h2>
+      <p style="color: #666; font-size: 14px; margin-bottom: 15px">
+        Welcome back! 🇰🇪
+      </p>
+
+      <form id="loginForm" onsubmit="login(event)">
+        <label
+          for="loginPhone"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Phone Number *</label
+        >
+        <input type="tel" id="loginPhone" placeholder="Phone Number" required />
+
+        <label
+          for="loginPassword"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Password *</label
+        >
+        <div style="position: relative">
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+            required
+            style="padding-right: 50px"
+          />
+          <span
+            onclick="togglePassword('loginPassword', this)"
+            style="
+              position: absolute;
+              right: 15px;
+              top: 14px;
+              cursor: pointer;
+              font-size: 20px;
+            "
+            >👁️</span
+          >
+        </div>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+          "
+        >
+          <input
+            type="checkbox"
+            id="rememberMe"
+            style="width: auto; margin: 0"
+          />
+          <label for="rememberMe" style="font-size: 13px; color: #666"
+            >Remember me</label
+          >
+        </div>
+
+        <button
+          type="button"
+          class="btn outline"
+          onclick="showScreen('resetPassword')"
+          style="
+            background: none;
+            color: #cc0000;
+            border: none;
+            font-size: 14px;
+            margin-bottom: 10px;
+          "
+        >
+          Forgot Password?
+        </button>
+        <button type="submit" class="btn green" id="loginBtn">LOGIN</button>
+        <button
+          type="button"
+          class="btn outline"
+          onclick="showScreen('welcome')"
+        >
+          BACK
+        </button>
+      </form>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCREEN: RESET PASSWORD -->
+    <!-- ============================================ -->
+    <div id="resetPassword" class="screen">
+      <h2>🔑 Reset Password</h2>
+      <p style="font-size: 14px; color: #666; margin-bottom: 15px">
+        Forgot your password? Verify your identity to reset it.
+      </p>
+
+      <div id="resetStep1">
+        <p
+          style="
+            font-size: 13px;
+            color: #006400;
+            font-weight: bold;
+            margin-bottom: 8px;
+          "
+        >
+          Step 1: Verify Your Email
+        </p>
+        <label
+          for="resetEmail"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Email Address *</label
+        >
+        <input
+          type="email"
+          id="resetEmail"
+          placeholder="Registered Email Address *"
+          required
+        />
+        <p style="font-size: 12px; color: #888; margin-bottom: 10px">
+          We'll send a reset code to your registered email
+        </p>
+        <button class="btn green" onclick="sendResetCode()" id="sendResetBtn">
+          📧 SEND RESET CODE
+        </button>
+      </div>
+
+      <div id="resetStep2" style="display: none">
+        <p
+          style="
+            font-size: 13px;
+            color: #006400;
+            font-weight: bold;
+            margin-bottom: 8px;
+          "
+        >
+          Step 2: Verify Your Identity
+        </p>
+        <div
+          style="
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+          "
+        >
+          <p style="font-size: 12px; color: #006400">
+            ✅ Reset code sent to <span id="resetEmailDisplay"></span>
+          </p>
+        </div>
+        <label
+          for="resetOtp"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Reset Code *</label
+        >
+        <input
+          type="text"
+          id="resetOtp"
+          placeholder="Enter 6-digit reset code *"
+          maxlength="6"
+          required
+        />
+
+        <label
+          for="resetPhone"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Registered Phone *</label
+        >
+        <input
+          type="tel"
+          id="resetPhone"
+          placeholder="Registered Phone Number *"
+          required
+        />
+
+        <label
+          for="resetID"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >National ID *</label
+        >
+        <input
+          type="text"
+          id="resetID"
+          placeholder="National ID Number *"
+          required
+        />
+
+        <label
+          for="resetProfession"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Profession *</label
+        >
+        <input
+          type="text"
+          id="resetProfession"
+          placeholder="Your Registered Profession *"
+          required
+        />
+
+        <label
+          for="resetLocation"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Location *</label
+        >
+        <input
+          type="text"
+          id="resetLocation"
+          placeholder="Your Registered Location *"
+          required
+        />
+
+        <small style="color: #cc0000; display: block; margin-bottom: 10px"
+          >⚠️ All fields must match your registration details exactly.</small
+        >
+        <button class="btn green" onclick="verifyResetIdentity()">
+          VERIFY IDENTITY
+        </button>
+        <button
+          class="btn outline"
+          onclick="resendResetCode()"
+          style="font-size: 12px; padding: 8px; margin-top: 5px"
+        >
+          🔄 Resend Code
+        </button>
+      </div>
+
+      <div id="resetStep3" style="display: none">
+        <p
+          style="
+            font-size: 13px;
+            color: #006400;
+            font-weight: bold;
+            margin-bottom: 8px;
+          "
+        >
+          Step 3: Set New Password
+        </p>
+        <div
+          style="
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+          "
+        >
+          <p style="font-size: 12px; color: #006400">✅ Identity Verified</p>
+        </div>
+        <label
+          for="newPassword"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >New Password *</label
+        >
+        <div style="position: relative">
+          <input
+            type="password"
+            id="newPassword"
+            placeholder="New Password (6+ chars, letters & numbers) *"
+            minlength="6"
+            style="padding-right: 50px"
+            required
+          />
+          <span
+            onclick="togglePassword('newPassword', this)"
+            style="
+              position: absolute;
+              right: 15px;
+              top: 14px;
+              cursor: pointer;
+              font-size: 20px;
+            "
+            >👁️</span
+          >
+        </div>
+
+        <label
+          for="confirmPassword"
+          style="
+            color: #006400;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+          "
+          >Confirm Password *</label
+        >
+        <div style="position: relative">
+          <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirm New Password *"
+            style="padding-right: 50px"
+            required
+          />
+          <span
+            onclick="togglePassword('confirmPassword', this)"
+            style="
+              position: absolute;
+              right: 15px;
+              top: 14px;
+              cursor: pointer;
+              font-size: 20px;
+            "
+            >👁️</span
+          >
+        </div>
+        <button class="btn green" onclick="resetPassword()">
+          RESET PASSWORD
+        </button>
+      </div>
+
+      <button
+        class="btn outline"
+        onclick="showScreen('login')"
+        style="margin-top: 10px"
+      >
+        BACK TO LOGIN
+      </button>
+    </div>
+
     <!-- ============================================ -->
     <!-- SCREEN: PAYMENT -->
     <!-- ============================================ -->
