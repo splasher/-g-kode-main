@@ -723,7 +723,7 @@ function setupFilePreview(inputId, previewId, containerId) {
 }
 
 // ============================================
-// EMAIL FUNCTIONS - FIXED
+// 📧 EMAIL FUNCTIONS - FIXED
 // ============================================
 function loadEmailJS(callback) {
   if (typeof emailjs !== "undefined") {
@@ -753,70 +753,88 @@ function loadEmailJS(callback) {
   };
 }
 
+// ✅ FIXED: sendOTPEmail now returns a Promise
 function sendOTPEmail(email, name, code) {
-  loadEmailJS(function () {
-    if (typeof emailjs === "undefined") {
-      showToast("📱 Your code: " + code, "info");
-      return;
-    }
-    const templateParams = {
-      to_email: email,
-      to_name: name || "User",
-      code: code,
-      app_name: "G-KODE",
-      year: new Date().getFullYear(),
-    };
-    console.log("📧 Sending OTP to:", email);
-    console.log("🔑 Code:", code);
-    emailjs
-      .send(
-        EMAILJS_CONFIG.serviceID,
-        EMAILJS_CONFIG.otpTemplateID,
-        templateParams,
-      )
-      .then(function (response) {
-        console.log("✅ OTP email sent! Status:", response.status);
-        showToast("📧 Verification code sent to your email!", "success");
-      })
-      .catch(function (error) {
-        console.error("❌ OTP email failed:", error);
-        showToast("📱 Your code: " + code + " (Check spam folder)", "info");
-      });
+  return new Promise(function (resolve) {
+    loadEmailJS(function () {
+      if (typeof emailjs === "undefined") {
+        showToast("📱 Your OTP code: " + code, "info");
+        resolve(false);
+        return;
+      }
+
+      const templateParams = {
+        to_email: email,
+        to_name: name || "User",
+        code: code,
+        app_name: "G-KODE",
+        year: new Date().getFullYear(),
+      };
+
+      console.log("📧 Sending OTP to:", email);
+      console.log("🔑 Code:", code);
+
+      emailjs
+        .send(
+          EMAILJS_CONFIG.serviceID,
+          EMAILJS_CONFIG.otpTemplateID,
+          templateParams,
+        )
+        .then(function (response) {
+          console.log("✅ OTP email sent! Status:", response.status);
+          showToast("📧 Verification code sent to your email!", "success");
+          resolve(true);
+        })
+        .catch(function (error) {
+          console.error("❌ OTP email failed:", error);
+          showToast("📱 Your code: " + code + " (Check spam folder)", "info");
+          resolve(false);
+        });
+    });
   });
 }
 
+// ✅ FIXED: sendResetEmail now returns a Promise
 function sendResetEmail(email, name, code) {
-  loadEmailJS(function () {
-    if (typeof emailjs === "undefined") {
-      showToast("📱 Your reset code: " + code, "info");
-      return;
-    }
-    const templateParams = {
-      to_email: email,
-      to_name: name || "User",
-      code: code,
-      app_name: "G-KODE",
-      year: new Date().getFullYear(),
-    };
-    console.log("📧 Sending reset code to:", email);
-    console.log("🔑 Reset Code:", code);
-    emailjs
-      .send(
-        EMAILJS_CONFIG.serviceID,
-        EMAILJS_CONFIG.resetTemplateID,
-        templateParams,
-      )
-      .then(function (response) {
-        console.log("✅ Reset email sent! Status:", response.status);
-        showToast("📧 Reset code sent to your email!", "success");
-      })
-      .catch(function (error) {
-        console.error("❌ Reset email failed:", error);
-        showToast(
-          "📱 Your reset code: " + code + " (Check spam folder)",
-          "info",
-        );
-      });
+  return new Promise(function (resolve) {
+    loadEmailJS(function () {
+      if (typeof emailjs === "undefined") {
+        showToast("📱 Your reset code: " + code, "info");
+        resolve(false);
+        return;
+      }
+
+      const templateParams = {
+        to_email: email,
+        to_name: name || "User",
+        code: code,
+        app_name: "G-KODE",
+        year: new Date().getFullYear(),
+      };
+
+      console.log("📧 Sending reset code to:", email);
+      console.log("🔑 Reset Code:", code);
+
+      emailjs
+        .send(
+          EMAILJS_CONFIG.serviceID,
+          EMAILJS_CONFIG.resetTemplateID,
+          templateParams,
+        )
+        .then(function (response) {
+          console.log("✅ Reset email sent! Status:", response.status);
+          showToast("📧 Reset code sent to your email!", "success");
+          resolve(true);
+        })
+        .catch(function (error) {
+          console.error("❌ Reset email failed:", error);
+          showToast(
+            "📱 Your reset code: " + code + " (Check spam folder)",
+            "info",
+          );
+          resolve(false);
+        });
+    });
   });
 }
 
@@ -990,8 +1008,14 @@ async function register(e) {
     pendingRegistration = user;
     pendingOtp = otpCode;
 
+    // ✅ FIXED: Send OTP email with await
     btn.textContent = "⏳ SENDING OTP...";
-    sendOTPEmail(email, name, otpCode);
+    try {
+      await sendOTPEmail(email, name, otpCode);
+    } catch (err) {
+      console.error("Send OTP error:", err);
+      showToast("📱 Your code: " + otpCode + " (Check spam folder)", "info");
+    }
 
     const otpSection = document.getElementById("otpSection");
     if (otpSection) otpSection.style.display = "block";
@@ -1001,7 +1025,6 @@ async function register(e) {
     btn.textContent = "VERIFY EMAIL";
     btn.disabled = false;
     isProcessing = false;
-    showToast("📧 Verification code sent to your email!", "success");
   } catch (error) {
     console.error("Registration error:", error);
     showToast("Registration error: " + error.message, "error");
@@ -1024,14 +1047,24 @@ function verifyOtp() {
   completeRegistration();
 }
 
-function resendOtp() {
+// ✅ FIXED: resendOtp now uses async/await
+async function resendOtp() {
   if (!pendingRegistration) {
     showToast("Please start registration again", "error");
     return;
   }
   pendingOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  sendOTPEmail(pendingRegistration.email, pendingRegistration.name, pendingOtp);
-  showToast("📧 New code sent to your email!", "success");
+  try {
+    await sendOTPEmail(
+      pendingRegistration.email,
+      pendingRegistration.name,
+      pendingOtp,
+    );
+    showToast("📧 New code sent to your email!", "success");
+  } catch (err) {
+    console.error("Resend OTP error:", err);
+    showToast("📱 Your new code: " + pendingOtp, "info");
+  }
 }
 
 async function completeRegistration() {
@@ -1274,12 +1307,20 @@ async function sendResetCode() {
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log("🔑 Reset Code:", resetCode);
 
-    showToast("📧 Sending reset code to " + email + "...", "info");
-
-    const emailSent = await sendResetEmail(email, user.full_name, resetCode);
-
-    if (!emailSent) {
-      showToast("⚠️ Email failed. Your code: " + resetCode, "warning");
+    // ✅ FIXED: Send reset email with await
+    try {
+      const emailSent = await sendResetEmail(email, user.full_name, resetCode);
+      if (!emailSent) {
+        showToast("⚠️ Email failed. Your code: " + resetCode, "warning");
+      } else {
+        showToast("📧 Reset code sent to " + email, "success");
+      }
+    } catch (err) {
+      console.error("Send reset email error:", err);
+      showToast(
+        "📱 Your reset code: " + resetCode + " (Check spam folder)",
+        "info",
+      );
     }
 
     resetData = {
@@ -1299,7 +1340,6 @@ async function sendResetCode() {
     document.getElementById("resetOtp").focus();
 
     startResetTimer();
-    showToast("📧 Reset code sent to " + email, "success");
   } catch (err) {
     showToast("Error: " + err.message, "error");
     console.error("Reset error:", err);
@@ -1311,8 +1351,10 @@ async function sendResetCode() {
 
 async function verifyResetIdentity() {
   const btn = document.getElementById("verifyBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ VERIFYING...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ VERIFYING...";
+  }
 
   try {
     const enteredCode = document.getElementById("resetOtp").value.trim();
@@ -1323,22 +1365,28 @@ async function verifyResetIdentity() {
 
     if (!enteredCode || enteredCode.length !== 6) {
       showToast("❌ Please enter the 6-digit reset code.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "VERIFY IDENTITY";
+      }
       return;
     }
 
     if (!resetData) {
       showToast("❌ Reset session expired. Please start over.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "VERIFY IDENTITY";
+      }
       return;
     }
 
     if (enteredCode !== resetData.code) {
       showToast("❌ Invalid reset code. Please try again.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "VERIFY IDENTITY";
+      }
       return;
     }
 
@@ -1358,8 +1406,10 @@ async function verifyResetIdentity() {
 
     if (errorMsg) {
       showToast(errorMsg + " Please check your details.", "error");
-      btn.disabled = false;
-      btn.textContent = "VERIFY IDENTITY";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "VERIFY IDENTITY";
+      }
       return;
     }
 
@@ -1375,10 +1425,13 @@ async function verifyResetIdentity() {
     console.error("Verification error:", err);
   }
 
-  btn.disabled = false;
-  btn.textContent = "VERIFY IDENTITY";
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "VERIFY IDENTITY";
+  }
 }
 
+// ✅ FIXED: resendResetCode now uses async/await
 async function resendResetCode() {
   if (!resetData) {
     showToast("❌ Reset session expired. Please start over.", "error");
@@ -1388,22 +1441,26 @@ async function resendResetCode() {
   const newCode = Math.floor(100000 + Math.random() * 900000).toString();
   resetData.code = newCode;
 
-  showToast("📧 Sending new reset code...", "info");
-
-  const emailSent = await sendResetEmail(resetData.email, "User", newCode);
-
-  if (emailSent) {
-    showToast("📧 New reset code sent!", "success");
-    startResetTimer();
-  } else {
-    showToast("⚠️ Email failed. Your new code: " + newCode, "warning");
+  try {
+    const emailSent = await sendResetEmail(resetData.email, "User", newCode);
+    if (emailSent) {
+      showToast("📧 New reset code sent!", "success");
+      startResetTimer();
+    } else {
+      showToast("⚠️ Email failed. Your new code: " + newCode, "warning");
+    }
+  } catch (err) {
+    console.error("Resend reset error:", err);
+    showToast("📱 Your new code: " + newCode, "info");
   }
 }
 
 async function resetPassword() {
   const btn = document.getElementById("resetPasswordBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ RESETTING...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ RESETTING...";
+  }
 
   try {
     const newPassword = document.getElementById("newPassword").value;
@@ -1411,22 +1468,28 @@ async function resetPassword() {
 
     if (newPassword.length < 6) {
       showToast("❌ Password must be at least 6 characters.", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "RESET PASSWORD";
+      }
       return;
     }
 
     if (newPassword !== confirmPassword) {
       showToast("❌ Passwords do not match!", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "RESET PASSWORD";
+      }
       return;
     }
 
     if (!resetData) {
       showToast("❌ Reset session expired. Please start over.", "error");
-      btn.disabled = false;
-      btn.textContent = "RESET PASSWORD";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "RESET PASSWORD";
+      }
       return;
     }
 
@@ -1450,8 +1513,10 @@ async function resetPassword() {
     console.error("Reset password error:", err);
   }
 
-  btn.disabled = false;
-  btn.textContent = "RESET PASSWORD";
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "RESET PASSWORD";
+  }
 }
 
 function startResetTimer() {
