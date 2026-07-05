@@ -940,18 +940,25 @@ async function register(e) {
     }
 
     // Check Supabase
-    if (supabaseInitialized) {
-      const { data, error } = await supabase
-        .from("users")
-        .select("phone, email")
-        .or("phone.eq." + phone + ",email.eq." + email)
-        .maybeSingle();
-      if (data) {
-        showToast("Phone or email already registered", "error");
-        btn.disabled = false;
-        btn.textContent = "REGISTER";
-        isProcessing = false;
-        return;
+    // NEW CODE - add this:
+    // Check Supabase
+    if (supabaseInitialized && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("phone, email")
+          .or("phone.eq." + phone + ",email.eq." + email)
+          .maybeSingle();
+        if (data) {
+          showToast("Phone or email already registered", "error");
+          btn.disabled = false;
+          btn.textContent = "REGISTER";
+          isProcessing = false;
+          return;
+        }
+      } catch (supabaseErr) {
+        console.log("Supabase check failed, continuing:", supabaseErr);
+        // Continue with registration anyway
       }
     }
 
@@ -1173,13 +1180,83 @@ async function login(e) {
       return;
     }
 
-    // ⚡ CHECK SUPABASE FIRST
+    // ✅ CHECK: Is Supabase initialized?
+    if (!supabaseInitialized || !supabase) {
+      showToast("⚠️ Cloud service unavailable. Using local data.", "warning");
+      // Fallback to local users
+      const localUsers = getUsersLocal();
+      const localUser = localUsers.find(function (u) {
+        return u.phone === phone;
+      });
+      if (!localUser) {
+        showToast("❌ Phone not registered.", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      if (localUser.password !== password) {
+        showToast("❌ Wrong password.", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      if (localUser.isBanned) {
+        showToast("🚫 Account is banned!", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      currentUser = localUser;
+      localStorage.setItem("gkode_user", JSON.stringify(localUser));
+      showToast("Welcome back, " + localUser.name + "!", "success");
+      showScreen("home");
+      loadGigs();
+      btn.disabled = false;
+      btn.textContent = "LOGIN";
+      return;
+    }
+
+    // ⚡ CHECK SUPABASE
     const { data: users, error: findError } = await supabase
       .from("users")
       .select("*")
       .eq("phone", phone);
 
-    if (findError) throw findError;
+    if (findError) {
+      console.error("Supabase query error:", findError);
+      showToast("⚠️ Database error. Using local data.", "warning");
+      // Fallback to local users
+      const localUsers = getUsersLocal();
+      const localUser = localUsers.find(function (u) {
+        return u.phone === phone;
+      });
+      if (!localUser) {
+        showToast("❌ Phone not registered.", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      if (localUser.password !== password) {
+        showToast("❌ Wrong password.", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      if (localUser.isBanned) {
+        showToast("🚫 Account is banned!", "error");
+        btn.disabled = false;
+        btn.textContent = "LOGIN";
+        return;
+      }
+      currentUser = localUser;
+      localStorage.setItem("gkode_user", JSON.stringify(localUser));
+      showToast("Welcome back, " + localUser.name + "!", "success");
+      showScreen("home");
+      loadGigs();
+      btn.disabled = false;
+      btn.textContent = "LOGIN";
+      return;
+    }
 
     if (!users || users.length === 0) {
       showToast("❌ Phone not registered.", "error");
@@ -1205,10 +1282,14 @@ async function login(e) {
     }
 
     // ⚡ UPDATE LAST ACTIVE
-    await supabase
-      .from("users")
-      .update({ last_active: new Date().toISOString() })
-      .eq("id", user.id);
+    try {
+      await supabase
+        .from("users")
+        .update({ last_active: new Date().toISOString() })
+        .eq("id", user.id);
+    } catch (updateErr) {
+      console.log("Could not update last_active:", updateErr);
+    }
 
     // Store user
     currentUser = user;
