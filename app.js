@@ -1,10 +1,6 @@
 // ============================================
-// G-KODE - COMPLETE WORKING APP v3.1
-// ALL ISSUES FIXED:
-// - Users auto-sync to Supabase on register/login
-// - OTP emails working with proper EmailJS config
-// - Admin panel shows cloud users
-// - No duplicate declarations
+// G-KODE - CLOUD-FIRST VERSION v4.0
+// All data stored in Supabase with localStorage fallback
 // ============================================
 
 // ============ SUPABASE CONFIG ============
@@ -39,6 +35,7 @@ let resetTimeLeft = 600;
 let isProcessing = false;
 let cameraStream = null;
 let cameraActive = false;
+let isOnline = true;
 
 // ============================================
 // ADMIN PHONES
@@ -46,7 +43,7 @@ let cameraActive = false;
 const ADMIN_PHONES = ["0703428192", "0711991467"];
 
 // ============================================
-// EMAILJS CONFIG - VERIFIED WORKING
+// EMAILJS CONFIG
 // ============================================
 const EMAILJS_CONFIG = {
   serviceID: "service_hw35xfu",
@@ -56,13 +53,34 @@ const EMAILJS_CONFIG = {
 };
 
 // ============================================
+// CHECK ONLINE STATUS
+// ============================================
+function checkOnlineStatus() {
+  isOnline = navigator.onLine;
+  if (!isOnline) {
+    showToast("⚠️ You are offline. Using local data.", "warning");
+  }
+  return isOnline;
+}
+
+window.addEventListener("online", function () {
+  isOnline = true;
+  showToast("✅ Back online! Syncing data...", "success");
+  syncAllUsersToCloud();
+});
+
+window.addEventListener("offline", function () {
+  isOnline = false;
+  showToast("⚠️ You are offline. Changes will sync later.", "warning");
+});
+
+// ============================================
 // TOAST FUNCTION
 // ============================================
 function showToast(message, type) {
   type = type || "info";
   const container = document.getElementById("toast-container");
   if (!container) {
-    // Create container if it doesn't exist
     const newContainer = document.createElement("div");
     newContainer.id = "toast-container";
     newContainer.style.cssText =
@@ -99,7 +117,7 @@ function showToast(message, type) {
 })();
 
 // ============================================
-// DATA HELPERS
+// DATA HELPERS (LOCAL FALLBACK)
 // ============================================
 function getData(key) {
   try {
@@ -224,8 +242,8 @@ function compressImage(file, maxWidth, maxHeight, quality) {
 // UPLOAD TO SUPABASE STORAGE
 // ============================================
 async function uploadToSupabase(file, bucket, folder) {
-  if (!supabaseInitialized) {
-    console.log("⚠️ Supabase not ready, using base64 fallback");
+  if (!supabaseInitialized || !isOnline) {
+    console.log("⚠️ Supabase not ready or offline, using base64 fallback");
     return readFileAsDataURL(file);
   }
 
@@ -260,86 +278,117 @@ async function uploadToSupabase(file, bucket, folder) {
 }
 
 // ============================================
-// SYNC USER TO SUPABASE - FIXED
+// 📧 EMAIL FUNCTIONS
 // ============================================
-async function syncUserToSupabase(userData) {
-  if (!supabaseInitialized) {
-    console.warn("⚠️ Supabase not initialized, user not synced");
-    return false;
-  }
-
-  try {
-    // Check if user exists
-    const { data: existing, error: checkError } = await supabase
-      .from("users")
-      .select("phone")
-      .eq("phone", userData.phone);
-
-    if (checkError) throw checkError;
-
-    if (existing && existing.length > 0) {
-      // UPDATE existing user
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          full_name: userData.name || userData.full_name,
-          national_id: userData.id || userData.national_id,
-          email: userData.email || "N/A",
-          location: userData.location || "N/A",
-          profession: userData.profession || "N/A",
-          skills: userData.skills
-            ? Array.isArray(userData.skills)
-              ? userData.skills
-              : [userData.skills]
-            : [],
-          photo_url: userData.photo || userData.photo_url || null,
-          rating: userData.rating || 0,
-          review_count: userData.reviewCount || userData.review_count || 0,
-          strikes: userData.strikes || 0,
-          is_paid: userData.isPaid || userData.is_paid || false,
-          is_banned: userData.isBanned || userData.is_banned || false,
-          last_active: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("phone", userData.phone);
-
-      if (updateError) throw updateError;
-      console.log("✅ User updated in Supabase:", userData.phone);
-      return true;
-    } else {
-      // INSERT new user
-      const { error: insertError } = await supabase.from("users").insert({
-        phone: userData.phone,
-        full_name: userData.name || userData.full_name || "Unknown",
-        national_id: userData.id || userData.national_id || "N/A",
-        email: userData.email || "N/A",
-        password_hash: userData.password || "password",
-        location: userData.location || "N/A",
-        profession: userData.profession || "N/A",
-        skills: userData.skills
-          ? Array.isArray(userData.skills)
-            ? userData.skills
-            : [userData.skills]
-          : [],
-        photo_url: userData.photo || userData.photo_url || null,
-        rating: userData.rating || 0,
-        review_count: userData.reviewCount || userData.review_count || 0,
-        strikes: userData.strikes || 0,
-        is_paid: userData.isPaid || userData.is_paid || false,
-        is_banned: userData.isBanned || userData.is_banned || false,
-        created_at: userData.registeredAt || new Date().toISOString(),
-        last_active: new Date().toISOString(),
-      });
-
-      if (insertError) throw insertError;
-      console.log("✅ New user saved to Supabase:", userData.phone);
-      return true;
+function loadEmailJS(callback) {
+  if (typeof emailjs !== "undefined") {
+    try {
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+    } catch (e) {
+      console.log("EmailJS already initialized");
     }
-  } catch (e) {
-    console.error("❌ Supabase sync error:", e);
-    showToast("⚠️ User saved locally but cloud sync failed", "warning");
-    return false;
+    callback();
+    return;
   }
+  const script = document.createElement("script");
+  script.src =
+    "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+  document.head.appendChild(script);
+  script.onload = function () {
+    try {
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+    } catch (e) {
+      console.log("EmailJS init error:", e);
+    }
+    callback();
+  };
+  script.onerror = function () {
+    showToast("⚠️ Email service unavailable. Using on-screen code.", "warning");
+    callback();
+  };
+}
+
+function sendOTPEmail(email, name, code) {
+  return new Promise(function (resolve) {
+    loadEmailJS(function () {
+      if (typeof emailjs === "undefined") {
+        showToast("📱 Your OTP code: " + code, "info");
+        resolve(false);
+        return;
+      }
+
+      const templateParams = {
+        to_email: email,
+        to_name: name || "User",
+        code: code,
+        app_name: "G-KODE",
+        year: new Date().getFullYear(),
+      };
+
+      console.log("📧 Sending OTP to:", email);
+      console.log("🔑 Code:", code);
+
+      emailjs
+        .send(
+          EMAILJS_CONFIG.serviceID,
+          EMAILJS_CONFIG.otpTemplateID,
+          templateParams,
+        )
+        .then(function (response) {
+          console.log("✅ OTP email sent! Status:", response.status);
+          showToast("📧 Verification code sent to your email!", "success");
+          resolve(true);
+        })
+        .catch(function (error) {
+          console.error("❌ OTP email failed:", error);
+          showToast("📱 Your code: " + code + " (Check spam folder)", "info");
+          resolve(false);
+        });
+    });
+  });
+}
+
+function sendResetEmail(email, name, code) {
+  return new Promise(function (resolve) {
+    loadEmailJS(function () {
+      if (typeof emailjs === "undefined") {
+        showToast("📱 Your reset code: " + code, "info");
+        resolve(false);
+        return;
+      }
+
+      const templateParams = {
+        to_email: email,
+        to_name: name || "User",
+        code: code,
+        app_name: "G-KODE",
+        year: new Date().getFullYear(),
+      };
+
+      console.log("📧 Sending reset code to:", email);
+      console.log("🔑 Reset Code:", code);
+
+      emailjs
+        .send(
+          EMAILJS_CONFIG.serviceID,
+          EMAILJS_CONFIG.resetTemplateID,
+          templateParams,
+        )
+        .then(function (response) {
+          console.log("✅ Reset email sent! Status:", response.status);
+          showToast("📧 Reset code sent to your email!", "success");
+          resolve(true);
+        })
+        .catch(function (error) {
+          console.error("❌ Reset email failed:", error);
+          showToast(
+            "📱 Your reset code: " + code + " (Check spam folder)",
+            "info",
+          );
+          resolve(false);
+        });
+    });
+  });
 }
 
 // ============================================
@@ -723,123 +772,7 @@ function setupFilePreview(inputId, previewId, containerId) {
 }
 
 // ============================================
-// 📧 EMAIL FUNCTIONS - FIXED
-// ============================================
-function loadEmailJS(callback) {
-  if (typeof emailjs !== "undefined") {
-    try {
-      emailjs.init(EMAILJS_CONFIG.publicKey);
-    } catch (e) {
-      console.log("EmailJS already initialized");
-    }
-    callback();
-    return;
-  }
-  const script = document.createElement("script");
-  script.src =
-    "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
-  document.head.appendChild(script);
-  script.onload = function () {
-    try {
-      emailjs.init(EMAILJS_CONFIG.publicKey);
-    } catch (e) {
-      console.log("EmailJS init error:", e);
-    }
-    callback();
-  };
-  script.onerror = function () {
-    showToast("⚠️ Email service unavailable. Using on-screen code.", "warning");
-    callback();
-  };
-}
-
-// ✅ FIXED: sendOTPEmail now returns a Promise
-function sendOTPEmail(email, name, code) {
-  return new Promise(function (resolve) {
-    loadEmailJS(function () {
-      if (typeof emailjs === "undefined") {
-        showToast("📱 Your OTP code: " + code, "info");
-        resolve(false);
-        return;
-      }
-
-      const templateParams = {
-        to_email: email,
-        to_name: name || "User",
-        code: code,
-        app_name: "G-KODE",
-        year: new Date().getFullYear(),
-      };
-
-      console.log("📧 Sending OTP to:", email);
-      console.log("🔑 Code:", code);
-
-      emailjs
-        .send(
-          EMAILJS_CONFIG.serviceID,
-          EMAILJS_CONFIG.otpTemplateID,
-          templateParams,
-        )
-        .then(function (response) {
-          console.log("✅ OTP email sent! Status:", response.status);
-          showToast("📧 Verification code sent to your email!", "success");
-          resolve(true);
-        })
-        .catch(function (error) {
-          console.error("❌ OTP email failed:", error);
-          showToast("📱 Your code: " + code + " (Check spam folder)", "info");
-          resolve(false);
-        });
-    });
-  });
-}
-
-// ✅ FIXED: sendResetEmail now returns a Promise
-function sendResetEmail(email, name, code) {
-  return new Promise(function (resolve) {
-    loadEmailJS(function () {
-      if (typeof emailjs === "undefined") {
-        showToast("📱 Your reset code: " + code, "info");
-        resolve(false);
-        return;
-      }
-
-      const templateParams = {
-        to_email: email,
-        to_name: name || "User",
-        code: code,
-        app_name: "G-KODE",
-        year: new Date().getFullYear(),
-      };
-
-      console.log("📧 Sending reset code to:", email);
-      console.log("🔑 Reset Code:", code);
-
-      emailjs
-        .send(
-          EMAILJS_CONFIG.serviceID,
-          EMAILJS_CONFIG.resetTemplateID,
-          templateParams,
-        )
-        .then(function (response) {
-          console.log("✅ Reset email sent! Status:", response.status);
-          showToast("📧 Reset code sent to your email!", "success");
-          resolve(true);
-        })
-        .catch(function (error) {
-          console.error("❌ Reset email failed:", error);
-          showToast(
-            "📱 Your reset code: " + code + " (Check spam folder)",
-            "info",
-          );
-          resolve(false);
-        });
-    });
-  });
-}
-
-// ============================================
-// REGISTER - FIXED WITH SUPABASE SYNC
+// REGISTER - CLOUD FIRST
 // ============================================
 async function register(e) {
   if (e) e.preventDefault();
@@ -868,7 +801,6 @@ async function register(e) {
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
-    // Validation
     if (
       !name ||
       !phone ||
@@ -920,45 +852,23 @@ async function register(e) {
       return;
     }
 
-    // Check local users
-    const users = getUsersLocal();
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].phone === phone) {
-        showToast("Phone already registered", "error");
-        btn.disabled = false;
-        btn.textContent = "REGISTER";
-        isProcessing = false;
-        return;
-      }
-      if (users[i].id === id) {
-        showToast("ID already registered", "error");
-        btn.disabled = false;
-        btn.textContent = "REGISTER";
-        isProcessing = false;
-        return;
-      }
-    }
-
-    // Check Supabase
-    // NEW CODE - add this:
-    // Check Supabase
-    if (supabaseInitialized && supabase) {
+    // ✅ CHECK SUPABASE FIRST (if online)
+    if (supabaseInitialized && isOnline) {
       try {
-        const { data, error } = await supabase
+        const { data: existingUser, error: checkError } = await supabase
           .from("users")
           .select("phone, email")
-          .or("phone.eq." + phone + ",email.eq." + email)
-          .maybeSingle();
-        if (data) {
+          .or("phone.eq." + phone + ",email.eq." + email);
+
+        if (!checkError && existingUser && existingUser.length > 0) {
           showToast("Phone or email already registered", "error");
           btn.disabled = false;
           btn.textContent = "REGISTER";
           isProcessing = false;
           return;
         }
-      } catch (supabaseErr) {
-        console.log("Supabase check failed, continuing:", supabaseErr);
-        // Continue with registration anyway
+      } catch (err) {
+        console.log("Supabase check failed:", err);
       }
     }
 
@@ -1015,7 +925,6 @@ async function register(e) {
     pendingRegistration = user;
     pendingOtp = otpCode;
 
-    // ✅ FIXED: Send OTP email with await
     btn.textContent = "⏳ SENDING OTP...";
     try {
       await sendOTPEmail(email, name, otpCode);
@@ -1054,7 +963,6 @@ function verifyOtp() {
   completeRegistration();
 }
 
-// ✅ FIXED: resendOtp now uses async/await
 async function resendOtp() {
   if (!pendingRegistration) {
     showToast("Please start registration again", "error");
@@ -1088,36 +996,34 @@ async function completeRegistration() {
 
   try {
     const user = pendingRegistration;
-
-    // ⚡ SAVE TO SUPABASE FIRST
     let saved = false;
-    if (supabaseInitialized) {
+
+    // ✅ SAVE TO SUPABASE FIRST (if online)
+    if (supabaseInitialized && isOnline) {
       try {
-        const { error } = await supabase.from("users").insert([
-          {
-            phone: user.phone,
-            national_id: user.id,
-            email: user.email,
-            full_name: user.name,
-            location: user.location,
-            profession: user.profession,
-            skills: user.skills
-              ? user.skills.split(",").map(function (s) {
-                  return s.trim();
-                })
-              : [],
-            photo_url: user.photo,
-            id_scan_url: user.idScan,
-            password_hash: user.password,
-            rating: 0,
-            review_count: 0,
-            strikes: 0,
-            is_paid: false,
-            is_banned: false,
-            created_at: new Date().toISOString(),
-            last_active: new Date().toISOString(),
-          },
-        ]);
+        const { error } = await supabase.from("users").insert({
+          phone: user.phone,
+          national_id: user.id,
+          email: user.email,
+          full_name: user.name,
+          location: user.location,
+          profession: user.profession,
+          skills: user.skills
+            ? user.skills.split(",").map(function (s) {
+                return s.trim();
+              })
+            : [],
+          photo_url: user.photo,
+          id_scan_url: user.idScan,
+          password_hash: user.password,
+          rating: 0,
+          review_count: 0,
+          strikes: 0,
+          is_paid: false,
+          is_banned: false,
+          created_at: new Date().toISOString(),
+          last_active: new Date().toISOString(),
+        });
         if (!error) saved = true;
       } catch (e) {
         console.log("Supabase save error:", e);
@@ -1159,7 +1065,7 @@ async function completeRegistration() {
 }
 
 // ============================================
-// LOGIN - FIXED WITH SUPABASE
+// LOGIN - CLOUD FIRST
 // ============================================
 async function login(e) {
   e.preventDefault();
@@ -1180,127 +1086,91 @@ async function login(e) {
       return;
     }
 
-    // ✅ CHECK: Is Supabase initialized?
-    if (!supabaseInitialized || !supabase) {
-      showToast("⚠️ Cloud service unavailable. Using local data.", "warning");
-      // Fallback to local users
-      const localUsers = getUsersLocal();
-      const localUser = localUsers.find(function (u) {
-        return u.phone === phone;
-      });
-      if (!localUser) {
-        showToast("❌ Phone not registered.", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
+    // ✅ CHECK SUPABASE FIRST (if online)
+    if (supabaseInitialized && isOnline) {
+      try {
+        const { data: users, error: findError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("phone", phone);
+
+        if (!findError && users && users.length > 0) {
+          const user = users[0];
+
+          if (user.password_hash !== password) {
+            showToast("❌ Wrong password.", "error");
+            btn.disabled = false;
+            btn.textContent = "LOGIN";
+            return;
+          }
+
+          if (user.is_banned) {
+            showToast("🚫 Account is banned! Contact support.", "error");
+            btn.disabled = false;
+            btn.textContent = "LOGIN";
+            return;
+          }
+
+          // Update last_active
+          try {
+            await supabase
+              .from("users")
+              .update({ last_active: new Date().toISOString() })
+              .eq("id", user.id);
+          } catch (updateErr) {
+            console.log("Could not update last_active:", updateErr);
+          }
+
+          currentUser = user;
+          if (rememberMe) {
+            localStorage.setItem("gkode_currentUser", JSON.stringify(user));
+          } else {
+            sessionStorage.setItem("gkode_currentUser", JSON.stringify(user));
+          }
+
+          document.getElementById("loginForm").reset();
+          showToast("Welcome back, " + user.full_name + "!", "success");
+          showScreen("home");
+          loadGigs();
+          btn.disabled = false;
+          btn.textContent = "LOGIN";
+          return;
+        }
+      } catch (err) {
+        console.log("Supabase login error, falling back to local:", err);
       }
-      if (localUser.password !== password) {
-        showToast("❌ Wrong password.", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
-      }
-      if (localUser.isBanned) {
-        showToast("🚫 Account is banned!", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
-      }
-      currentUser = localUser;
-      localStorage.setItem("gkode_user", JSON.stringify(localUser));
-      showToast("Welcome back, " + localUser.name + "!", "success");
-      showScreen("home");
-      loadGigs();
-      btn.disabled = false;
-      btn.textContent = "LOGIN";
-      return;
     }
 
-    // ⚡ CHECK SUPABASE
-    const { data: users, error: findError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("phone", phone);
+    // ✅ FALLBACK TO LOCAL
+    const localUsers = getUsersLocal();
+    const localUser = localUsers.find(function (u) {
+      return u.phone === phone;
+    });
 
-    if (findError) {
-      console.error("Supabase query error:", findError);
-      showToast("⚠️ Database error. Using local data.", "warning");
-      // Fallback to local users
-      const localUsers = getUsersLocal();
-      const localUser = localUsers.find(function (u) {
-        return u.phone === phone;
-      });
-      if (!localUser) {
-        showToast("❌ Phone not registered.", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
-      }
-      if (localUser.password !== password) {
-        showToast("❌ Wrong password.", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
-      }
-      if (localUser.isBanned) {
-        showToast("🚫 Account is banned!", "error");
-        btn.disabled = false;
-        btn.textContent = "LOGIN";
-        return;
-      }
-      currentUser = localUser;
-      localStorage.setItem("gkode_user", JSON.stringify(localUser));
-      showToast("Welcome back, " + localUser.name + "!", "success");
-      showScreen("home");
-      loadGigs();
-      btn.disabled = false;
-      btn.textContent = "LOGIN";
-      return;
-    }
-
-    if (!users || users.length === 0) {
+    if (!localUser) {
       showToast("❌ Phone not registered.", "error");
       btn.disabled = false;
       btn.textContent = "LOGIN";
       return;
     }
 
-    const user = users[0];
-
-    if (user.password_hash !== password) {
+    if (localUser.password !== password) {
       showToast("❌ Wrong password.", "error");
       btn.disabled = false;
       btn.textContent = "LOGIN";
       return;
     }
 
-    if (user.is_banned) {
-      showToast("🚫 Account is banned! Contact support.", "error");
+    if (localUser.isBanned) {
+      showToast("🚫 Account is banned!", "error");
       btn.disabled = false;
       btn.textContent = "LOGIN";
       return;
     }
 
-    // ⚡ UPDATE LAST ACTIVE
-    try {
-      await supabase
-        .from("users")
-        .update({ last_active: new Date().toISOString() })
-        .eq("id", user.id);
-    } catch (updateErr) {
-      console.log("Could not update last_active:", updateErr);
-    }
-
-    // Store user
-    currentUser = user;
-    if (rememberMe) {
-      localStorage.setItem("gkode_currentUser", JSON.stringify(user));
-    } else {
-      sessionStorage.setItem("gkode_currentUser", JSON.stringify(user));
-    }
-
-    document.getElementById("loginForm").reset();
-    showToast("Welcome back, " + user.full_name + "!", "success");
+    currentUser = localUser;
+    localStorage.setItem("gkode_user", JSON.stringify(localUser));
+    showToast("Welcome back, " + localUser.name + "!", "success");
     showScreen("home");
     loadGigs();
   } catch (err) {
@@ -1310,35 +1180,6 @@ async function login(e) {
 
   btn.disabled = false;
   btn.textContent = "LOGIN";
-}
-
-// ============================================
-// CHECK SESSION
-// ============================================
-async function checkSession() {
-  const savedUser =
-    sessionStorage.getItem("gkode_currentUser") ||
-    localStorage.getItem("gkode_currentUser");
-
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser);
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id);
-
-      if (!error && data && data.length > 0) {
-        currentUser = data[0];
-        showScreen("home");
-        loadGigs();
-        return;
-      }
-    } catch (e) {
-      console.log("Session expired");
-    }
-  }
-  showScreen("welcome");
 }
 
 // ============================================
@@ -1353,7 +1194,7 @@ function logout() {
 }
 
 // ============================================
-// RESET PASSWORD - FIXED
+// RESET PASSWORD
 // ============================================
 async function sendResetCode() {
   const btn = document.getElementById("sendResetBtn");
@@ -1370,27 +1211,58 @@ async function sendResetCode() {
       return;
     }
 
-    const { data: users, error: findError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email);
+    let user = null;
 
-    if (findError) throw findError;
+    // ✅ CHECK SUPABASE FIRST
+    if (supabaseInitialized && isOnline) {
+      try {
+        const { data: users, error: findError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email);
 
-    if (!users || users.length === 0) {
+        if (!findError && users && users.length > 0) {
+          user = users[0];
+        }
+      } catch (err) {
+        console.log("Supabase email check failed:", err);
+      }
+    }
+
+    // ✅ FALLBACK TO LOCAL
+    if (!user) {
+      const localUsers = getUsersLocal();
+      const localUser = localUsers.find(function (u) {
+        return u.email === email;
+      });
+      if (localUser) {
+        user = {
+          phone: localUser.phone,
+          national_id: localUser.id,
+          profession: localUser.profession,
+          location: localUser.location,
+          full_name: localUser.name,
+          id: localUser.phone, // Use phone as ID for local
+        };
+      }
+    }
+
+    if (!user) {
       showToast("❌ No account found with this email.", "error");
       btn.disabled = false;
       btn.textContent = "📧 SEND RESET CODE";
       return;
     }
 
-    const user = users[0];
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log("🔑 Reset Code:", resetCode);
 
-    // ✅ FIXED: Send reset email with await
     try {
-      const emailSent = await sendResetEmail(email, user.full_name, resetCode);
+      const emailSent = await sendResetEmail(
+        email,
+        user.full_name || "User",
+        resetCode,
+      );
       if (!emailSent) {
         showToast("⚠️ Email failed. Your code: " + resetCode, "warning");
       } else {
@@ -1411,7 +1283,7 @@ async function sendResetCode() {
       national_id: user.national_id,
       profession: user.profession,
       location: user.location,
-      userId: user.id,
+      userId: user.id || user.phone,
     };
 
     document.getElementById("resetStep1").style.display = "none";
@@ -1512,7 +1384,6 @@ async function verifyResetIdentity() {
   }
 }
 
-// ✅ FIXED: resendResetCode now uses async/await
 async function resendResetCode() {
   if (!resetData) {
     showToast("❌ Reset session expired. Please start over.", "error");
@@ -1574,20 +1445,59 @@ async function resetPassword() {
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ password_hash: newPassword })
-      .eq("id", resetData.userId);
+    // ✅ Update in Supabase
+    if (supabaseInitialized && isOnline) {
+      try {
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({ password_hash: newPassword })
+          .eq("id", resetData.userId);
 
-    if (updateError) throw updateError;
+        if (!updateError) {
+          // Also update local
+          const localUsers = getUsersLocal();
+          for (var i = 0; i < localUsers.length; i++) {
+            if (localUsers[i].phone === resetData.phone) {
+              localUsers[i].password = newPassword;
+              break;
+            }
+          }
+          setUsersLocal(localUsers);
+
+          resetData = null;
+          clearInterval(resetTimerInterval);
+          document.getElementById("resetStep3").style.display = "none";
+          document.getElementById("resetStep1").style.display = "block";
+          document.getElementById("resetEmail").value = "";
+          showToast("✅ Password reset successful! Please login.", "success");
+          showScreen("login");
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "RESET PASSWORD";
+          }
+          return;
+        }
+      } catch (err) {
+        console.log("Supabase reset failed, trying local:", err);
+      }
+    }
+
+    // ✅ FALLBACK: Update local only
+    const localUsers = getUsersLocal();
+    for (var i = 0; i < localUsers.length; i++) {
+      if (localUsers[i].phone === resetData.phone) {
+        localUsers[i].password = newPassword;
+        break;
+      }
+    }
+    setUsersLocal(localUsers);
 
     resetData = null;
     clearInterval(resetTimerInterval);
     document.getElementById("resetStep3").style.display = "none";
     document.getElementById("resetStep1").style.display = "block";
     document.getElementById("resetEmail").value = "";
-
-    showToast("✅ Password reset successful! Please login.", "success");
+    showToast("✅ Password reset successful! (Local)", "success");
     showScreen("login");
   } catch (err) {
     showToast("Error: " + err.message, "error");
@@ -1630,7 +1540,7 @@ function updateResetTimerDisplay() {
 }
 
 // ============================================
-// GIG FUNCTIONS
+// GIG FUNCTIONS - CLOUD FIRST
 // ============================================
 function postGig(e) {
   if (e) e.preventDefault();
@@ -1692,9 +1602,40 @@ function postGig(e) {
       createdAt: new Date().toISOString(),
     };
 
+    // Save to localStorage
     let gigs = getGigsLocal();
     gigs.push(gig);
     setGigsLocal(gigs);
+
+    // ✅ Also save to Supabase if online
+    if (supabaseInitialized && isOnline) {
+      try {
+        supabase
+          .from("gigs")
+          .insert({
+            id: gig.id,
+            title: gig.title,
+            skill: gig.skill,
+            location: gig.location,
+            urgency: gig.urgency,
+            budget_min: gig.budgetMin,
+            budget_max: gig.budgetMax,
+            description: gig.description,
+            client_phone: gig.clientPhone,
+            client_name: gig.client,
+            status: gig.status,
+            gps_lat: gig.gpsLat,
+            gps_lon: gig.gpsLon,
+            created_at: gig.createdAt,
+          })
+          .then(function (result) {
+            if (result.error)
+              console.log("Supabase gig save error:", result.error);
+          });
+      } catch (err) {
+        console.log("Could not save gig to Supabase:", err);
+      }
+    }
 
     showToast("✅ Gig posted successfully!", "success");
     showScreen("home");
@@ -1744,11 +1685,52 @@ function switchTab(tab) {
   loadGigs();
 }
 
-function loadGigs() {
+async function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
 
-  const gigs = getGigsLocal();
+  let gigs = [];
+
+  // ✅ Try Supabase first
+  if (supabaseInitialized && isOnline) {
+    try {
+      const { data, error } = await supabase
+        .from("gigs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        gigs = data.map(function (g) {
+          return {
+            id: g.id,
+            title: g.title,
+            skill: g.skill,
+            location: g.location,
+            urgency: g.urgency || "Normal",
+            budgetMin: g.budget_min,
+            budgetMax: g.budget_max,
+            description: g.description,
+            client: g.client_name,
+            clientPhone: g.client_phone,
+            status: g.status || "Open",
+            worker: g.worker_name || "",
+            workerPhone: g.worker_phone || "",
+            gpsLat: g.gps_lat,
+            gpsLon: g.gps_lon,
+            createdAt: g.created_at,
+          };
+        });
+      }
+    } catch (err) {
+      console.log("Could not load gigs from Supabase:", err);
+    }
+  }
+
+  // ✅ Fallback to local
+  if (gigs.length === 0) {
+    gigs = getGigsLocal();
+  }
+
   const filtered = [];
   for (var i = 0; i < gigs.length; i++) {
     var g = gigs[i];
@@ -1849,6 +1831,28 @@ function acceptGig(id) {
   gig.workerPhone = currentUser.phone;
 
   setGigsLocal(gigs);
+
+  // ✅ Update in Supabase
+  if (supabaseInitialized && isOnline) {
+    try {
+      supabase
+        .from("gigs")
+        .update({
+          status: "Assigned",
+          worker_name: currentUser.name,
+          worker_phone: currentUser.phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .then(function (result) {
+          if (result.error)
+            console.log("Supabase gig update error:", result.error);
+        });
+    } catch (err) {
+      console.log("Could not update gig in Supabase:", err);
+    }
+  }
+
   showToast("✅ Gig accepted!", "success");
   loadGigs();
   openChat(id);
@@ -1995,7 +1999,8 @@ function navigateToClient() {
 // ============================================
 function loadProfile() {
   if (!currentUser) return;
-  document.getElementById("profileName").textContent = currentUser.name;
+  document.getElementById("profileName").textContent =
+    currentUser.full_name || currentUser.name;
   document.getElementById("profilePhone").textContent =
     "📞 " + currentUser.phone;
   document.getElementById("profileLocation").textContent =
@@ -2003,18 +2008,25 @@ function loadProfile() {
   document.getElementById("profileProfession").textContent =
     "👔 " + currentUser.profession;
   document.getElementById("profileSkills").textContent =
-    "🛠️ " + (currentUser.skills || "None");
-  if (currentUser.photo) {
-    document.getElementById("profilePhoto").src = currentUser.photo;
+    "🛠️ " +
+    (currentUser.skills
+      ? Array.isArray(currentUser.skills)
+        ? currentUser.skills.join(", ")
+        : currentUser.skills
+      : "None");
+  if (currentUser.photo_url || currentUser.photo) {
+    document.getElementById("profilePhoto").src =
+      currentUser.photo_url || currentUser.photo;
   }
-  var statusText = currentUser.verified ? "✅ Verified" : "🟡 Pending";
+  var statusText = currentUser.is_paid ? "✅ Paid" : "🟡 Pending";
   document.getElementById("profileStatus").innerHTML =
     statusText +
     " | ⭐ " +
     (currentUser.rating || 0) +
     " (" +
-    (currentUser.reviewCount || 0) +
+    (currentUser.review_count || 0) +
     " reviews)";
+
   var gigs = getGigsLocal();
   var myGigs = [];
   for (var i = 0; i < gigs.length; i++) {
@@ -2165,7 +2177,7 @@ function registerCompany(e) {
       }
     }
 
-    companies.push({
+    var company = {
       id: Date.now().toString(),
       name: name,
       type: type,
@@ -2179,8 +2191,37 @@ function registerCompany(e) {
       registeredAt: new Date().toISOString(),
       totalSales: 0,
       totalCommission: 0,
-    });
+    };
+
+    companies.push(company);
     setCompaniesLocal(companies);
+
+    // ✅ Save to Supabase
+    if (supabaseInitialized && isOnline) {
+      try {
+        supabase
+          .from("companies")
+          .insert({
+            id: company.id,
+            name: company.name,
+            type: company.type,
+            reg_no: company.regNo,
+            location: company.location,
+            phone: company.phone,
+            email: company.email,
+            description: company.desc,
+            owner_phone: company.ownerPhone,
+            owner_name: company.owner,
+            created_at: company.registeredAt,
+          })
+          .then(function (result) {
+            if (result.error)
+              console.log("Supabase company save error:", result.error);
+          });
+      } catch (err) {
+        console.log("Could not save company to Supabase:", err);
+      }
+    }
 
     showToast("✅ " + name + " registered successfully!", "success");
     showScreen("companyDashboard");
@@ -2329,8 +2370,7 @@ function addProduct(e) {
       return;
     }
 
-    var products = getProductsLocal();
-    products.push({
+    var product = {
       id: Date.now().toString(),
       companyId: myComp.id,
       companyName: myComp.name,
@@ -2341,8 +2381,37 @@ function addProduct(e) {
       stock: stock,
       desc: desc,
       createdAt: new Date().toISOString(),
-    });
+    };
+
+    var products = getProductsLocal();
+    products.push(product);
     setProductsLocal(products);
+
+    // ✅ Save to Supabase
+    if (supabaseInitialized && isOnline) {
+      try {
+        supabase
+          .from("products")
+          .insert({
+            id: product.id,
+            company_id: product.companyId,
+            company_name: product.companyName,
+            name: product.name,
+            category: product.category,
+            unit: product.unit,
+            price: product.price,
+            stock: product.stock,
+            description: product.desc,
+            created_at: product.createdAt,
+          })
+          .then(function (result) {
+            if (result.error)
+              console.log("Supabase product save error:", result.error);
+          });
+      } catch (err) {
+        console.log("Could not save product to Supabase:", err);
+      }
+    }
 
     showToast("✅ " + name + " added!", "success");
     showScreen("companyDashboard");
@@ -2603,80 +2672,11 @@ function deleteAccount() {
 }
 
 // ============================================
-// AUTO-SYNC USER TO SUPABASE
-// ============================================
-async function autoSyncUserToSupabase(userData) {
-  if (!supabaseInitialized) {
-    console.log("⚠️ Supabase not ready, skipping sync");
-    return false;
-  }
-
-  try {
-    var { data: existing, error: checkError } = await supabase
-      .from("users")
-      .select("phone")
-      .eq("phone", userData.phone);
-
-    if (checkError) throw checkError;
-
-    if (existing && existing.length > 0) {
-      var { error: updateError } = await supabase
-        .from("users")
-        .update({
-          full_name: userData.name || userData.full_name,
-          national_id: userData.id || userData.national_id,
-          email: userData.email || "N/A",
-          location: userData.location || "N/A",
-          profession: userData.profession || "N/A",
-          skills: userData.skills ? [userData.skills] : [],
-          photo_url: userData.photo || null,
-          rating: userData.rating || 0,
-          review_count: userData.reviewCount || 0,
-          strikes: userData.strikes || 0,
-          is_paid: userData.isPaid || false,
-          is_banned: userData.isBanned || false,
-          last_active: new Date().toISOString(),
-        })
-        .eq("phone", userData.phone);
-
-      if (updateError) throw updateError;
-      console.log("✅ User updated in Supabase:", userData.phone);
-    } else {
-      var { error: insertError } = await supabase.from("users").insert({
-        phone: userData.phone,
-        full_name: userData.name || userData.full_name || "Unknown",
-        national_id: userData.id || userData.national_id || "N/A",
-        email: userData.email || "N/A",
-        password_hash: userData.password || "password",
-        location: userData.location || "N/A",
-        profession: userData.profession || "N/A",
-        skills: userData.skills ? [userData.skills] : [],
-        photo_url: userData.photo || null,
-        rating: userData.rating || 0,
-        review_count: userData.reviewCount || 0,
-        strikes: userData.strikes || 0,
-        is_paid: userData.isPaid || false,
-        is_banned: userData.isBanned || false,
-        created_at: userData.registeredAt || new Date().toISOString(),
-        last_active: new Date().toISOString(),
-      });
-
-      if (insertError) throw insertError;
-      console.log("✅ New user saved to Supabase:", userData.phone);
-    }
-    return true;
-  } catch (e) {
-    console.error("❌ Auto-sync error:", e);
-    return false;
-  }
-}
-
-// ============================================
 // SYNC ALL LOCAL USERS TO SUPABASE
 // ============================================
 async function syncAllUsersToCloud() {
-  if (!supabaseInitialized) {
-    showToast("❌ Supabase not connected!", "error");
+  if (!supabaseInitialized || !isOnline) {
+    showToast("❌ Supabase not connected or offline!", "error");
     return;
   }
 
@@ -2693,11 +2693,37 @@ async function syncAllUsersToCloud() {
   var failCount = 0;
 
   for (var i = 0; i < localUsers.length; i++) {
-    var synced = await syncUserToSupabase(localUsers[i]);
-    if (synced) {
-      successCount++;
-    } else {
+    try {
+      var { error } = await supabase.from("users").upsert(
+        {
+          phone: localUsers[i].phone,
+          national_id: localUsers[i].id,
+          email: localUsers[i].email,
+          full_name: localUsers[i].name,
+          location: localUsers[i].location,
+          profession: localUsers[i].profession,
+          skills: localUsers[i].skills ? [localUsers[i].skills] : [],
+          photo_url: localUsers[i].photo,
+          password_hash: localUsers[i].password,
+          rating: localUsers[i].rating || 0,
+          review_count: localUsers[i].reviewCount || 0,
+          strikes: localUsers[i].strikes || 0,
+          is_paid: localUsers[i].isPaid || false,
+          is_banned: localUsers[i].isBanned || false,
+          last_active: new Date().toISOString(),
+        },
+        { onConflict: "phone" },
+      );
+
+      if (!error) {
+        successCount++;
+      } else {
+        failCount++;
+        console.error("Sync error for", localUsers[i].phone, error);
+      }
+    } catch (err) {
       failCount++;
+      console.error("Sync error for", localUsers[i].phone, err);
     }
   }
 
@@ -2711,7 +2737,11 @@ async function syncAllUsersToCloud() {
 // 🚀 INIT
 // ============================================
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 G-KODE v3.1 loading...");
+  console.log("🚀 G-KODE v4.0 (Cloud-First) loading...");
+  console.log(
+    "📡 Online status:",
+    navigator.onLine ? "✅ Online" : "❌ Offline",
+  );
 
   populateProfessionDropdown();
   populateCategoryDropdown();
@@ -2719,15 +2749,25 @@ document.addEventListener("DOMContentLoaded", function () {
   setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
   setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
 
-  var savedUser = localStorage.getItem("gkode_user");
+  // Check for saved session
+  var savedUser =
+    localStorage.getItem("gkode_user") ||
+    localStorage.getItem("gkode_currentUser");
   if (savedUser) {
     try {
       currentUser = JSON.parse(savedUser);
       if (currentUser) {
-        console.log("✅ Auto-login:", currentUser.name);
+        console.log(
+          "✅ Auto-login:",
+          currentUser.full_name || currentUser.name,
+        );
         showScreen("home");
         loadGigs();
         updateBottomNav();
+        // Try to sync user to cloud
+        if (supabaseInitialized && isOnline) {
+          syncUserToSupabase(currentUser);
+        }
       }
     } catch (e) {
       console.log("Auto-login failed:", e);
@@ -2737,22 +2777,10 @@ document.addEventListener("DOMContentLoaded", function () {
     showScreen("welcome");
   }
 
-  console.log("🚀 G-KODE v3.1 loaded successfully!");
-  console.log("📊 Data stored in localStorage (fallback).");
+  console.log("🚀 G-KODE v4.0 loaded successfully!");
+  console.log(
+    "📊 Using Supabase as primary data source with localStorage fallback",
+  );
   console.log("☁️ Supabase URL:", SUPABASE_URL);
   console.log("📧 EmailJS configured.");
 });
-
-// ============================================
-// GLOBAL ERROR HANDLING
-// ============================================
-window.onerror = function (message, source, lineno, colno, error) {
-  console.error("Global error:", {
-    message: message,
-    source: source,
-    lineno: lineno,
-    colno: colno,
-    error: error,
-  });
-  showToast("An unexpected error occurred. Please try again.", "error");
-};
