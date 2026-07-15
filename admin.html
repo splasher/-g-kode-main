@@ -681,7 +681,7 @@
 
     <script>
       // ============================================
-      // SUPABASE CONFIG — USING SERVICE ROLE KEY
+      // SUPABASE CONFIG
       // ============================================
       const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
       const SUPABASE_SERVICE_KEY =
@@ -694,42 +694,61 @@
       let paymentEnabled = true;
 
       // ============================================
-      // LOAD SUAPBASE ONCE
+      // LOAD SUPABASE
       // ============================================
-      function loadSupabase() {
+      function initSupabase() {
+        if (supabaseInitialized) return;
+
+        // Check if Supabase is already loaded
         if (typeof window.supabase !== "undefined") {
-          initSupabase();
-          return;
+          try {
+            supabase = window.supabase.createClient(
+              SUPABASE_URL,
+              SUPABASE_SERVICE_KEY,
+            );
+            supabaseInitialized = true;
+            console.log("✅ Supabase connected");
+            updateSyncStatus("✅ Connected to cloud", "online");
+            return;
+          } catch (e) {
+            console.log("Supabase init error:", e);
+          }
         }
+
+        // Load the library
         var script = document.createElement("script");
         script.src =
           "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-        script.onload = initSupabase;
+        script.onload = function () {
+          try {
+            supabase = window.supabase.createClient(
+              SUPABASE_URL,
+              SUPABASE_SERVICE_KEY,
+            );
+            supabaseInitialized = true;
+            console.log("✅ Supabase connected via CDN");
+            updateSyncStatus("✅ Connected to cloud", "online");
+          } catch (e) {
+            console.log("Supabase init error:", e);
+            updateSyncStatus("⚠️ Connection failed", "offline");
+          }
+        };
         script.onerror = function () {
-          updateSyncStatus("⚠️ Cloud unavailable", "offline");
-          showToast("⚠️ Cloud services unavailable", "warning");
+          console.log("❌ Failed to load Supabase library");
+          updateSyncStatus(
+            "⚠️ Connection failed - library not loaded",
+            "offline",
+          );
+          showToast(
+            "⚠️ Failed to connect to Supabase. Please refresh.",
+            "error",
+          );
         };
         document.head.appendChild(script);
       }
 
-      function initSupabase() {
-        if (supabaseInitialized) return;
-        try {
-          supabase = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_SERVICE_KEY,
-          );
-          supabaseInitialized = true;
-          updateSyncStatus("✅ Connected to cloud", "online");
-          console.log("✅ Supabase connected with SERVICE ROLE KEY");
-        } catch (e) {
-          console.log("⚠️ Supabase init error:", e);
-          updateSyncStatus("⚠️ Connection failed", "offline");
-        }
-      }
-
       // Start loading
-      loadSupabase();
+      initSupabase();
 
       // ============================================
       // PAYMENT STATE
@@ -756,6 +775,7 @@
       function showToast(msg, type) {
         type = type || "info";
         var container = document.getElementById("toast-container");
+        if (!container) return;
         var colors = {
           success: "#006400",
           error: "#cc0000",
@@ -765,7 +785,8 @@
         var toast = document.createElement("div");
         toast.style.cssText =
           "padding:12px 20px;border-radius:10px;color:#fff;margin-bottom:8px;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:" +
-          (colors[type] || "#333");
+          (colors[type] || "#333") +
+          ";animation:slideDown 0.3s ease;";
         toast.textContent = msg;
         container.appendChild(toast);
         setTimeout(function () {
@@ -843,7 +864,7 @@
       // ============================================
       async function getUsersFromSupabase() {
         if (!supabaseInitialized || !supabase) {
-          console.warn("⚠️ Supabase not ready");
+          console.warn("⚠️ Supabase not ready, using localStorage");
           return getUsersLocal();
         }
         try {
@@ -920,6 +941,11 @@
           loadPaymentSettings();
           showToast("✅ Welcome Admin!", "success");
           addLog("Admin logged in");
+
+          // Try to reconnect if not initialized
+          if (!supabaseInitialized) {
+            initSupabase();
+          }
         } else {
           showToast("❌ Access denied", "error");
         }
@@ -1001,6 +1027,13 @@
       async function syncAllToCloud() {
         if (!supabaseInitialized || !supabase) {
           showToast("❌ Supabase not connected!", "error");
+          // Try to reconnect
+          initSupabase();
+          setTimeout(function () {
+            if (supabaseInitialized) {
+              syncAllToCloud();
+            }
+          }, 2000);
           return;
         }
         var localUsers = getUsersLocal();
@@ -1061,10 +1094,10 @@
       async function viewUsers() {
         var output = document.getElementById("output");
         output.innerHTML =
-          '<div style="text-align:center;padding:20px;"><div class="loader"></div><p>Loading...</p></div>';
+          '<div style="text-align:center;padding:20px;"><div class="loader"></div><p>Loading users...</p></div>';
         var users = await getUsersFromSupabase();
         if (!users || users.length === 0) {
-          output.innerHTML = "<p>No users found.</p>";
+          output.innerHTML = "<p>No users found in cloud.</p>";
           return;
         }
         var html =
