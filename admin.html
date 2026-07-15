@@ -58,7 +58,6 @@
       .btn-small {
         padding: 8px 16px;
         font-size: 13px;
-        width: auto;
         display: inline-block;
         margin-right: 5px;
         margin-bottom: 5px;
@@ -146,10 +145,6 @@
         background: #cc0000;
         color: #fff;
       }
-      .badge-active {
-        background: #2196f3;
-        color: #fff;
-      }
       .login-box {
         max-width: 400px;
         margin: 100px auto;
@@ -207,18 +202,6 @@
       }
       .btn.red {
         background: #cc0000;
-        color: #fff;
-      }
-      .btn.blue {
-        background: #2196f3;
-        color: #fff;
-      }
-      .btn.orange {
-        background: #ff9800;
-        color: #000;
-      }
-      .btn.purple {
-        background: #9c27b0;
         color: #fff;
       }
       input {
@@ -361,21 +344,6 @@
         color: #cc0000;
         background: #ffebee;
       }
-      .status-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-      .status-badge.active {
-        background: #e8f5e9;
-        color: #006400;
-      }
-      .status-badge.inactive {
-        background: #ffebee;
-        color: #cc0000;
-      }
       @media (max-width: 480px) {
         .admin-card .stats {
           grid-template-columns: 1fr 1fr;
@@ -389,12 +357,9 @@
     </style>
   </head>
   <body>
-    <!-- ===== TOAST CONTAINER ===== -->
     <div id="toast-container"></div>
 
-    <!-- ============================================ -->
-    <!-- LOGIN BOX                                   -->
-    <!-- ============================================ -->
+    <!-- LOGIN -->
     <div id="loginBox" class="login-box">
       <h1>🔐 Admin Panel</h1>
       <p style="color: #888; margin-bottom: 20px">
@@ -411,9 +376,7 @@
       <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <!-- ============================================ -->
-    <!-- ADMIN PANEL                                 -->
-    <!-- ============================================ -->
+    <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
       <h1>🚨 Admin Panel</h1>
       <p style="color: #888; margin-bottom: 20px">
@@ -421,7 +384,7 @@
       </p>
       <div class="sync-status" id="adminSyncStatus">📡 Connected to cloud</div>
 
-      <!-- ===== STATS DASHBOARD ===== -->
+      <!-- STATS -->
       <div class="admin-card">
         <h3>📊 Dashboard</h3>
         <div class="stats">
@@ -455,7 +418,7 @@
         </button>
       </div>
 
-      <!-- ===== USER MANAGEMENT ===== -->
+      <!-- USER MANAGEMENT -->
       <div class="section-title">👥 USER MANAGEMENT</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -477,7 +440,7 @@
         </p>
       </div>
 
-      <!-- ===== GIG MANAGEMENT ===== -->
+      <!-- GIG MANAGEMENT -->
       <div class="section-title">📋 GIG MANAGEMENT</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -493,7 +456,7 @@
         </div>
       </div>
 
-      <!-- ===== COMPLAINTS & SECURITY ===== -->
+      <!-- COMPLAINTS -->
       <div class="section-title">🚩 COMPLAINTS & SECURITY</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -512,7 +475,7 @@
         </div>
       </div>
 
-      <!-- ===== PAYMENT SYSTEM ===== -->
+      <!-- PAYMENT SYSTEM -->
       <div class="section-title">💳 PAYMENT SYSTEM</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -548,7 +511,7 @@
         </div>
       </div>
 
-      <!-- ===== PAYMENT SETTINGS ===== -->
+      <!-- PAYMENT SETTINGS -->
       <div class="section-title">💳 PAYMENT SETTINGS</div>
       <div class="admin-card">
         <h4>💰 Commission & Bank</h4>
@@ -594,7 +557,7 @@
         </button>
       </div>
 
-      <!-- ===== ADVERTISING ===== -->
+      <!-- ADVERTISING -->
       <div class="section-title">📢 ADVERTISING</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -654,7 +617,7 @@
         <div id="adsList" style="margin-top: 15px"></div>
       </div>
 
-      <!-- ===== SYSTEM TOOLS ===== -->
+      <!-- SYSTEM TOOLS -->
       <div class="section-title">🔧 SYSTEM TOOLS</div>
       <div class="admin-card">
         <div class="flex-buttons">
@@ -677,7 +640,7 @@
         </div>
       </div>
 
-      <!-- ===== DANGER ZONE ===== -->
+      <!-- DANGER ZONE -->
       <div
         class="section-title"
         style="border-bottom-color: #cc0000; color: #cc0000"
@@ -702,10 +665,10 @@
         </p>
       </div>
 
-      <!-- ===== OUTPUT ===== -->
+      <!-- OUTPUT -->
       <div id="output"></div>
 
-      <!-- ===== LOGOUT ===== -->
+      <!-- LOGOUT -->
       <button
         class="btn outline"
         onclick="adminLogout()"
@@ -716,31 +679,24 @@
       <a href="index.html" class="back-link">← Back to G-KODE</a>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SCRIPTS                                     -->
-    <!-- ============================================ -->
     <script>
       // ============================================
-      // SUPABASE CONFIG — FIXED: USING SERVICE ROLE KEY
+      // SUPABASE CONFIG — USING SERVICE ROLE KEY
       // ============================================
       const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
-      // ✅ CHANGED: Using SERVICE ROLE KEY (bypasses RLS)
       const SUPABASE_SERVICE_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmlqeHBiZHJob2xzaHpodXNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3NjE4NSwiZXhwIjoyMDk4MTUyMTg1fQ.Ypd8iKnvD3By_75yEE1VRSVnJw7SGK6_IqLugRu2nCA";
+
       let supabase = null;
       let supabaseInitialized = false;
-
-      // ============================================
-      // ADMIN CONFIG
-      // ============================================
       const ADMIN_KEY = "MAYA";
       let adminLoggedIn = false;
       let paymentEnabled = true;
 
       // ============================================
-      // INIT SUPABASE
+      // LOAD SUAPBASE ONCE
       // ============================================
-      function loadSupabaseLibrary() {
+      function loadSupabase() {
         if (typeof window.supabase !== "undefined") {
           initSupabase();
           return;
@@ -748,20 +704,10 @@
         var script = document.createElement("script");
         script.src =
           "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-        script.onload = function () {
-          console.log("✅ Supabase library loaded (Admin)");
-          initSupabase();
-        };
+        script.onload = initSupabase;
         script.onerror = function () {
-          console.warn("⚠️ Failed to load Supabase library (Admin)");
-          updateSyncStatus(
-            "⚠️ Cloud unavailable. Using local data.",
-            "offline",
-          );
-          showToast(
-            "⚠️ Cloud services unavailable. Using local data.",
-            "warning",
-          );
+          updateSyncStatus("⚠️ Cloud unavailable", "offline");
+          showToast("⚠️ Cloud services unavailable", "warning");
         };
         document.head.appendChild(script);
       }
@@ -769,111 +715,58 @@
       function initSupabase() {
         if (supabaseInitialized) return;
         try {
-          if (typeof window.supabase === "undefined") {
-            console.warn("⚠️ Supabase library not loaded yet");
-            loadSupabaseLibrary();
-            return;
-          }
-          // ✅ CHANGED: Using SERVICE ROLE KEY
           supabase = window.supabase.createClient(
             SUPABASE_URL,
             SUPABASE_SERVICE_KEY,
           );
           supabaseInitialized = true;
-          console.log("✅ Supabase connected (Admin) with SERVICE ROLE KEY");
           updateSyncStatus("✅ Connected to cloud", "online");
-          // Test connection
-          supabase
-            .from("users")
-            .select("count", { count: "exact", head: true })
-            .then(function (result) {
-              if (result.error) {
-                console.warn("Supabase connection test failed:", result.error);
-                updateSyncStatus("⚠️ Cloud connection issue", "offline");
-              } else {
-                console.log("✅ Supabase connection confirmed");
-              }
-            })
-            .catch(function (err) {
-              console.warn("Supabase connection test error:", err);
-              updateSyncStatus("⚠️ Cloud connection issue", "offline");
-            });
+          console.log("✅ Supabase connected with SERVICE ROLE KEY");
         } catch (e) {
-          console.log("⚠️ Supabase not available:", e);
-          updateSyncStatus("⚠️ Cloud unavailable", "offline");
+          console.log("⚠️ Supabase init error:", e);
+          updateSyncStatus("⚠️ Connection failed", "offline");
         }
       }
 
-      function updateSyncStatus(message, status) {
-        var el = document.getElementById("adminSyncStatus");
-        if (!el) el = document.getElementById("syncStatus");
-        if (el) {
-          el.textContent = message;
-          el.className = "sync-status " + (status || "online");
-        }
-      }
-
-      loadSupabaseLibrary();
+      // Start loading
+      loadSupabase();
 
       // ============================================
-      // LOAD PAYMENT STATE FROM LOCALSTORAGE
+      // PAYMENT STATE
       // ============================================
       function loadPaymentState() {
         try {
-          const saved = localStorage.getItem("gkode_payment_enabled");
+          var saved = localStorage.getItem("gkode_payment_enabled");
           if (saved !== null) {
             paymentEnabled = saved === "true";
           }
-          console.log(
-            "💳 Payment system state:",
-            paymentEnabled ? "ACTIVE" : "DISABLED",
-          );
-          updatePaymentStatus();
-        } catch (e) {
-          console.log("Payment state load error:", e);
-        }
+        } catch (e) {}
+        updatePaymentStatus();
       }
 
-      // ============================================
-      // SAVE PAYMENT STATE TO LOCALSTORAGE
-      // ============================================
       function savePaymentState() {
         try {
           localStorage.setItem("gkode_payment_enabled", String(paymentEnabled));
-          console.log(
-            "💳 Payment system saved:",
-            paymentEnabled ? "ACTIVE" : "DISABLED",
-          );
-        } catch (e) {
-          console.log("Payment state save error:", e);
-        }
+        } catch (e) {}
       }
 
       // ============================================
       // TOAST
       // ============================================
-      function showToast(message, type) {
+      function showToast(msg, type) {
         type = type || "info";
         var container = document.getElementById("toast-container");
-        if (!container) {
-          container = document.createElement("div");
-          container.id = "toast-container";
-          container.style.cssText =
-            "position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;width:90%;max-width:500px;pointer-events:none;";
-          document.body.appendChild(container);
-        }
-        var toast = document.createElement("div");
         var colors = {
           success: "#006400",
           error: "#cc0000",
           info: "#2196F3",
           warning: "#ff9800",
         };
+        var toast = document.createElement("div");
         toast.style.cssText =
-          "padding:12px 20px;border-radius:10px;color:#fff;margin-bottom:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:" +
-          (colors[type] || "#333") +
-          ";pointer-events:auto;font-size:14px;font-weight:500;animation:slideDown 0.3s ease;";
-        toast.textContent = message;
+          "padding:12px 20px;border-radius:10px;color:#fff;margin-bottom:8px;font-weight:500;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);background:" +
+          (colors[type] || "#333");
+        toast.textContent = msg;
         container.appendChild(toast);
         setTimeout(function () {
           toast.style.opacity = "0";
@@ -884,8 +777,18 @@
         }, 4000);
       }
 
+      function updateSyncStatus(msg, status) {
+        var el =
+          document.getElementById("adminSyncStatus") ||
+          document.getElementById("syncStatus");
+        if (el) {
+          el.textContent = msg;
+          el.className = "sync-status " + (status || "online");
+        }
+      }
+
       // ============================================
-      // DATA HELPERS — MATCH APP.JS SCHEMA
+      // DATA HELPERS
       // ============================================
       function getData(key) {
         try {
@@ -894,51 +797,36 @@
           return [];
         }
       }
-
       function getUsersLocal() {
         return getData("gkode_users");
       }
-
-      function setUsersLocal(users) {
-        localStorage.setItem("gkode_users", JSON.stringify(users));
+      function setUsersLocal(u) {
+        localStorage.setItem("gkode_users", JSON.stringify(u));
       }
-
       function getGigs() {
         return getData("gkode_gigs");
       }
-
-      function setGigsLocal(gigs) {
-        localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
-      }
-
       function getComplaints() {
         return getData("gkode_complaints");
       }
-
       function getPayments() {
         return getData("gkode_payments");
       }
-
       function getBusinesses() {
         return getData("gkode_companies");
       }
-
       function getProducts() {
         return getData("gkode_products");
       }
-
       function getOrders() {
         return getData("gkode_orders");
       }
-
       function getLogs() {
         return getData("gkode_adminLogs");
       }
-
       function getBackups() {
         return getData("gkode_backups");
       }
-
       function addLog(action) {
         var logs = getLogs();
         logs.push({
@@ -951,11 +839,11 @@
       }
 
       // ============================================
-      // SUPABASE USER FUNCTIONS — MATCH APP.JS
+      // SUPABASE USER FUNCTIONS
       // ============================================
       async function getUsersFromSupabase() {
         if (!supabaseInitialized || !supabase) {
-          console.warn("⚠️ Supabase not ready, using localStorage");
+          console.warn("⚠️ Supabase not ready");
           return getUsersLocal();
         }
         try {
@@ -963,18 +851,8 @@
             .from("users")
             .select("*")
             .order("created_at", { ascending: false });
-          if (error) {
-            console.error("Supabase error:", error);
-            return getUsersLocal();
-          }
-          console.log(
-            "✅ Loaded",
-            data ? data.length : 0,
-            "users from Supabase",
-          );
-
-          // Convert Supabase schema to app schema
-          return (data || []).map(function (u) {
+          if (error) throw error;
+          return data.map(function (u) {
             return {
               phone: u.phone || "",
               name: u.full_name || u.name || "",
@@ -990,33 +868,23 @@
               photo: u.photo_url || u.photo || "",
               idScan: u.id_scan_url || u.idScan || "",
               password: u.password_hash || u.password || "",
-              password_hash: u.password_hash || u.password || "",
               isPaid: u.is_paid || false,
-              is_paid: u.is_paid || false,
               isBanned: u.is_banned || false,
-              is_banned: u.is_banned || false,
               strikes: u.strikes || 0,
               rating: u.rating || 0,
               reviewCount: u.review_count || 0,
-              registeredAt:
-                u.created_at || u.registeredAt || new Date().toISOString(),
-              created_at:
-                u.created_at || u.registeredAt || new Date().toISOString(),
+              created_at: u.created_at || new Date().toISOString(),
             };
           });
         } catch (e) {
-          console.error("Error fetching users:", e);
+          console.error("Supabase error:", e);
           return getUsersLocal();
         }
       }
 
       async function updateUserInSupabase(phone, updates) {
-        if (!supabaseInitialized || !supabase) {
-          showToast("⚠️ Cloud unavailable. Update failed.", "error");
-          return false;
-        }
+        if (!supabaseInitialized || !supabase) return false;
         try {
-          // Convert updates to Supabase schema
           var supabaseUpdates = {};
           if (updates.isBanned !== undefined)
             supabaseUpdates.is_banned = updates.isBanned;
@@ -1026,95 +894,16 @@
             supabaseUpdates.strikes = updates.strikes;
           if (updates.name !== undefined)
             supabaseUpdates.full_name = updates.name;
-          if (updates.location !== undefined)
-            supabaseUpdates.location = updates.location;
-          if (updates.profession !== undefined)
-            supabaseUpdates.profession = updates.profession;
-
-          var { data, error } = await supabase
+          var { error } = await supabase
             .from("users")
             .update(supabaseUpdates)
-            .eq("phone", phone)
-            .select();
-
+            .eq("phone", phone);
           if (error) throw error;
-          showToast("✅ User updated in cloud!", "success");
           return true;
         } catch (e) {
-          console.error("Error updating user:", e);
-          showToast("❌ Update failed: " + e.message, "error");
+          console.error("Update error:", e);
           return false;
         }
-      }
-
-      // ============================================
-      // SYNC ALL LOCAL USERS TO SUPABASE
-      // ============================================
-      async function syncAllToCloud() {
-        if (!supabaseInitialized || !supabase) {
-          showToast("❌ Supabase not connected!", "error");
-          return;
-        }
-
-        var localUsers = getUsersLocal();
-        if (localUsers.length === 0) {
-          showToast("⚠️ No local users to sync", "warning");
-          return;
-        }
-
-        showToast("⏳ Syncing " + localUsers.length + " users...", "info");
-        var successCount = 0;
-        var failCount = 0;
-
-        for (var i = 0; i < localUsers.length; i++) {
-          try {
-            var u = localUsers[i];
-            var { error } = await supabase.from("users").upsert(
-              {
-                phone: u.phone,
-                national_id: u.id || u.national_id || "",
-                email: u.email || "",
-                full_name: u.name || u.full_name || "",
-                location: u.location || "",
-                profession: u.profession || "",
-                skills: u.skills
-                  ? Array.isArray(u.skills)
-                    ? u.skills
-                    : u.skills.split(",").map(function (s) {
-                        return s.trim();
-                      })
-                  : [],
-                photo_url: u.photo || u.photo_url || "",
-                id_scan_url: u.idScan || u.id_scan_url || "",
-                password_hash: u.password || u.password_hash || "",
-                rating: u.rating || 0,
-                review_count: u.reviewCount || 0,
-                strikes: u.strikes || 0,
-                is_paid: u.isPaid || false,
-                is_banned: u.isBanned || false,
-                last_active: new Date().toISOString(),
-              },
-              { onConflict: "phone" },
-            );
-
-            if (!error) {
-              successCount++;
-            } else {
-              failCount++;
-              console.error("Sync error for", u.phone, error);
-            }
-          } catch (err) {
-            failCount++;
-            console.error("Sync error for", localUsers[i].phone, err);
-          }
-        }
-
-        showToast(
-          "✅ Synced " + successCount + " users, " + failCount + " failed",
-          successCount > 0 ? "success" : "error",
-        );
-        addLog("Synced " + successCount + " users to cloud");
-        loadStats();
       }
 
       // ============================================
@@ -1128,7 +917,6 @@
           document.getElementById("adminPanel").classList.remove("hidden");
           loadPaymentState();
           loadStats();
-          updatePaymentStatus();
           loadPaymentSettings();
           showToast("✅ Welcome Admin!", "success");
           addLog("Admin logged in");
@@ -1148,7 +936,7 @@
       }
 
       // ============================================
-      // LOAD STATS
+      // STATS
       // ============================================
       async function loadStats() {
         var users = await getUsersFromSupabase();
@@ -1157,12 +945,10 @@
         var payments = getPayments();
         var businesses = getBusinesses();
         var products = getProducts();
-
         var totalRevenue = 0;
         payments.forEach(function (p) {
           if (p.verified) totalRevenue += p.amount;
         });
-
         document.getElementById("statUsers").textContent = users.length || 0;
         document.getElementById("statGigs").textContent = gigs.length;
         document.getElementById("statRevenue").textContent =
@@ -1175,239 +961,119 @@
       }
 
       // ============================================
-      // TOGGLE PAYMENT SYSTEM - FIXED!
+      // TOGGLE PAYMENT
       // ============================================
       function togglePaymentSystem() {
         paymentEnabled = !paymentEnabled;
-        savePaymentState(); // ✅ SAVE to localStorage
+        savePaymentState();
         updatePaymentStatus();
-        var status = paymentEnabled ? "ENABLED" : "DISABLED (Testing)";
+        var status = paymentEnabled ? "ENABLED" : "DISABLED";
         showToast(
           "💳 Payment system " + status,
           paymentEnabled ? "success" : "warning",
         );
         addLog("Payment system " + status);
-
-        // ✅ Update the toggle button text
-        var toggleBtn = document.getElementById("paymentToggleBtn");
-        if (paymentEnabled) {
-          toggleBtn.textContent = "🔒 Toggle";
-          toggleBtn.className = "btn-small orange";
-        } else {
-          toggleBtn.textContent = "🔓 Toggle";
-          toggleBtn.className = "btn-small green";
-        }
       }
 
       function updatePaymentStatus() {
-        var statusEl = document.getElementById("paymentStatus");
-        var toggleBtn = document.getElementById("paymentToggleBtn");
-
+        var el = document.getElementById("paymentStatus");
+        var btn = document.getElementById("paymentToggleBtn");
         if (paymentEnabled) {
-          statusEl.textContent = "✅ ACTIVE";
-          statusEl.style.color = "#006400";
-          if (toggleBtn) {
-            toggleBtn.textContent = "🔒 Toggle";
-            toggleBtn.className = "btn-small orange";
+          el.textContent = "✅ ACTIVE";
+          el.style.color = "#006400";
+          if (btn) {
+            btn.textContent = "🔒 Toggle";
+            btn.className = "btn-small orange";
           }
         } else {
-          statusEl.textContent = "⛔ DISABLED (Testing)";
-          statusEl.style.color = "#ff9800";
-          if (toggleBtn) {
-            toggleBtn.textContent = "🔓 Toggle";
-            toggleBtn.className = "btn-small green";
+          el.textContent = "⛔ DISABLED (Testing)";
+          el.style.color = "#ff9800";
+          if (btn) {
+            btn.textContent = "🔓 Toggle";
+            btn.className = "btn-small green";
           }
         }
       }
 
-      function viewPayments() {
-        var payments = getPayments();
-        var output = document.getElementById("output");
-
-        if (payments.length === 0) {
-          output.innerHTML = "<p>No payments recorded.</p>";
+      // ============================================
+      // SYNC
+      // ============================================
+      async function syncAllToCloud() {
+        if (!supabaseInitialized || !supabase) {
+          showToast("❌ Supabase not connected!", "error");
           return;
         }
-
-        var html = "<h3>💰 Payments (" + payments.length + ")</h3>";
-        payments.forEach(function (p) {
-          html += '<div class="user-item">';
-          html += "<div>📞 " + p.phone + "</div>";
-          html += "<div>💰 Ksh " + p.amount + " | Code: " + p.code + "</div>";
-          html +=
-            "<div>" +
-            (p.verified ? "✅ Verified" : "❌ Pending") +
-            " | " +
-            (p.type || "User Fee") +
-            "</div>";
-          html +=
-            '<div style="font-size:11px; color:#888;">📅 ' +
-            new Date(p.date).toLocaleString() +
-            "</div>";
-          html += "</div>";
-        });
-        output.innerHTML = html;
-      }
-
-      function viewRevenueReport() {
-        var payments = getPayments();
-        var users = getUsersLocal();
-        var gigs = getGigs();
-
-        var totalRevenue = 0;
-        var userFees = 0;
-        var commission = 0;
-
-        payments.forEach(function (p) {
-          if (p.verified) {
-            totalRevenue += p.amount;
-            if (p.type === "user_fee" || !p.type) userFees += p.amount;
-            if (p.type === "commission") commission += p.amount;
-          }
-        });
-
-        var paidUsers = users.filter(function (u) {
-          return u.isPaid;
-        }).length;
-        var completedGigs = gigs.filter(function (g) {
-          return g.status === "Completed" || g.status === "Assigned";
-        }).length;
-        var orders = getOrders();
-
-        var html = "<h3>📊 Revenue Report</h3>";
-        html += '<div class="admin-card">';
-        html +=
-          "<p><strong>Total Revenue:</strong> Ksh " +
-          totalRevenue.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>User Fees:</strong> Ksh " +
-          userFees.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>Commission (3%):</strong> Ksh " +
-          commission.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>Paid Users:</strong> " +
-          paidUsers +
-          "/" +
-          users.length +
-          "</p>";
-        html += "<p><strong>Completed Gigs:</strong> " + completedGigs + "</p>";
-        html += "<p><strong>Total Orders:</strong> " + orders.length + "</p>";
-        html +=
-          "<p><strong>Potential Revenue:</strong> Ksh " +
-          ((users.length - paidUsers) * 300 + orders.length * 50) +
-          "</p>";
-        html += "</div>";
-        document.getElementById("output").innerHTML = html;
-      }
-
-      // ============================================
-      // PAYMENT SETTINGS
-      // ============================================
-      function getPaymentSettings() {
-        try {
-          return JSON.parse(
-            localStorage.getItem("gkode_payment_settings") || "{}",
-          );
-        } catch {
-          return {};
+        var localUsers = getUsersLocal();
+        if (localUsers.length === 0) {
+          showToast("⚠️ No local users to sync", "warning");
+          return;
         }
-      }
-
-      function setPaymentSettings(settings) {
-        localStorage.setItem(
-          "gkode_payment_settings",
-          JSON.stringify(settings),
+        showToast("⏳ Syncing " + localUsers.length + " users...", "info");
+        var success = 0,
+          fail = 0;
+        for (var i = 0; i < localUsers.length; i++) {
+          try {
+            var u = localUsers[i];
+            var { error } = await supabase.from("users").upsert(
+              {
+                phone: u.phone,
+                national_id: u.id || u.national_id || "",
+                email: u.email || "",
+                full_name: u.name || u.full_name || "",
+                location: u.location || "",
+                profession: u.profession || "",
+                skills: u.skills
+                  ? Array.isArray(u.skills)
+                    ? u.skills
+                    : u.skills.split(",").map(function (s) {
+                        return s.trim();
+                      })
+                  : [],
+                photo_url: u.photo || "",
+                id_scan_url: u.idScan || "",
+                password_hash: u.password || "",
+                rating: u.rating || 0,
+                review_count: u.reviewCount || 0,
+                strikes: u.strikes || 0,
+                is_paid: u.isPaid || false,
+                is_banned: u.isBanned || false,
+                last_active: new Date().toISOString(),
+              },
+              { onConflict: "phone" },
+            );
+            if (!error) success++;
+            else fail++;
+          } catch (e) {
+            fail++;
+          }
+        }
+        showToast(
+          "✅ Synced " + success + ", failed " + fail,
+          success > 0 ? "success" : "error",
         );
-      }
-
-      function savePaymentSettings() {
-        var settings = getPaymentSettings();
-        settings.commissionRate =
-          parseFloat(document.getElementById("commissionRate").value) || 3;
-        settings.bankName = document
-          .getElementById("gkodeBankName")
-          .value.trim();
-        settings.accountNumber = document
-          .getElementById("gkodeAccountNumber")
-          .value.trim();
-        setPaymentSettings(settings);
-        showToast("✅ Payment settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function saveMpesaSettings() {
-        var settings = getPaymentSettings();
-        settings.tillNumber = document
-          .getElementById("mpesaTillNumber")
-          .value.trim();
-        settings.paybillNumber = document
-          .getElementById("mpesaPaybillNumber")
-          .value.trim();
-        settings.accountReference = document
-          .getElementById("mpesaAccountNumber")
-          .value.trim();
-        setPaymentSettings(settings);
-        showToast("✅ M-Pesa settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function saveUssdSettings() {
-        var settings = getPaymentSettings();
-        settings.ussdCode = document.getElementById("ussdCode").value.trim();
-        settings.ussdMenu = document.getElementById("ussdMenu").value;
-        setPaymentSettings(settings);
-        showToast("✅ USSD settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function loadPaymentSettings() {
-        var settings = getPaymentSettings();
-        document.getElementById("commissionRate").value =
-          settings.commissionRate || 3;
-        document.getElementById("gkodeBankName").value =
-          settings.bankName || "";
-        document.getElementById("gkodeAccountNumber").value =
-          settings.accountNumber || "";
-        document.getElementById("mpesaTillNumber").value =
-          settings.tillNumber || "";
-        document.getElementById("mpesaPaybillNumber").value =
-          settings.paybillNumber || "";
-        document.getElementById("mpesaAccountNumber").value =
-          settings.accountReference || "";
-        document.getElementById("ussdCode").value =
-          settings.ussdCode || "*384#";
-        document.getElementById("ussdMenu").value =
-          settings.ussdMenu ||
-          "1. Register\n2. Login\n3. Post a Gig\n4. Find Gigs\n5. Chat with Client\n6. My Profile";
+        addLog("Synced " + success + " users");
+        loadStats();
       }
 
       // ============================================
-      // VIEW USERS — FROM SUPABASE!
+      // VIEW USERS
       // ============================================
       async function viewUsers() {
         var output = document.getElementById("output");
         output.innerHTML =
-          '<div style="text-align:center;padding:20px;"><div class="loader"></div><p>Loading users from cloud...</p></div>';
-
+          '<div style="text-align:center;padding:20px;"><div class="loader"></div><p>Loading...</p></div>';
         var users = await getUsersFromSupabase();
-
         if (!users || users.length === 0) {
-          output.innerHTML = "<p>No users found in cloud database.</p>";
+          output.innerHTML = "<p>No users found.</p>";
           return;
         }
-
         var html =
-          '<h3>👥 All Users (<span style="color:#2196F3;">' +
+          "<h3>👥 Users (" +
           users.length +
-          '</span>) <span class="cloud-badge">☁️ CLOUD</span></h3>';
+          ') <span class="cloud-badge">☁️</span></h3>';
         html +=
-          '<input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
+          '<input type="text" id="userSearch" placeholder="Search..." onkeyup="searchUsers()" style="margin-bottom:10px;">';
         html += '<div id="userList">';
-
         users.forEach(function (u) {
           var statusClass = u.isBanned
             ? "badge-banned"
@@ -1419,10 +1085,9 @@
             : u.isPaid
               ? "✅ Paid"
               : "🟡 Unpaid";
-
           html +=
             '<div class="user-item" data-name="' +
-            (u.name || u.full_name || "").toLowerCase() +
+            (u.name || "").toLowerCase() +
             '" data-phone="' +
             (u.phone || "") +
             '">';
@@ -1442,13 +1107,10 @@
             " | 👔 " +
             (u.profession || "N/A") +
             "</div>";
-          html += "<div>📧 " + (u.email || "N/A") + "</div>";
           html +=
             "<div>⭐ " +
             (u.rating || 0) +
-            " (" +
-            (u.reviewCount || 0) +
-            " reviews) | ⚠️ " +
+            " | ⚠️ " +
             (u.strikes || 0) +
             " strikes</div>";
           html +=
@@ -1479,7 +1141,6 @@
             "')\">📋 Details</button>";
           html += "</div></div>";
         });
-
         html += "</div>";
         output.innerHTML = html;
       }
@@ -1487,15 +1148,13 @@
       function viewCloudUsers() {
         viewUsers();
       }
-
       function searchUsers() {
-        var query = document.getElementById("userSearch").value.toLowerCase();
-        var items = document.querySelectorAll(".user-item");
-        items.forEach(function (item) {
+        var q = document.getElementById("userSearch").value.toLowerCase();
+        document.querySelectorAll(".user-item").forEach(function (item) {
           var name = item.dataset.name || "";
           var phone = item.dataset.phone || "";
-          var match = name.includes(query) || phone.includes(query);
-          item.style.display = match ? "block" : "none";
+          item.style.display =
+            name.includes(q) || phone.includes(q) ? "block" : "none";
         });
       }
 
@@ -1542,7 +1201,7 @@
             (u.rating || 0) +
             " | ⚠️ " +
             (u.strikes || 0) +
-            " strikes</div></div>";
+            "</div></div>";
         });
         document.getElementById("output").innerHTML = html;
       }
@@ -1556,22 +1215,12 @@
           showToast("User not found", "error");
           return;
         }
-
-        var gigs = getGigs().filter(function (g) {
-          return g.clientPhone === phone || g.workerPhone === phone;
-        });
-        var complaints = getComplaints().filter(function (c) {
-          return c.userId === phone || c.reporterId === phone;
-        });
-
         var html =
-          "<h3>📋 User Details: " +
+          "<h3>📋 User: " +
           (user.name || user.full_name || "Unknown") +
           "</h3>";
-        html +=
-          '<div class="admin-card"><p><strong>Phone:</strong> ' +
-          (user.phone || "N/A") +
-          "</p>";
+        html += '<div class="admin-card">';
+        html += "<p><strong>Phone:</strong> " + (user.phone || "N/A") + "</p>";
         html +=
           "<p><strong>ID:</strong> " +
           (user.id || user.national_id || "N/A") +
@@ -1582,8 +1231,6 @@
           "<p><strong>Profession:</strong> " +
           (user.profession || "N/A") +
           "</p>";
-        html +=
-          "<p><strong>Skills:</strong> " + (user.skills || "None") + "</p>";
         html +=
           "<p><strong>Rating:</strong> ⭐ " +
           (user.rating || 0) +
@@ -1600,43 +1247,15 @@
               ? "✅ Paid"
               : "🟡 Unpaid") +
           "</p>";
-        html +=
-          "<p><strong>Joined:</strong> " +
-          new Date(user.registeredAt || user.created_at).toLocaleString() +
-          "</p></div>";
-
-        html += "<h4>📋 Gigs (" + gigs.length + ")</h4>";
-        gigs.forEach(function (g) {
-          html +=
-            '<div class="user-item">' +
-            g.title +
-            " — " +
-            g.status +
-            " (" +
-            g.location +
-            ")</div>";
-        });
-
-        html += "<h4>🚩 Complaints (" + complaints.length + ")</h4>";
-        complaints.forEach(function (c) {
-          html +=
-            '<div class="user-item">' +
-            c.reason +
-            " — " +
-            (c.resolved ? "✅ Resolved" : "🟡 Pending") +
-            "</div>";
-        });
-
+        html += "</div>";
         document.getElementById("output").innerHTML = html;
       }
 
       // ============================================
-      // BAN / UNBAN / DELETE USER
+      // BAN / UNBAN / DELETE
       // ============================================
       async function banUser(phone) {
-        if (!confirm("Ban user " + phone + "? They will lose all access."))
-          return;
-
+        if (!confirm("Ban " + phone + "?")) return;
         var users = getUsersLocal();
         for (var i = 0; i < users.length; i++) {
           if (users[i].phone === phone) {
@@ -1645,21 +1264,20 @@
           }
         }
         setUsersLocal(users);
-
         var success = await updateUserInSupabase(phone, { isBanned: true });
+        showToast(
+          success ? "✅ User banned" : "❌ Failed",
+          success ? "success" : "error",
+        );
         if (success) {
-          showToast("✅ User banned in cloud!", "success");
-          addLog("Banned user: " + phone);
+          addLog("Banned: " + phone);
           viewUsers();
           loadStats();
-        } else {
-          showToast("❌ Failed to ban user", "error");
         }
       }
 
       async function unbanUser(phone) {
-        if (!confirm("Unban user " + phone + "?")) return;
-
+        if (!confirm("Unban " + phone + "?")) return;
         var users = getUsersLocal();
         for (var i = 0; i < users.length; i++) {
           if (users[i].phone === phone) {
@@ -1668,50 +1286,42 @@
           }
         }
         setUsersLocal(users);
-
         var success = await updateUserInSupabase(phone, { isBanned: false });
+        showToast(
+          success ? "✅ User unbanned" : "❌ Failed",
+          success ? "success" : "error",
+        );
         if (success) {
-          showToast("✅ User unbanned in cloud!", "success");
-          addLog("Unbanned user: " + phone);
+          addLog("Unbanned: " + phone);
           viewUsers();
           loadStats();
-        } else {
-          showToast("❌ Failed to unban user", "error");
         }
       }
 
       async function deleteUser(phone) {
-        if (
-          !confirm(
-            "⚠️ Delete user " + phone + " permanently? This cannot be undone!",
-          )
-        )
-          return;
-
+        if (!confirm("⚠️ Permanently delete " + phone + "?")) return;
         var users = getUsersLocal().filter(function (u) {
           return u.phone !== phone;
         });
         setUsersLocal(users);
-
         if (!supabaseInitialized) {
-          showToast("User removed locally. Supabase not connected.", "info");
+          showToast("User removed locally", "info");
           viewUsers();
           loadStats();
           return;
         }
-
         try {
           var { error } = await supabase
             .from("users")
             .delete()
             .eq("phone", phone);
           if (error) throw error;
-          showToast("🗑️ User deleted from cloud!", "info");
-          addLog("Deleted user: " + phone);
+          showToast("🗑️ User deleted", "info");
+          addLog("Deleted: " + phone);
           viewUsers();
           loadStats();
         } catch (e) {
-          showToast("Error deleting user: " + e.message, "error");
+          showToast("Error: " + e.message, "error");
         }
       }
 
@@ -1719,10 +1329,8 @@
       // GIG FUNCTIONS
       // ============================================
       function viewGigs() {
-        var gigs = getGigs();
-        displayGigs(gigs, "📋 All Gigs");
+        displayGigs(getGigs(), "📋 All Gigs");
       }
-
       function viewOpenGigs() {
         var gigs = getGigs().filter(function (g) {
           return g.status === "Open";
@@ -1733,7 +1341,6 @@
         }
         displayGigs(gigs, "🟢 Open Gigs");
       }
-
       function viewCompletedGigs() {
         var gigs = getGigs().filter(function (g) {
           return g.status === "Completed" || g.status === "Assigned";
@@ -1751,7 +1358,6 @@
           output.innerHTML = "<p>No gigs found.</p>";
           return;
         }
-
         var html = "<h3>" + title + " (" + gigs.length + ")</h3>";
         gigs.forEach(function (g) {
           html += '<div class="user-item">';
@@ -1768,7 +1374,7 @@
             "</div>";
           if (g.worker) html += "<div>👷 Worker: " + g.worker + "</div>";
           html +=
-            '<div style="font-size:11px; color:#888;">📅 ' +
+            '<div style="font-size:11px;color:#888;">📅 ' +
             new Date(g.createdAt).toLocaleString() +
             "</div>";
           html += '<div style="margin-top:5px;">';
@@ -1787,20 +1393,14 @@
 
       function viewGigDetails(id) {
         var gigs = getGigs();
-        var gig = null;
-        for (var i = 0; i < gigs.length; i++) {
-          if (gigs[i].id === id) {
-            gig = gigs[i];
-            break;
-          }
-        }
+        var gig = gigs.find(function (g) {
+          return g.id === id;
+        });
         if (!gig) {
           showToast("Gig not found", "error");
           return;
         }
-
-        var html = "<h3>📋 Gig Details</h3>";
-        html += '<div class="admin-card">';
+        var html = "<h3>📋 Gig Details</h3><div class='admin-card'>";
         html += "<p><strong>Title:</strong> " + gig.title + "</p>";
         html += "<p><strong>Skill:</strong> " + gig.skill + "</p>";
         html += "<p><strong>Location:</strong> " + gig.location + "</p>";
@@ -1810,7 +1410,6 @@
           " - " +
           gig.budgetMax +
           "</p>";
-        html += "<p><strong>Urgency:</strong> " + gig.urgency + "</p>";
         html += "<p><strong>Status:</strong> " + gig.status + "</p>";
         html +=
           "<p><strong>Client:</strong> " +
@@ -1825,18 +1424,6 @@
             " (" +
             gig.workerPhone +
             ")</p>";
-        html +=
-          "<p><strong>Description:</strong> " +
-          (gig.description || "None") +
-          "</p>";
-        if (gig.gpsLat && gig.gpsLon) {
-          html +=
-            "<p><strong>GPS:</strong> " +
-            gig.gpsLat +
-            ", " +
-            gig.gpsLon +
-            "</p>";
-        }
         html +=
           "<p><strong>Posted:</strong> " +
           new Date(gig.createdAt).toLocaleString() +
@@ -1858,33 +1445,30 @@
       }
 
       // ============================================
-      // COMPLAINT FUNCTIONS
+      // COMPLAINTS
       // ============================================
       function viewComplaints() {
-        var complaints = getComplaints();
-        displayComplaints(complaints, "🚩 All Complaints");
+        displayComplaints(getComplaints(), "🚩 All Complaints");
       }
-
       function viewPendingComplaints() {
-        var complaints = getComplaints().filter(function (c) {
+        var c = getComplaints().filter(function (c) {
           return !c.resolved;
         });
-        if (complaints.length === 0) {
+        if (c.length === 0) {
           showToast("No pending complaints", "info");
           return;
         }
-        displayComplaints(complaints, "🟡 Pending Complaints");
+        displayComplaints(c, "🟡 Pending Complaints");
       }
-
       function viewResolvedComplaints() {
-        var complaints = getComplaints().filter(function (c) {
+        var c = getComplaints().filter(function (c) {
           return c.resolved;
         });
-        if (complaints.length === 0) {
+        if (c.length === 0) {
           showToast("No resolved complaints", "info");
           return;
         }
-        displayComplaints(complaints, "✅ Resolved Complaints");
+        displayComplaints(c, "✅ Resolved Complaints");
       }
 
       function displayComplaints(complaints, title) {
@@ -1893,17 +1477,15 @@
           output.innerHTML = "<p>No complaints found.</p>";
           return;
         }
-
         var html = "<h3>" + title + " (" + complaints.length + ")</h3>";
         complaints.forEach(function (c) {
-          var status = c.resolved ? "✅ Resolved" : "🟡 Pending";
           html += '<div class="user-item">';
           html +=
             "<div><strong>" +
             c.reason +
-            "</strong> — <span>" +
-            status +
-            "</span></div>";
+            "</strong> — " +
+            (c.resolved ? "✅ Resolved" : "🟡 Pending") +
+            "</div>";
           html += "<div>📝 " + c.details + "</div>";
           html +=
             "<div>👤 User: " +
@@ -1912,7 +1494,7 @@
             (c.reporterId || "Unknown") +
             "</div>";
           html +=
-            '<div style="font-size:11px; color:#888;">📅 ' +
+            '<div style="font-size:11px;color:#888;">📅 ' +
             new Date(c.date).toLocaleString() +
             "</div>";
           if (!c.resolved) {
@@ -1961,13 +1543,11 @@
         var withStrikes = users.filter(function (u) {
           return u.strikes > 0;
         });
-        var output = document.getElementById("output");
-
         if (withStrikes.length === 0) {
-          output.innerHTML = "<p>No users with strikes.</p>";
+          document.getElementById("output").innerHTML =
+            "<p>No users with strikes.</p>";
           return;
         }
-
         var html = "<h3>⚠️ Strikes Report</h3>";
         withStrikes.sort(function (a, b) {
           return b.strikes - a.strikes;
@@ -1975,7 +1555,7 @@
         withStrikes.forEach(function (u) {
           var warning =
             u.strikes >= 5
-              ? "🔴 WARNING: Near ban!"
+              ? "🔴 Near ban!"
               : u.strikes >= 3
                 ? "🟡 Warning"
                 : "🟢 Ok";
@@ -1988,11 +1568,156 @@
           html +=
             "<div>" + (u.isBanned ? "🚫 BANNED" : "Active") + "</div></div>";
         });
-        output.innerHTML = html;
+        document.getElementById("output").innerHTML = html;
       }
 
       // ============================================
-      // AD FUNCTIONS
+      // PAYMENTS
+      // ============================================
+      function viewPayments() {
+        var payments = getPayments();
+        if (payments.length === 0) {
+          document.getElementById("output").innerHTML =
+            "<p>No payments recorded.</p>";
+          return;
+        }
+        var html = "<h3>💰 Payments (" + payments.length + ")</h3>";
+        payments.forEach(function (p) {
+          html += '<div class="user-item">';
+          html += "<div>📞 " + p.phone + "</div>";
+          html += "<div>💰 Ksh " + p.amount + " | Code: " + p.code + "</div>";
+          html +=
+            "<div>" +
+            (p.verified ? "✅ Verified" : "❌ Pending") +
+            " | " +
+            (p.type || "User Fee") +
+            "</div>";
+          html +=
+            '<div style="font-size:11px;color:#888;">📅 ' +
+            new Date(p.date).toLocaleString() +
+            "</div>";
+          html += "</div>";
+        });
+        document.getElementById("output").innerHTML = html;
+      }
+
+      function viewRevenueReport() {
+        var payments = getPayments();
+        var users = getUsersLocal();
+        var gigs = getGigs();
+        var totalRevenue = 0,
+          userFees = 0,
+          commission = 0;
+        payments.forEach(function (p) {
+          if (p.verified) {
+            totalRevenue += p.amount;
+            if (p.type === "user_fee" || !p.type) userFees += p.amount;
+            if (p.type === "commission") commission += p.amount;
+          }
+        });
+        var paidUsers = users.filter(function (u) {
+          return u.isPaid;
+        }).length;
+        var completedGigs = gigs.filter(function (g) {
+          return g.status === "Completed" || g.status === "Assigned";
+        }).length;
+        var orders = getOrders();
+        var html = "<h3>📊 Revenue Report</h3><div class='admin-card'>";
+        html +=
+          "<p><strong>Total Revenue:</strong> Ksh " +
+          totalRevenue.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>User Fees:</strong> Ksh " +
+          userFees.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Commission:</strong> Ksh " +
+          commission.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Paid Users:</strong> " +
+          paidUsers +
+          "/" +
+          users.length +
+          "</p>";
+        html += "<p><strong>Completed Gigs:</strong> " + completedGigs + "</p>";
+        html += "<p><strong>Orders:</strong> " + orders.length + "</p>";
+        html += "</div>";
+        document.getElementById("output").innerHTML = html;
+      }
+
+      // ============================================
+      // PAYMENT SETTINGS
+      // ============================================
+      function getPaymentSettings() {
+        try {
+          return JSON.parse(
+            localStorage.getItem("gkode_payment_settings") || "{}",
+          );
+        } catch {
+          return {};
+        }
+      }
+      function setPaymentSettings(s) {
+        localStorage.setItem("gkode_payment_settings", JSON.stringify(s));
+      }
+
+      function savePaymentSettings() {
+        var s = getPaymentSettings();
+        s.commissionRate =
+          parseFloat(document.getElementById("commissionRate").value) || 3;
+        s.bankName = document.getElementById("gkodeBankName").value.trim();
+        s.accountNumber = document
+          .getElementById("gkodeAccountNumber")
+          .value.trim();
+        setPaymentSettings(s);
+        showToast("✅ Payment settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function saveMpesaSettings() {
+        var s = getPaymentSettings();
+        s.tillNumber = document.getElementById("mpesaTillNumber").value.trim();
+        s.paybillNumber = document
+          .getElementById("mpesaPaybillNumber")
+          .value.trim();
+        s.accountReference = document
+          .getElementById("mpesaAccountNumber")
+          .value.trim();
+        setPaymentSettings(s);
+        showToast("✅ M-Pesa settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function saveUssdSettings() {
+        var s = getPaymentSettings();
+        s.ussdCode = document.getElementById("ussdCode").value.trim();
+        s.ussdMenu = document.getElementById("ussdMenu").value;
+        setPaymentSettings(s);
+        showToast("✅ USSD settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function loadPaymentSettings() {
+        var s = getPaymentSettings();
+        document.getElementById("commissionRate").value = s.commissionRate || 3;
+        document.getElementById("gkodeBankName").value = s.bankName || "";
+        document.getElementById("gkodeAccountNumber").value =
+          s.accountNumber || "";
+        document.getElementById("mpesaTillNumber").value = s.tillNumber || "";
+        document.getElementById("mpesaPaybillNumber").value =
+          s.paybillNumber || "";
+        document.getElementById("mpesaAccountNumber").value =
+          s.accountReference || "";
+        document.getElementById("ussdCode").value = s.ussdCode || "*384#";
+        document.getElementById("ussdMenu").value =
+          s.ussdMenu ||
+          "1. Register\n2. Login\n3. Post a Gig\n4. Find Gigs\n5. Chat with Client\n6. My Profile";
+      }
+
+      // ============================================
+      // ADS
       // ============================================
       function getAds() {
         try {
@@ -2001,17 +1726,15 @@
           return [];
         }
       }
-
       function setAds(ads) {
         localStorage.setItem("gkode_ads", JSON.stringify(ads));
       }
 
       function showAdForm() {
-        var container = document.getElementById("adFormContainer");
-        if (container) {
-          var isHidden = container.style.display === "none";
-          container.style.display = isHidden ? "block" : "none";
-          if (isHidden) {
+        var c = document.getElementById("adFormContainer");
+        if (c) {
+          c.style.display = c.style.display === "none" ? "block" : "none";
+          if (c.style.display === "block") {
             document.getElementById("adTitle").value = "";
             document.getElementById("adDescription").value = "";
             document.getElementById("adLink").value = "";
@@ -2022,30 +1745,26 @@
 
       function saveAd() {
         var title = document.getElementById("adTitle").value.trim();
-        var description = document.getElementById("adDescription").value.trim();
+        var desc = document.getElementById("adDescription").value.trim();
         var link = document.getElementById("adLink").value.trim();
         var placement = document.getElementById("adPlacement").value;
-        var isActive = document.getElementById("adActive").checked;
-
-        if (!title || !description || !link) {
-          showToast("Please fill all fields.", "error");
+        var active = document.getElementById("adActive").checked;
+        if (!title || !desc || !link) {
+          showToast("Fill all fields.", "error");
           return;
         }
-
         var ads = getAds();
-        var newAd = {
+        ads.push({
           id: Date.now().toString(),
           title: title,
-          description: description,
+          description: desc,
           link: link,
           placement: placement,
-          isActive: isActive,
+          isActive: active,
           views: 0,
           clicks: 0,
           createdAt: new Date().toISOString(),
-        };
-
-        ads.push(newAd);
+        });
         setAds(ads);
         showToast("✅ Ad created!", "success");
         document.getElementById("adFormContainer").style.display = "none";
@@ -2056,18 +1775,15 @@
         var ads = getAds();
         var container = document.getElementById("adsList");
         if (!container) return;
-
         if (ads.length === 0) {
           container.innerHTML =
-            '<p style="color:#888;padding:10px;">No ads created yet.</p>';
+            '<p style="color:#888;padding:10px;">No ads.</p>';
           return;
         }
-
         var html = "<h4>📢 All Ads</h4>";
         ads.forEach(function (ad) {
-          html += '<div class="ad-item">';
           html +=
-            '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">';
+            '<div class="ad-item"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">';
           html += "<div><strong>" + ad.title + "</strong>";
           html +=
             ' <span style="font-size:12px;color:' +
@@ -2081,9 +1797,8 @@
             " views | " +
             (ad.clicks || 0) +
             " clicks</div></div>";
-          html += "<div>";
           html +=
-            "<button onclick=\"toggleAd('" +
+            "<div><button onclick=\"toggleAd('" +
             ad.id +
             '\')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">' +
             (ad.isActive ? "⏸️" : "▶️") +
@@ -2091,38 +1806,31 @@
           html +=
             " <button onclick=\"deleteAd('" +
             ad.id +
-            '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️</button>';
-          html += "</div></div></div>";
+            '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️</button></div></div></div>';
         });
         container.innerHTML = html;
       }
 
-      function toggleAd(adId) {
+      function toggleAd(id) {
         var ads = getAds();
-        var ad = null;
-        for (var i = 0; i < ads.length; i++) {
-          if (ads[i].id === adId) {
-            ad = ads[i];
-            break;
-          }
-        }
+        var ad = ads.find(function (a) {
+          return a.id === id;
+        });
         if (ad) {
           ad.isActive = !ad.isActive;
           setAds(ads);
-          showToast(
-            "Ad " + (ad.isActive ? "activated" : "paused") + ".",
-            "success",
-          );
+          showToast("Ad " + (ad.isActive ? "activated" : "paused"), "success");
           viewAds();
         }
       }
 
-      function deleteAd(adId) {
+      function deleteAd(id) {
         if (!confirm("Delete this ad?")) return;
-        var ads = getAds().filter(function (a) {
-          return a.id !== adId;
-        });
-        setAds(ads);
+        setAds(
+          getAds().filter(function (a) {
+            return a.id !== id;
+          }),
+        );
         showToast("Ad deleted.", "info");
         viewAds();
       }
@@ -2133,27 +1841,27 @@
           showToast("No ads.", "info");
           return;
         }
-        var totalViews = 0,
-          totalClicks = 0,
-          activeAds = 0;
+        var views = 0,
+          clicks = 0,
+          active = 0;
         ads.forEach(function (ad) {
-          totalViews += ad.views || 0;
-          totalClicks += ad.clicks || 0;
-          if (ad.isActive) activeAds++;
+          views += ad.views || 0;
+          clicks += ad.clicks || 0;
+          if (ad.isActive) active++;
         });
-        var msg =
-          "📊 AD STATS\n\n📢 Total Ads: " +
-          ads.length +
-          "\n🟢 Active: " +
-          activeAds +
-          "\n👁️ Views: " +
-          totalViews +
-          "\n👆 Clicks: " +
-          totalClicks +
-          "\n📈 CTR: " +
-          (totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0) +
-          "%";
-        alert(msg);
+        alert(
+          "📊 AD STATS\n\n📢 Total: " +
+            ads.length +
+            "\n🟢 Active: " +
+            active +
+            "\n👁️ Views: " +
+            views +
+            "\n👆 Clicks: " +
+            clicks +
+            "\n📈 CTR: " +
+            (views > 0 ? ((clicks / views) * 100).toFixed(1) : 0) +
+            "%",
+        );
       }
 
       // ============================================
@@ -2175,7 +1883,6 @@
           ads: getAds(),
           systemState: { paymentEnabled: paymentEnabled },
         };
-
         var blob = new Blob([JSON.stringify(data, null, 2)], {
           type: "application/json",
         });
@@ -2186,7 +1893,6 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
         var backups = getBackups();
         backups.push({
           id: Date.now().toString(),
@@ -2194,47 +1900,41 @@
           size: blob.size,
         });
         localStorage.setItem("gkode_backups", JSON.stringify(backups));
-
-        showToast("✅ Backup downloaded and saved", "success");
+        showToast("✅ Backup saved", "success");
         addLog("Backup created");
       }
 
       function viewBackups() {
         var backups = getBackups();
-        var output = document.getElementById("output");
-
         if (backups.length === 0) {
-          output.innerHTML = "<p>No backups found.</p>";
+          document.getElementById("output").innerHTML = "<p>No backups.</p>";
           return;
         }
-
         var html = "<h3>📂 Backups (" + backups.length + ")</h3>";
         backups
           .slice()
           .reverse()
           .forEach(function (b) {
-            html += '<div class="user-item">';
             html +=
-              "<div>📅 " + new Date(b.timestamp).toLocaleString() + "</div>";
+              '<div class="user-item"><div>📅 ' +
+              new Date(b.timestamp).toLocaleString() +
+              "</div>";
             html +=
               "<div>📦 " +
-              (b.size ? (b.size / 1024).toFixed(2) + " KB" : "Unknown size") +
+              (b.size ? (b.size / 1024).toFixed(2) + " KB" : "Unknown") +
               "</div>";
             html += "<div>🆔 " + b.id.slice(-6) + "</div></div>";
           });
-        output.innerHTML = html;
+        document.getElementById("output").innerHTML = html;
       }
 
       function viewLogs() {
         var logs = getLogs();
-        var output = document.getElementById("output");
-
         if (logs.length === 0) {
-          output.innerHTML = "<p>No logs found.</p>";
+          document.getElementById("output").innerHTML = "<p>No logs.</p>";
           return;
         }
-
-        var html = "<h3>📜 Activity Logs (" + logs.length + ")</h3>";
+        var html = "<h3>📜 Logs (" + logs.length + ")</h3>";
         logs
           .slice()
           .reverse()
@@ -2252,7 +1952,7 @@
               "</div>";
             html += "</div>";
           });
-        output.innerHTML = html;
+        document.getElementById("output").innerHTML = html;
       }
 
       function viewSystemHealth() {
@@ -2260,21 +1960,16 @@
         var gigs = getGigs();
         var complaints = getComplaints();
         var payments = getPayments();
-
         var totalRevenue = 0;
         payments.forEach(function (p) {
           if (p.verified) totalRevenue += p.amount;
         });
-
-        var storageSize = 0;
+        var storage = 0;
         for (var key in localStorage) {
-          if (localStorage.hasOwnProperty(key)) {
-            storageSize += localStorage[key].length;
-          }
+          if (localStorage.hasOwnProperty(key))
+            storage += localStorage[key].length;
         }
-
-        var html = "<h3>🏥 System Health</h3>";
-        html += '<div class="admin-card">';
+        var html = "<h3>🏥 System Health</h3><div class='admin-card'>";
         html += "<p>👥 Users: <strong>" + users.length + "</strong></p>";
         html += "<p>📋 Gigs: <strong>" + gigs.length + "</strong></p>";
         html +=
@@ -2285,32 +1980,26 @@
           "</strong></p>";
         html +=
           "<p>💾 Storage: <strong>" +
-          (storageSize / 1024).toFixed(2) +
+          (storage / 1024).toFixed(2) +
           " KB</strong></p>";
         html +=
-          "<p>💳 Payment System: <strong>" +
+          "<p>💳 Payment: <strong>" +
           (paymentEnabled ? "✅ Active" : "⛔ Disabled") +
           "</strong></p>";
         html +=
           "<p>☁️ Cloud: <strong>" +
           (supabaseInitialized ? "✅ Connected" : "⚠️ Offline") +
           "</strong></p>";
-        html +=
-          "<p>📅 Last Check: <strong>" +
-          new Date().toLocaleString() +
-          "</strong></p>";
-        html += '<p style="color:#006400;">✅ System is healthy</p>';
-        html += "</div>";
+        html += '<p style="color:#006400;">✅ System healthy</p></div>';
         document.getElementById("output").innerHTML = html;
       }
 
       function exportUsersCSV() {
         var users = getUsersLocal();
         if (users.length === 0) {
-          showToast("No users to export", "error");
+          showToast("No users", "error");
           return;
         }
-
         var csv =
           "Name,Phone,ID,Location,Profession,Rating,Strikes,Paid,Banned\n";
         users.forEach(function (u) {
@@ -2334,7 +2023,6 @@
             (u.isBanned ? "Yes" : "No") +
             "\n";
         });
-
         var blob = new Blob([csv], { type: "text/csv" });
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -2343,7 +2031,6 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
         showToast("✅ Users exported", "success");
       }
 
@@ -2351,14 +2038,8 @@
       // DANGER ZONE
       // ============================================
       function resetEverything() {
-        if (
-          !confirm(
-            "🔄 WARNING: This will reset ALL app data on this device!\n\nContinue?",
-          )
-        )
-          return;
-        if (!confirm("FINAL WARNING: This cannot be undone! Continue?")) return;
-
+        if (!confirm("🔄 Reset ALL data?")) return;
+        if (!confirm("FINAL WARNING: Cannot be undone!")) return;
         downloadBackup();
         localStorage.removeItem("gkode_users");
         localStorage.removeItem("gkode_gigs");
@@ -2368,47 +2049,36 @@
         localStorage.removeItem("gkode_products");
         localStorage.removeItem("gkode_orders");
         localStorage.removeItem("gkode_adminLogs");
-        localStorage.removeItem("gkode_professions");
-        localStorage.removeItem("gkode_categories");
         localStorage.removeItem("gkode_user");
         localStorage.removeItem("gkode_token");
         localStorage.removeItem("gkode_ads");
         localStorage.removeItem("gkode_payment_settings");
         localStorage.removeItem("gkode_payment_enabled");
-
-        showToast("🔄 All data reset. Backup saved.", "success");
-        addLog("All data reset by admin");
+        showToast("🔄 Reset complete", "success");
+        addLog("All data reset");
         loadStats();
         document.getElementById("output").innerHTML =
-          '<p style="color:#006400;">✅ All data has been reset. A backup was saved.</p>';
+          '<p style="color:#006400;">✅ Data reset. Backup saved.</p>';
       }
 
       function clearAllData() {
-        if (!confirm("🔥 WARNING: This will DELETE ALL data! Continue?"))
-          return;
-        if (!confirm("FINAL WARNING: This cannot be undone! Continue?")) return;
-
+        if (!confirm("🔥 Delete ALL data?")) return;
+        if (!confirm("FINAL WARNING: Cannot be undone!")) return;
         downloadBackup();
         localStorage.clear();
-
-        showToast("✅ All data cleared. Backup saved.", "success");
-        addLog("All data cleared by admin");
+        showToast("✅ All data cleared", "success");
+        addLog("All data cleared");
         loadStats();
         document.getElementById("output").innerHTML =
-          '<p style="color:#006400;">✅ All data has been cleared. A backup was saved.</p>';
+          '<p style="color:#006400;">✅ Data cleared. Backup saved.</p>';
       }
 
       function resetApp() {
-        if (
-          !confirm("🔄 Reset entire app? This will clear all data and reload.")
-        )
-          return;
-        if (!confirm("Final warning: This cannot be undone!")) return;
-
+        if (!confirm("🔄 Reset app?")) return;
+        if (!confirm("Final warning!")) return;
         downloadBackup();
         localStorage.clear();
-
-        showToast("🔄 App reset. Refreshing...", "info");
+        showToast("🔄 App reset", "info");
         setTimeout(function () {
           window.location.href = "index.html";
         }, 2000);
@@ -2420,31 +2090,16 @@
       document.addEventListener("DOMContentLoaded", function () {
         loadPaymentSettings();
         loadPaymentState();
-        updateSyncStatus("📡 Connecting to cloud...", "online");
-
-        // Check if admin was logged in
-        if (localStorage.getItem("adminLoggedIn") === "true") {
-          adminLogin();
-        }
-
-        console.log("🔐 G-KODE Admin Panel v4.0 loaded");
-        console.log("📊 Admin Key: MAYA");
-        console.log("☁️ Reading users from Supabase Cloud!");
-        console.log("🔑 Using SERVICE ROLE KEY (bypasses RLS)");
-        console.log(
-          "💳 Payment system:",
-          paymentEnabled ? "ACTIVE" : "DISABLED",
-        );
+        updateSyncStatus("📡 Connecting...", "online");
+        if (localStorage.getItem("adminLoggedIn") === "true") adminLogin();
+        console.log("🔐 G-KODE Admin Panel v4.0");
+        console.log("🔑 Admin Key: MAYA");
         console.log("🇰🇪 Kenya Helping Kenya");
       });
 
-      // Auto-save admin login state
       window.addEventListener("beforeunload", function () {
-        if (adminLoggedIn) {
-          localStorage.setItem("adminLoggedIn", "true");
-        } else {
-          localStorage.removeItem("adminLoggedIn");
-        }
+        if (adminLoggedIn) localStorage.setItem("adminLoggedIn", "true");
+        else localStorage.removeItem("adminLoggedIn");
       });
     </script>
   </body>
