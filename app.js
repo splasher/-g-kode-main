@@ -9,17 +9,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
 let supabase = null;
 let supabaseInitialized = false;
 
-function initSupabase() {
-  if (supabaseInitialized) return;
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    supabaseInitialized = true;
-    console.log("✅ Supabase connected");
-  } catch (e) {
-    console.log("⚠️ Supabase not available:", e);
-  }
-}
-initSupabase();
+// ============ PAYMENT SYSTEM STATE ============
+let paymentEnabled = true; // Default: enabled
 
 // ============================================
 // STATE VARIABLES
@@ -53,6 +44,75 @@ const EMAILJS_CONFIG = {
 };
 
 // ============================================
+// INIT SUPABASE
+// ============================================
+function initSupabase() {
+  if (supabaseInitialized) return;
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseInitialized = true;
+    console.log("✅ Supabase connected");
+    loadPaymentSettings();
+  } catch (e) {
+    console.log("⚠️ Supabase not available:", e);
+  }
+}
+initSupabase();
+
+// ============================================
+// LOAD PAYMENT SETTINGS FROM LOCAL STORAGE
+// ============================================
+function loadPaymentSettings() {
+  try {
+    const saved = localStorage.getItem("gkode_payment_enabled");
+    if (saved !== null) {
+      paymentEnabled = saved === "true";
+    }
+    console.log(
+      "💳 Payment system:",
+      paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
+    );
+  } catch (e) {
+    console.log("Payment settings load error:", e);
+  }
+}
+
+// ============================================
+// CHECK IF PAYMENT IS ENABLED
+// ============================================
+function isPaymentEnabled() {
+  return paymentEnabled;
+}
+
+// ============================================
+// CHECK IF USER CAN ACCESS FEATURES
+// ============================================
+function canAccessFeatures() {
+  if (!currentUser) return false;
+
+  // If payment is disabled (testing mode), block all features
+  if (!isPaymentEnabled()) {
+    showToast(
+      "⚠️ System is in testing mode. Features are disabled.",
+      "warning",
+    );
+    return false;
+  }
+
+  // If user is not paid, block features
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to access features.",
+      "warning",
+    );
+    showScreen("payment");
+    return false;
+  }
+
+  return true;
+}
+
+// ============================================
 // CHECK ONLINE STATUS
 // ============================================
 function checkOnlineStatus() {
@@ -66,7 +126,6 @@ function checkOnlineStatus() {
 window.addEventListener("online", function () {
   isOnline = true;
   showToast("✅ Back online! Syncing data...", "success");
-  syncAllUsersToCloud();
 });
 
 window.addEventListener("offline", function () {
@@ -107,14 +166,6 @@ function showToast(message, type) {
     }, 500);
   }, 4000);
 }
-
-// Add animation
-(function () {
-  const style = document.createElement("style");
-  style.textContent =
-    "@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }";
-  document.head.appendChild(style);
-})();
 
 // ============================================
 // DATA HELPERS (LOCAL FALLBACK)
@@ -418,7 +469,30 @@ function showScreen(id) {
     if (nav) nav.classList.add("hidden");
   }
 
-  if (id === "home") loadGigs();
+  if (id === "home") {
+    // Check if user can access features before loading gigs
+    if (isPaymentEnabled() && currentUser && currentUser.isPaid) {
+      loadGigs();
+    } else if (isPaymentEnabled() && currentUser && !currentUser.isPaid) {
+      showToast(
+        "💳 Please pay the one-time fee of Ksh 300 to access features.",
+        "warning",
+      );
+      showScreen("payment");
+    } else if (!isPaymentEnabled()) {
+      // Testing mode - show maintenance message
+      document.getElementById("gigsList").innerHTML = `
+                <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+                    <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+                    <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
+                    <p style="color: #666;">Please check back later.</p>
+                    <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+                </div>
+            `;
+    } else {
+      loadGigs();
+    }
+  }
   if (id === "profile") loadProfile();
   if (id === "marketplace") loadMarketplace();
   if (id === "companyDashboard") loadCompanyDashboard();
@@ -1121,11 +1195,38 @@ async function login(e) {
             console.log("Could not update last_active:", updateErr);
           }
 
-          currentUser = user;
+          currentUser = {
+            phone: user.phone,
+            name: user.full_name,
+            full_name: user.full_name,
+            id: user.national_id,
+            email: user.email,
+            location: user.location,
+            profession: user.profession,
+            skills: user.skills ? user.skills.join(", ") : "",
+            photo: user.photo_url,
+            idScan: user.id_scan_url,
+            password: user.password_hash,
+            isPaid: user.is_paid || false,
+            is_paid: user.is_paid || false,
+            isBanned: user.is_banned || false,
+            is_banned: user.is_banned || false,
+            strikes: user.strikes || 0,
+            rating: user.rating || 0,
+            reviewCount: user.review_count || 0,
+            registeredAt: user.created_at,
+          };
+
           if (rememberMe) {
-            localStorage.setItem("gkode_currentUser", JSON.stringify(user));
+            localStorage.setItem(
+              "gkode_currentUser",
+              JSON.stringify(currentUser),
+            );
           } else {
-            sessionStorage.setItem("gkode_currentUser", JSON.stringify(user));
+            sessionStorage.setItem(
+              "gkode_currentUser",
+              JSON.stringify(currentUser),
+            );
           }
 
           document.getElementById("loginForm").reset();
@@ -1242,7 +1343,7 @@ async function sendResetCode() {
           profession: localUser.profession,
           location: localUser.location,
           full_name: localUser.name,
-          id: localUser.phone, // Use phone as ID for local
+          id: localUser.phone,
         };
       }
     }
@@ -1540,12 +1641,30 @@ function updateResetTimerDisplay() {
 }
 
 // ============================================
-// GIG FUNCTIONS - CLOUD FIRST
+// GIG FUNCTIONS - WITH PAYMENT CHECK
 // ============================================
 function postGig(e) {
   if (e) e.preventDefault();
   if (!currentUser) {
     showToast("Please login first.", "error");
+    return;
+  }
+
+  // ✅ CHECK PAYMENT STATUS
+  if (!isPaymentEnabled()) {
+    showToast(
+      "⚠️ System is in testing mode. Posting gigs is disabled.",
+      "warning",
+    );
+    return;
+  }
+
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to post a gig.",
+      "warning",
+    );
+    showScreen("payment");
     return;
   }
 
@@ -1689,6 +1808,19 @@ async function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
 
+  // ✅ CHECK PAYMENT STATUS
+  if (!isPaymentEnabled()) {
+    container.innerHTML = `
+            <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+                <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+                <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
+                <p style="color: #666;">Features are temporarily disabled.</p>
+                <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+            </div>
+        `;
+    return;
+  }
+
   let gigs = [];
 
   // ✅ Try Supabase first
@@ -1784,10 +1916,20 @@ async function loadGigs() {
       g.budgetMax +
       "</div>";
     if (open) {
-      html +=
-        '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' +
-        g.id +
-        "')\">✅ ACCEPT</button></div>";
+      // ✅ Check if user can accept gigs
+      if (
+        isPaymentEnabled() &&
+        currentUser &&
+        (currentUser.isPaid || currentUser.is_paid)
+      ) {
+        html +=
+          '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' +
+          g.id +
+          "')\">✅ ACCEPT</button></div>";
+      } else if (currentUser && !currentUser.isPaid && !currentUser.is_paid) {
+        html +=
+          '<div class="gig-actions"><button class="btn-accept" style="background:#ff9800;" onclick="showPaymentScreen()">💳 PAY TO ACCEPT</button></div>';
+      }
     } else {
       html +=
         '<div class="gig-actions"><button class="btn-chat" onclick="openChat(\'' +
@@ -1802,6 +1944,24 @@ async function loadGigs() {
 function acceptGig(id) {
   if (!currentUser) {
     showToast("Please login first.", "error");
+    return;
+  }
+
+  // ✅ CHECK PAYMENT STATUS
+  if (!isPaymentEnabled()) {
+    showToast(
+      "⚠️ System is in testing mode. Accepting gigs is disabled.",
+      "warning",
+    );
+    return;
+  }
+
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to accept gigs.",
+      "warning",
+    );
+    showScreen("payment");
     return;
   }
 
@@ -2079,11 +2239,24 @@ function openAdminPanel() {
 }
 
 // ============================================
-// MARKETPLACE FUNCTIONS
+// MARKETPLACE FUNCTIONS - WITH PAYMENT CHECK
 // ============================================
 function loadMarketplace() {
   var container = document.getElementById("marketplaceList");
   if (!container) return;
+
+  // ✅ CHECK PAYMENT STATUS
+  if (!isPaymentEnabled()) {
+    container.innerHTML = `
+            <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+                <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+                <p style="color: #666; margin-top: 10px;">Marketplace is temporarily disabled.</p>
+                <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+            </div>
+        `;
+    return;
+  }
+
   var products = getProductsLocal();
   if (products.length === 0) {
     container.innerHTML =
@@ -2098,10 +2271,15 @@ function loadMarketplace() {
     html += "<p>🏢 " + p.companyName + " | " + p.category + "</p>";
     html += "<p>💰 Ksh " + p.price + "/" + p.unit + "</p>";
     html += "<p>📦 Stock: " + p.stock + "</p>";
-    html +=
-      "<button onclick=\"buyProduct('" +
-      p.id +
-      '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
+    if (currentUser && (currentUser.isPaid || currentUser.is_paid)) {
+      html +=
+        "<button onclick=\"buyProduct('" +
+        p.id +
+        '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
+    } else {
+      html +=
+        '<button style="background:#ff9800;color:#000;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;" onclick="showPaymentScreen()">💳 PAY TO BUY</button>';
+    }
     html += "</div>";
   }
   container.innerHTML = html;
@@ -2110,6 +2288,14 @@ function loadMarketplace() {
 function buyProduct(id) {
   if (!currentUser) {
     showToast("Please login first.", "error");
+    return;
+  }
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to buy products.",
+      "warning",
+    );
+    showScreen("payment");
     return;
   }
   var products = getProductsLocal();
@@ -2135,7 +2321,7 @@ function buyProduct(id) {
 }
 
 // ============================================
-// COMPANY FUNCTIONS
+// COMPANY FUNCTIONS - WITH PAYMENT CHECK
 // ============================================
 function registerCompany(e) {
   if (e) e.preventDefault();
@@ -2143,6 +2329,24 @@ function registerCompany(e) {
     showToast("Please login first.", "error");
     return;
   }
+
+  if (!isPaymentEnabled()) {
+    showToast(
+      "⚠️ System is in testing mode. Business registration is disabled.",
+      "warning",
+    );
+    return;
+  }
+
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to register a business.",
+      "warning",
+    );
+    showScreen("payment");
+    return;
+  }
+
   var btn = document.getElementById("compRegisterBtn");
   if (!btn || isProcessing) return;
   isProcessing = true;
@@ -2332,6 +2536,14 @@ function addProduct(e) {
     showToast("Please login first.", "error");
     return;
   }
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to add products.",
+      "warning",
+    );
+    showScreen("payment");
+    return;
+  }
   var btn = document.getElementById("addProductBtn");
   if (!btn || isProcessing) return;
   isProcessing = true;
@@ -2464,9 +2676,9 @@ function loadPaymentDetails() {
   var bank = document.getElementById("displayGkodeBank");
   if (till) till.textContent = settings.tillNumber || "9876543";
   if (paybill) paybill.textContent = settings.paybillNumber || "247247";
-  if (account) account.textContent = settings.accountNumber || "G-KODE";
+  if (account) account.textContent = settings.accountReference || "G-KODE";
   if (commission) commission.textContent = (settings.commissionRate || 3) + "%";
-  if (bank) bank.textContent = settings.bank || "Equity Bank";
+  if (bank) bank.textContent = settings.bankName || "Equity Bank";
 }
 
 function showPaymentScreen() {
@@ -2501,7 +2713,7 @@ function verifyMpesaPayment() {
     amount +
     "\n" +
     "🏢 G-KODE Bank: " +
-    (settings.bank || "Equity Bank") +
+    (settings.bankName || "Equity Bank") +
     "\n\n" +
     "✅ Confirm payment?";
 
@@ -2742,12 +2954,19 @@ document.addEventListener("DOMContentLoaded", function () {
     "📡 Online status:",
     navigator.onLine ? "✅ Online" : "❌ Offline",
   );
+  console.log(
+    "💳 Payment system:",
+    paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
+  );
 
   populateProfessionDropdown();
   populateCategoryDropdown();
 
   setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
   setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
+
+  // Load payment settings from localStorage
+  loadPaymentSettings();
 
   // Check for saved session
   var savedUser =
@@ -2766,7 +2985,7 @@ document.addEventListener("DOMContentLoaded", function () {
         updateBottomNav();
         // Try to sync user to cloud
         if (supabaseInitialized && isOnline) {
-          syncUserToSupabase(currentUser);
+          syncAllUsersToCloud();
         }
       }
     } catch (e) {
