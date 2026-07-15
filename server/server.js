@@ -1,86 +1,127 @@
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const app = express();
-const PORT = 3000;
+// ============================================
+// G-KODE SERVER v3.0 - FRESH START
+// ============================================
 
-// YOUR SERVICE ROLE KEY - Full Access
+const express = require("express");
+const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ============================================
+// SUPABASE CONNECTION
+// ============================================
 const supabase = createClient(
-    'https://rqvijxpbdrholshzhusb.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmlqeHBiZHJob2xzaHpodXNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3NjE4NSwiZXhwIjoyMDk4MTUyMTg1fQ.Ypd8iKnvD3By_75yEE1VRSVnJw7SGK6_IqLugRu2nCA'
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
 );
 
-app.get('/', (req, res) => {
-    res.json({ 
-        message: '🇰🇪 G-KODE Server is running!',
-        time: new Date().toISOString()
+// ============================================
+// MIDDLEWARE
+// ============================================
+app.use(cors());
+app.use(express.json());
+
+// ============================================
+// ROUTES
+// ============================================
+
+// Health Check
+app.get("/", (req, res) => {
+  res.json({
+    status: "online",
+    message: "🇰🇪 G-KODE Server is running!",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Test Supabase Connection
+app.get("/api/test", async (req, res) => {
+  try {
+    const { data, error, count } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true });
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        message: "Supabase connection failed",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "✅ Supabase connected!",
+      userCount: count || 0,
     });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
 });
 
-app.get('/api/test-db', async (req, res) => {
-    try {
-        console.log('🔍 Testing Supabase connection...');
-        
-        const { data, error, count } = await supabase
-            .from('users')
-            .select('*', { count: 'exact', head: true });
+// Get Users
+app.get("/api/users", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("phone, full_name, email, location, profession")
+      .limit(20);
 
-        if (error) {
-            console.log('❌ Error:', error.message);
-            return res.json({
-                success: false,
-                error: error.message,
-                hint: 'Check if "users" table exists'
-            });
-        }
+    if (error) throw error;
 
-        console.log('✅ Connected! Users:', count || 0);
-        res.json({
-            success: true,
-            message: '✅ Supabase connected!',
-            userCount: count || 0
-        });
-    } catch (err) {
-        console.log('❌ Catch Error:', err.message);
-        res.json({
-            success: false,
-            error: err.message
-        });
-    }
+    res.json({
+      success: true,
+      count: data.length,
+      users: data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
 });
 
-app.get('/api/users', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('users')
-            .select('phone, full_name, email')
-            .limit(5);
-
-        if (error) throw error;
-
-        res.json({
-            success: true,
-            count: data?.length || 0,
-            users: data || []
-        });
-    } catch (err) {
-        res.json({
-            success: false,
-            error: err.message
-        });
-    }
+// Admin Test
+app.get("/api/admin/test", (req, res) => {
+  const key = req.headers["x-admin-key"];
+  if (key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+  res.json({
+    success: true,
+    message: "✅ Admin access granted!",
+  });
 });
 
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+// ============================================
+// START SERVER
+// ============================================
 app.listen(PORT, () => {
-    console.log('========================================');
-    console.log('🚀 G-KODE SERVER');
-    console.log('========================================');
-    console.log(`📍 http://localhost:${PORT}`);
-    console.log('🔑 Using SERVICE ROLE KEY');
-    console.log('========================================');
-    console.log('');
-    console.log('Test these URLs:');
-    console.log(`  http://localhost:${PORT}/`);
-    console.log(`  http://localhost:${PORT}/api/test-db`);
-    console.log(`  http://localhost:${PORT}/api/users`);
-    console.log('');
+  console.log("========================================");
+  console.log("🚀 G-KODE SERVER v3.0");
+  console.log("========================================");
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(
+    `📡 Supabase: ${process.env.SUPABASE_URL ? "✅ Configured" : "❌ Not configured"}`,
+  );
+  console.log(`🔑 Admin Key: ${process.env.ADMIN_KEY}`);
+  console.log("========================================");
 });
