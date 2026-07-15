@@ -361,6 +361,21 @@
         color: #cc0000;
         background: #ffebee;
       }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .status-badge.active {
+        background: #e8f5e9;
+        color: #006400;
+      }
+      .status-badge.inactive {
+        background: #ffebee;
+        color: #cc0000;
+      }
       @media (max-width: 480px) {
         .admin-card .stats {
           grid-template-columns: 1fr 1fr;
@@ -801,6 +816,40 @@
       loadSupabaseLibrary();
 
       // ============================================
+      // LOAD PAYMENT STATE FROM LOCALSTORAGE
+      // ============================================
+      function loadPaymentState() {
+        try {
+          const saved = localStorage.getItem("gkode_payment_enabled");
+          if (saved !== null) {
+            paymentEnabled = saved === "true";
+          }
+          console.log(
+            "💳 Payment system state:",
+            paymentEnabled ? "ACTIVE" : "DISABLED",
+          );
+          updatePaymentStatus();
+        } catch (e) {
+          console.log("Payment state load error:", e);
+        }
+      }
+
+      // ============================================
+      // SAVE PAYMENT STATE TO LOCALSTORAGE
+      // ============================================
+      function savePaymentState() {
+        try {
+          localStorage.setItem("gkode_payment_enabled", String(paymentEnabled));
+          console.log(
+            "💳 Payment system saved:",
+            paymentEnabled ? "ACTIVE" : "DISABLED",
+          );
+        } catch (e) {
+          console.log("Payment state save error:", e);
+        }
+      }
+
+      // ============================================
       // TOAST
       // ============================================
       function showToast(message, type) {
@@ -1077,6 +1126,7 @@
           adminLoggedIn = true;
           document.getElementById("loginBox").style.display = "none";
           document.getElementById("adminPanel").classList.remove("hidden");
+          loadPaymentState();
           loadStats();
           updatePaymentStatus();
           loadPaymentSettings();
@@ -1122,6 +1172,217 @@
         document.getElementById("statBusinesses").textContent =
           businesses.length;
         document.getElementById("statProducts").textContent = products.length;
+      }
+
+      // ============================================
+      // TOGGLE PAYMENT SYSTEM - FIXED!
+      // ============================================
+      function togglePaymentSystem() {
+        paymentEnabled = !paymentEnabled;
+        savePaymentState(); // ✅ SAVE to localStorage
+        updatePaymentStatus();
+        var status = paymentEnabled ? "ENABLED" : "DISABLED (Testing)";
+        showToast(
+          "💳 Payment system " + status,
+          paymentEnabled ? "success" : "warning",
+        );
+        addLog("Payment system " + status);
+
+        // ✅ Update the toggle button text
+        var toggleBtn = document.getElementById("paymentToggleBtn");
+        if (paymentEnabled) {
+          toggleBtn.textContent = "🔒 Toggle";
+          toggleBtn.className = "btn-small orange";
+        } else {
+          toggleBtn.textContent = "🔓 Toggle";
+          toggleBtn.className = "btn-small green";
+        }
+      }
+
+      function updatePaymentStatus() {
+        var statusEl = document.getElementById("paymentStatus");
+        var toggleBtn = document.getElementById("paymentToggleBtn");
+
+        if (paymentEnabled) {
+          statusEl.textContent = "✅ ACTIVE";
+          statusEl.style.color = "#006400";
+          if (toggleBtn) {
+            toggleBtn.textContent = "🔒 Toggle";
+            toggleBtn.className = "btn-small orange";
+          }
+        } else {
+          statusEl.textContent = "⛔ DISABLED (Testing)";
+          statusEl.style.color = "#ff9800";
+          if (toggleBtn) {
+            toggleBtn.textContent = "🔓 Toggle";
+            toggleBtn.className = "btn-small green";
+          }
+        }
+      }
+
+      function viewPayments() {
+        var payments = getPayments();
+        var output = document.getElementById("output");
+
+        if (payments.length === 0) {
+          output.innerHTML = "<p>No payments recorded.</p>";
+          return;
+        }
+
+        var html = "<h3>💰 Payments (" + payments.length + ")</h3>";
+        payments.forEach(function (p) {
+          html += '<div class="user-item">';
+          html += "<div>📞 " + p.phone + "</div>";
+          html += "<div>💰 Ksh " + p.amount + " | Code: " + p.code + "</div>";
+          html +=
+            "<div>" +
+            (p.verified ? "✅ Verified" : "❌ Pending") +
+            " | " +
+            (p.type || "User Fee") +
+            "</div>";
+          html +=
+            '<div style="font-size:11px; color:#888;">📅 ' +
+            new Date(p.date).toLocaleString() +
+            "</div>";
+          html += "</div>";
+        });
+        output.innerHTML = html;
+      }
+
+      function viewRevenueReport() {
+        var payments = getPayments();
+        var users = getUsersLocal();
+        var gigs = getGigs();
+
+        var totalRevenue = 0;
+        var userFees = 0;
+        var commission = 0;
+
+        payments.forEach(function (p) {
+          if (p.verified) {
+            totalRevenue += p.amount;
+            if (p.type === "user_fee" || !p.type) userFees += p.amount;
+            if (p.type === "commission") commission += p.amount;
+          }
+        });
+
+        var paidUsers = users.filter(function (u) {
+          return u.isPaid;
+        }).length;
+        var completedGigs = gigs.filter(function (g) {
+          return g.status === "Completed" || g.status === "Assigned";
+        }).length;
+        var orders = getOrders();
+
+        var html = "<h3>📊 Revenue Report</h3>";
+        html += '<div class="admin-card">';
+        html +=
+          "<p><strong>Total Revenue:</strong> Ksh " +
+          totalRevenue.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>User Fees:</strong> Ksh " +
+          userFees.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Commission (3%):</strong> Ksh " +
+          commission.toLocaleString() +
+          "</p>";
+        html +=
+          "<p><strong>Paid Users:</strong> " +
+          paidUsers +
+          "/" +
+          users.length +
+          "</p>";
+        html += "<p><strong>Completed Gigs:</strong> " + completedGigs + "</p>";
+        html += "<p><strong>Total Orders:</strong> " + orders.length + "</p>";
+        html +=
+          "<p><strong>Potential Revenue:</strong> Ksh " +
+          ((users.length - paidUsers) * 300 + orders.length * 50) +
+          "</p>";
+        html += "</div>";
+        document.getElementById("output").innerHTML = html;
+      }
+
+      // ============================================
+      // PAYMENT SETTINGS
+      // ============================================
+      function getPaymentSettings() {
+        try {
+          return JSON.parse(
+            localStorage.getItem("gkode_payment_settings") || "{}",
+          );
+        } catch {
+          return {};
+        }
+      }
+
+      function setPaymentSettings(settings) {
+        localStorage.setItem(
+          "gkode_payment_settings",
+          JSON.stringify(settings),
+        );
+      }
+
+      function savePaymentSettings() {
+        var settings = getPaymentSettings();
+        settings.commissionRate =
+          parseFloat(document.getElementById("commissionRate").value) || 3;
+        settings.bankName = document
+          .getElementById("gkodeBankName")
+          .value.trim();
+        settings.accountNumber = document
+          .getElementById("gkodeAccountNumber")
+          .value.trim();
+        setPaymentSettings(settings);
+        showToast("✅ Payment settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function saveMpesaSettings() {
+        var settings = getPaymentSettings();
+        settings.tillNumber = document
+          .getElementById("mpesaTillNumber")
+          .value.trim();
+        settings.paybillNumber = document
+          .getElementById("mpesaPaybillNumber")
+          .value.trim();
+        settings.accountReference = document
+          .getElementById("mpesaAccountNumber")
+          .value.trim();
+        setPaymentSettings(settings);
+        showToast("✅ M-Pesa settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function saveUssdSettings() {
+        var settings = getPaymentSettings();
+        settings.ussdCode = document.getElementById("ussdCode").value.trim();
+        settings.ussdMenu = document.getElementById("ussdMenu").value;
+        setPaymentSettings(settings);
+        showToast("✅ USSD settings saved!", "success");
+        loadPaymentSettings();
+      }
+
+      function loadPaymentSettings() {
+        var settings = getPaymentSettings();
+        document.getElementById("commissionRate").value =
+          settings.commissionRate || 3;
+        document.getElementById("gkodeBankName").value =
+          settings.bankName || "";
+        document.getElementById("gkodeAccountNumber").value =
+          settings.accountNumber || "";
+        document.getElementById("mpesaTillNumber").value =
+          settings.tillNumber || "";
+        document.getElementById("mpesaPaybillNumber").value =
+          settings.paybillNumber || "";
+        document.getElementById("mpesaAccountNumber").value =
+          settings.accountReference || "";
+        document.getElementById("ussdCode").value =
+          settings.ussdCode || "*384#";
+        document.getElementById("ussdMenu").value =
+          settings.ussdMenu ||
+          "1. Register\n2. Login\n3. Post a Gig\n4. Find Gigs\n5. Chat with Client\n6. My Profile";
       }
 
       // ============================================
@@ -1376,7 +1637,6 @@
         if (!confirm("Ban user " + phone + "? They will lose all access."))
           return;
 
-        // Update local
         var users = getUsersLocal();
         for (var i = 0; i < users.length; i++) {
           if (users[i].phone === phone) {
@@ -1428,7 +1688,6 @@
         )
           return;
 
-        // Remove from local
         var users = getUsersLocal().filter(function (u) {
           return u.phone !== phone;
         });
@@ -1730,202 +1989,6 @@
             "<div>" + (u.isBanned ? "🚫 BANNED" : "Active") + "</div></div>";
         });
         output.innerHTML = html;
-      }
-
-      // ============================================
-      // PAYMENT SYSTEM
-      // ============================================
-      function togglePaymentSystem() {
-        paymentEnabled = !paymentEnabled;
-        updatePaymentStatus();
-        var status = paymentEnabled ? "ENABLED" : "DISABLED";
-        showToast(
-          "💳 Payment system " + status,
-          paymentEnabled ? "success" : "warning",
-        );
-        addLog("Payment system " + status);
-      }
-
-      function updatePaymentStatus() {
-        var statusEl = document.getElementById("paymentStatus");
-        var toggleBtn = document.getElementById("paymentToggleBtn");
-
-        if (paymentEnabled) {
-          statusEl.textContent = "✅ ACTIVE";
-          statusEl.style.color = "#006400";
-          toggleBtn.textContent = "🔒 Toggle Payment";
-          toggleBtn.className = "btn-small orange";
-        } else {
-          statusEl.textContent = "⛔ DISABLED (Testing)";
-          statusEl.style.color = "#ff9800";
-          toggleBtn.textContent = "🔓 Toggle Payment";
-          toggleBtn.className = "btn-small green";
-        }
-      }
-
-      function viewPayments() {
-        var payments = getPayments();
-        var output = document.getElementById("output");
-
-        if (payments.length === 0) {
-          output.innerHTML = "<p>No payments recorded.</p>";
-          return;
-        }
-
-        var html = "<h3>💰 Payments (" + payments.length + ")</h3>";
-        payments.forEach(function (p) {
-          html += '<div class="user-item">';
-          html += "<div>📞 " + p.phone + "</div>";
-          html += "<div>💰 Ksh " + p.amount + " | Code: " + p.code + "</div>";
-          html +=
-            "<div>" +
-            (p.verified ? "✅ Verified" : "❌ Pending") +
-            " | " +
-            (p.type || "User Fee") +
-            "</div>";
-          html +=
-            '<div style="font-size:11px; color:#888;">📅 ' +
-            new Date(p.date).toLocaleString() +
-            "</div>";
-          html += "</div>";
-        });
-        output.innerHTML = html;
-      }
-
-      function viewRevenueReport() {
-        var payments = getPayments();
-        var users = getUsersLocal();
-        var gigs = getGigs();
-
-        var totalRevenue = 0;
-        var userFees = 0;
-        var commission = 0;
-
-        payments.forEach(function (p) {
-          if (p.verified) {
-            totalRevenue += p.amount;
-            if (p.type === "user_fee" || !p.type) userFees += p.amount;
-            if (p.type === "commission") commission += p.amount;
-          }
-        });
-
-        var paidUsers = users.filter(function (u) {
-          return u.isPaid;
-        }).length;
-        var completedGigs = gigs.filter(function (g) {
-          return g.status === "Completed" || g.status === "Assigned";
-        }).length;
-        var orders = getOrders();
-
-        var html = "<h3>📊 Revenue Report</h3>";
-        html += '<div class="admin-card">';
-        html +=
-          "<p><strong>Total Revenue:</strong> Ksh " +
-          totalRevenue.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>User Fees:</strong> Ksh " +
-          userFees.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>Commission (3%):</strong> Ksh " +
-          commission.toLocaleString() +
-          "</p>";
-        html +=
-          "<p><strong>Paid Users:</strong> " +
-          paidUsers +
-          "/" +
-          users.length +
-          "</p>";
-        html += "<p><strong>Completed Gigs:</strong> " + completedGigs + "</p>";
-        html += "<p><strong>Total Orders:</strong> " + orders.length + "</p>";
-        html +=
-          "<p><strong>Potential Revenue:</strong> Ksh " +
-          ((users.length - paidUsers) * 300 + orders.length * 50) +
-          "</p>";
-        html += "</div>";
-        document.getElementById("output").innerHTML = html;
-      }
-
-      // ============================================
-      // PAYMENT SETTINGS
-      // ============================================
-      function getPaymentSettings() {
-        try {
-          return JSON.parse(
-            localStorage.getItem("gkode_payment_settings") || "{}",
-          );
-        } catch {
-          return {};
-        }
-      }
-
-      function setPaymentSettings(settings) {
-        localStorage.setItem(
-          "gkode_payment_settings",
-          JSON.stringify(settings),
-        );
-      }
-
-      function savePaymentSettings() {
-        var settings = getPaymentSettings();
-        settings.commissionRate =
-          parseFloat(document.getElementById("commissionRate").value) || 3;
-        settings.bankName = document
-          .getElementById("gkodeBankName")
-          .value.trim();
-        settings.accountNumber = document
-          .getElementById("gkodeAccountNumber")
-          .value.trim();
-        setPaymentSettings(settings);
-        showToast("✅ Payment settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function saveMpesaSettings() {
-        var settings = getPaymentSettings();
-        settings.tillNumber = document
-          .getElementById("mpesaTillNumber")
-          .value.trim();
-        settings.paybillNumber = document
-          .getElementById("mpesaPaybillNumber")
-          .value.trim();
-        settings.accountReference = document
-          .getElementById("mpesaAccountNumber")
-          .value.trim();
-        setPaymentSettings(settings);
-        showToast("✅ M-Pesa settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function saveUssdSettings() {
-        var settings = getPaymentSettings();
-        settings.ussdCode = document.getElementById("ussdCode").value.trim();
-        settings.ussdMenu = document.getElementById("ussdMenu").value;
-        setPaymentSettings(settings);
-        showToast("✅ USSD settings saved!", "success");
-        loadPaymentSettings();
-      }
-
-      function loadPaymentSettings() {
-        var settings = getPaymentSettings();
-        document.getElementById("commissionRate").value =
-          settings.commissionRate || 3;
-        document.getElementById("gkodeBankName").value =
-          settings.bankName || "";
-        document.getElementById("gkodeAccountNumber").value =
-          settings.accountNumber || "";
-        document.getElementById("mpesaTillNumber").value =
-          settings.tillNumber || "";
-        document.getElementById("mpesaPaybillNumber").value =
-          settings.paybillNumber || "";
-        document.getElementById("mpesaAccountNumber").value =
-          settings.accountReference || "";
-        document.getElementById("ussdCode").value =
-          settings.ussdCode || "*384#";
-        document.getElementById("ussdMenu").value =
-          settings.ussdMenu ||
-          "1. Register\n2. Login\n3. Post a Gig\n4. Find Gigs\n5. Chat with Client\n6. My Profile";
       }
 
       // ============================================
@@ -2311,6 +2374,7 @@
         localStorage.removeItem("gkode_token");
         localStorage.removeItem("gkode_ads");
         localStorage.removeItem("gkode_payment_settings");
+        localStorage.removeItem("gkode_payment_enabled");
 
         showToast("🔄 All data reset. Backup saved.", "success");
         addLog("All data reset by admin");
@@ -2355,6 +2419,7 @@
       // ============================================
       document.addEventListener("DOMContentLoaded", function () {
         loadPaymentSettings();
+        loadPaymentState();
         updateSyncStatus("📡 Connecting to cloud...", "online");
 
         // Check if admin was logged in
@@ -2366,6 +2431,10 @@
         console.log("📊 Admin Key: MAYA");
         console.log("☁️ Reading users from Supabase Cloud!");
         console.log("🔑 Using SERVICE ROLE KEY (bypasses RLS)");
+        console.log(
+          "💳 Payment system:",
+          paymentEnabled ? "ACTIVE" : "DISABLED",
+        );
         console.log("🇰🇪 Kenya Helping Kenya");
       });
 
