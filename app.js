@@ -1,13 +1,59 @@
-// ============================================
-// G-KODE - CLOUD-FIRST VERSION v4.0
-// All data stored in Supabase with localStorage fallback
-// ============================================
-
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
-let supabase = null;
+let supabaseClient = null;
 let supabaseInitialized = false;
+
+function initSupabase() {
+  if (supabaseInitialized) return;
+
+  // If Supabase is already available
+  if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+    try {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+      supabaseInitialized = true;
+      console.log("✅ Supabase connected");
+      return;
+    } catch (e) {
+      console.log("⚠️ Supabase init error:", e);
+    }
+  }
+
+  // Load Supabase library
+  console.log("📡 Loading Supabase library...");
+  var script = document.createElement("script");
+  script.src =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  script.onload = function () {
+    try {
+      if (
+        typeof window.supabase !== "undefined" &&
+        window.supabase.createClient
+      ) {
+        supabaseClient = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY,
+        );
+        supabaseInitialized = true;
+        console.log("✅ Supabase loaded and connected");
+      } else {
+        console.log("⚠️ Supabase library not available");
+      }
+    } catch (e) {
+      console.log("⚠️ Supabase connection error:", e);
+    }
+  };
+  script.onerror = function () {
+    console.log("❌ Failed to load Supabase library");
+  };
+  document.head.appendChild(script);
+}
+
+// Start loading
+initSupabase();
 
 // ============ PAYMENT SYSTEM STATE ============
 let paymentEnabled = true; // Default: enabled
@@ -44,19 +90,59 @@ const EMAILJS_CONFIG = {
 };
 
 // ============================================
-// INIT SUPABASE
+// SUPABASE INIT - FIXED
 // ============================================
 function initSupabase() {
+  // If already initialized, skip
   if (supabaseInitialized) return;
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    supabaseInitialized = true;
-    console.log("✅ Supabase connected");
-    loadPaymentSettings();
-  } catch (e) {
-    console.log("⚠️ Supabase not available:", e);
+
+  // Check if Supabase is available
+  if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseInitialized = true;
+      console.log("✅ Supabase connected");
+      return;
+    } catch (e) {
+      console.log("⚠️ Supabase init error:", e);
+    }
   }
+
+  // Load Supabase library if not available
+  console.log("📡 Loading Supabase library...");
+  var script = document.createElement("script");
+  script.src =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  script.onload = function () {
+    try {
+      // Check if library loaded successfully
+      if (
+        typeof window.supabase !== "undefined" &&
+        window.supabase.createClient
+      ) {
+        supabase = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY,
+        );
+        supabaseInitialized = true;
+        console.log("✅ Supabase loaded and connected");
+      } else {
+        console.log(
+          "⚠️ Supabase library loaded but createClient not available",
+        );
+      }
+    } catch (e) {
+      console.log("⚠️ Supabase connection error:", e);
+    }
+  };
+  script.onerror = function () {
+    console.log("❌ Failed to load Supabase library");
+    showToast("⚠️ Cannot connect to cloud. Please refresh.", "warning");
+  };
+  document.head.appendChild(script);
 }
+
+// Call it
 initSupabase();
 
 // ============================================
@@ -329,34 +415,79 @@ async function uploadToSupabase(file, bucket, folder) {
 }
 
 // ============================================
-// 📧 EMAIL FUNCTIONS
+// 📧 EMAIL FUNCTIONS - FIXED WITH FALLBACKS
 // ============================================
 function loadEmailJS(callback) {
+  // Check if already loaded
   if (typeof emailjs !== "undefined") {
     try {
       emailjs.init(EMAILJS_CONFIG.publicKey);
+      console.log("✅ EmailJS already loaded");
     } catch (e) {
       console.log("EmailJS already initialized");
     }
     callback();
     return;
   }
-  const script = document.createElement("script");
-  script.src =
-    "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
-  document.head.appendChild(script);
-  script.onload = function () {
-    try {
-      emailjs.init(EMAILJS_CONFIG.publicKey);
-    } catch (e) {
-      console.log("EmailJS init error:", e);
+
+  console.log("📧 Loading EmailJS library...");
+
+  // Try multiple CDN sources
+  const cdnSources = [
+    "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js",
+    "https://unpkg.com/@emailjs/browser@4/dist/email.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/emailjs/4.0.3/email.min.js",
+  ];
+
+  let currentIndex = 0;
+
+  function tryLoadCDN() {
+    if (currentIndex >= cdnSources.length) {
+      console.log("❌ All CDN sources failed");
+      showToast(
+        "⚠️ Email service unavailable. Using on-screen code.",
+        "warning",
+      );
+      callback();
+      return;
     }
-    callback();
-  };
-  script.onerror = function () {
-    showToast("⚠️ Email service unavailable. Using on-screen code.", "warning");
-    callback();
-  };
+
+    const script = document.createElement("script");
+    script.src = cdnSources[currentIndex];
+    console.log(
+      `📧 Trying CDN ${currentIndex + 1}: ${cdnSources[currentIndex]}`,
+    );
+
+    script.onload = function () {
+      try {
+        if (typeof emailjs !== "undefined") {
+          emailjs.init(EMAILJS_CONFIG.publicKey);
+          console.log(`✅ EmailJS loaded from CDN ${currentIndex + 1}`);
+          callback();
+        } else {
+          console.log(
+            `⚠️ EmailJS not defined after loading CDN ${currentIndex + 1}`,
+          );
+          currentIndex++;
+          tryLoadCDN();
+        }
+      } catch (e) {
+        console.log(`❌ EmailJS init error from CDN ${currentIndex + 1}:`, e);
+        currentIndex++;
+        tryLoadCDN();
+      }
+    };
+
+    script.onerror = function () {
+      console.log(`❌ Failed to load EmailJS from CDN ${currentIndex + 1}`);
+      currentIndex++;
+      tryLoadCDN();
+    };
+
+    document.head.appendChild(script);
+  }
+
+  tryLoadCDN();
 }
 
 function sendOTPEmail(email, name, code) {
