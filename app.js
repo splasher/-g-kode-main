@@ -417,160 +417,74 @@ async function uploadToSupabase(file, bucket, folder) {
 // ============================================
 // 📧 EMAIL FUNCTIONS - FIXED WITH FALLBACKS
 // ============================================
-function loadEmailJS(callback) {
-  // Check if already loaded
-  if (typeof emailjs !== "undefined") {
-    try {
-      emailjs.init(EMAILJS_CONFIG.publicKey);
-      console.log("✅ EmailJS already loaded");
-    } catch (e) {
-      console.log("EmailJS already initialized");
+// ============================================
+// 📧 EMAIL FUNCTIONS - USING SERVER
+// ============================================
+
+const SERVER_URL = "http://localhost:3000"; // Your server URL
+
+async function sendOTPEmail(email, name, code) {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/send-otp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        name: name || "User",
+        code: code,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("✅ OTP email sent!");
+      showToast("📧 Verification code sent to your email!", "success");
+      return true;
+    } else {
+      console.error("❌ OTP email failed:", data.error);
+      showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
+      return false;
     }
-    callback();
-    return;
+  } catch (error) {
+    console.error("❌ OTP email error:", error);
+    showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
+    return false;
   }
-
-  console.log("📧 Loading EmailJS library...");
-
-  // Try multiple CDN sources
-  const cdnSources = [
-    "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js",
-    "https://unpkg.com/@emailjs/browser@4/dist/email.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/emailjs/4.0.3/email.min.js",
-  ];
-
-  let currentIndex = 0;
-
-  function tryLoadCDN() {
-    if (currentIndex >= cdnSources.length) {
-      console.log("❌ All CDN sources failed");
-      showToast(
-        "⚠️ Email service unavailable. Using on-screen code.",
-        "warning",
-      );
-      callback();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = cdnSources[currentIndex];
-    console.log(
-      `📧 Trying CDN ${currentIndex + 1}: ${cdnSources[currentIndex]}`,
-    );
-
-    script.onload = function () {
-      try {
-        if (typeof emailjs !== "undefined") {
-          emailjs.init(EMAILJS_CONFIG.publicKey);
-          console.log(`✅ EmailJS loaded from CDN ${currentIndex + 1}`);
-          callback();
-        } else {
-          console.log(
-            `⚠️ EmailJS not defined after loading CDN ${currentIndex + 1}`,
-          );
-          currentIndex++;
-          tryLoadCDN();
-        }
-      } catch (e) {
-        console.log(`❌ EmailJS init error from CDN ${currentIndex + 1}:`, e);
-        currentIndex++;
-        tryLoadCDN();
-      }
-    };
-
-    script.onerror = function () {
-      console.log(`❌ Failed to load EmailJS from CDN ${currentIndex + 1}`);
-      currentIndex++;
-      tryLoadCDN();
-    };
-
-    document.head.appendChild(script);
-  }
-
-  tryLoadCDN();
 }
 
-function sendOTPEmail(email, name, code) {
-  return new Promise(function (resolve) {
-    loadEmailJS(function () {
-      if (typeof emailjs === "undefined") {
-        showToast("📱 Your OTP code: " + code, "info");
-        resolve(false);
-        return;
-      }
-
-      const templateParams = {
-        to_email: email,
-        to_name: name || "User",
+async function sendResetEmail(email, name, code) {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/send-reset`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        name: name || "User",
         code: code,
-        app_name: "G-KODE",
-        year: new Date().getFullYear(),
-      };
-
-      console.log("📧 Sending OTP to:", email);
-      console.log("🔑 Code:", code);
-
-      emailjs
-        .send(
-          EMAILJS_CONFIG.serviceID,
-          EMAILJS_CONFIG.otpTemplateID,
-          templateParams,
-        )
-        .then(function (response) {
-          console.log("✅ OTP email sent! Status:", response.status);
-          showToast("📧 Verification code sent to your email!", "success");
-          resolve(true);
-        })
-        .catch(function (error) {
-          console.error("❌ OTP email failed:", error);
-          showToast("📱 Your code: " + code + " (Check spam folder)", "info");
-          resolve(false);
-        });
+      }),
     });
-  });
-}
 
-function sendResetEmail(email, name, code) {
-  return new Promise(function (resolve) {
-    loadEmailJS(function () {
-      if (typeof emailjs === "undefined") {
-        showToast("📱 Your reset code: " + code, "info");
-        resolve(false);
-        return;
-      }
+    const data = await response.json();
 
-      const templateParams = {
-        to_email: email,
-        to_name: name || "User",
-        code: code,
-        app_name: "G-KODE",
-        year: new Date().getFullYear(),
-      };
-
-      console.log("📧 Sending reset code to:", email);
-      console.log("🔑 Reset Code:", code);
-
-      emailjs
-        .send(
-          EMAILJS_CONFIG.serviceID,
-          EMAILJS_CONFIG.resetTemplateID,
-          templateParams,
-        )
-        .then(function (response) {
-          console.log("✅ Reset email sent! Status:", response.status);
-          showToast("📧 Reset code sent to your email!", "success");
-          resolve(true);
-        })
-        .catch(function (error) {
-          console.error("❌ Reset email failed:", error);
-          showToast(
-            "📱 Your reset code: " + code + " (Check spam folder)",
-            "info",
-          );
-          resolve(false);
-        });
-    });
-  });
+    if (data.success) {
+      console.log("✅ Reset email sent!");
+      showToast("📧 Reset code sent to your email!", "success");
+      return true;
+    } else {
+      console.error("❌ Reset email failed:", data.error);
+      showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Reset email error:", error);
+    showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
+    return false;
+  }
 }
 
 // ============================================
