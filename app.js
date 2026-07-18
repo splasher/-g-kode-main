@@ -1,124 +1,1184 @@
 // ============================================
-// G-KODE - CLOUD-FIRST VERSION v4.0
-// All data stored in Supabase with localStorage fallback
+// G-KODE - UNIVERSAL APP v5.0
+// One App, Every Device, Scale Forever
+// Kenya Helping Kenya 🇰🇪
 // ============================================
 
-// ============ SUPABASE CONFIG ============
-const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
-let supabaseClient = null;
-let supabaseInitialized = false;
+// ============================================
+// 🌐 DEVICE DETECTION & ADAPTATION SYSTEM
+// ============================================
 
-function initSupabase() {
-  if (supabaseInitialized) return;
+const Device = {
+  // Detect device type
+  type: (function () {
+    const ua = navigator.userAgent;
+    if (/Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(ua))
+      return "mobile";
+    if (/Tablet|iPad|Kindle|PlayBook/i.test(ua)) return "tablet";
+    if (/Windows|Mac|Linux|Chrome OS/i.test(ua)) return "desktop";
+    return "unknown";
+  })(),
 
-  // If Supabase is already available
-  if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+  // Detect screen size
+  screen: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    isSmall: window.innerWidth < 480,
+    isMedium: window.innerWidth >= 480 && window.innerWidth < 768,
+    isLarge: window.innerWidth >= 768,
+  },
+
+  // Detect device capabilities
+  capabilities: (function () {
+    let memory = 2; // Safe default
     try {
-      supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY,
-      );
-      supabaseInitialized = true;
-      console.log("✅ Supabase connected");
-      return;
+      if (navigator.deviceMemory) memory = navigator.deviceMemory;
+      else if (Device.type === "mobile") memory = 2;
+      else if (Device.type === "tablet") memory = 4;
+      else memory = 8;
     } catch (e) {
-      console.log("⚠️ Supabase init error:", e);
+      memory = 2;
     }
+
+    let cores = 2;
+    try {
+      if (navigator.hardwareConcurrency) cores = navigator.hardwareConcurrency;
+    } catch (e) {
+      cores = 2;
+    }
+
+    return {
+      memory: memory,
+      cores: cores,
+      hasCamera: !!(
+        navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+      ),
+      isTouch: "ontouchstart" in window || navigator.maxTouchPoints > 0,
+      connection: (function () {
+        try {
+          if (navigator.connection)
+            return navigator.connection.effectiveType || "unknown";
+          return "unknown";
+        } catch (e) {
+          return "unknown";
+        }
+      })(),
+    };
+  })(),
+
+  // Summary
+  summary: function () {
+    return {
+      type: this.type,
+      screen: `${this.screen.width}x${this.screen.height}`,
+      memory: this.capabilities.memory + "GB",
+      cores: this.capabilities.cores,
+      touch: this.capabilities.isTouch ? "Yes" : "No",
+      connection: this.capabilities.connection,
+    };
+  },
+};
+
+console.log("🌐 Device:", Device.summary());
+
+// ============================================
+// 📊 ADAPTIVE SETTINGS BASED ON DEVICE
+// ============================================
+
+const Adaptive = {
+  // Image settings - Auto adjusts based on device
+  images: {
+    maxWidth:
+      Device.capabilities.memory <= 2
+        ? 200
+        : Device.capabilities.memory <= 4
+          ? 400
+          : 800,
+    maxHeight:
+      Device.capabilities.memory <= 2
+        ? 200
+        : Device.capabilities.memory <= 4
+          ? 400
+          : 800,
+    quality:
+      Device.capabilities.memory <= 2
+        ? 0.4
+        : Device.capabilities.memory <= 4
+          ? 0.6
+          : 0.8,
+    maxFileSize:
+      Device.capabilities.memory <= 2
+        ? 2 * 1024 * 1024
+        : Device.capabilities.memory <= 4
+          ? 4 * 1024 * 1024
+          : 10 * 1024 * 1024,
+  },
+
+  // Feature flags
+  features: {
+    camera: Device.capabilities.hasCamera && Device.capabilities.memory > 1,
+    liveLocation: Device.capabilities.memory > 1,
+    animations: Device.capabilities.memory > 1.5,
+    backgroundSync:
+      Device.capabilities.memory > 2 && "serviceWorker" in navigator,
+    highQuality: Device.capabilities.memory > 4,
+  },
+
+  // Performance settings
+  performance: {
+    debounceDelay: Device.capabilities.memory <= 2 ? 500 : 300,
+    throttleDelay: Device.capabilities.memory <= 2 ? 300 : 100,
+    batchSize:
+      Device.capabilities.memory <= 2
+        ? 5
+        : Device.capabilities.memory <= 4
+          ? 20
+          : 50,
+    cacheTTL: Device.capabilities.memory <= 2 ? 60 : 300,
+  },
+};
+
+console.log("📊 Adaptive settings loaded:", Adaptive.features);
+
+// ============================================
+// 🛡️ SECURITY SYSTEM (HARDENED)
+// ============================================
+
+const ENCRYPTION_SALT = "G-KODE-ULTRA-2026-QUANTUM";
+
+function secureEncrypt(data) {
+  try {
+    if (typeof data === "undefined" || data === null) return data;
+    const json = JSON.stringify(data);
+    let encoded = btoa(encodeURIComponent(json));
+    let xored = "";
+    for (let i = 0; i < encoded.length; i++) {
+      const charCode = encoded.charCodeAt(i) ^ 47;
+      xored += String.fromCharCode(charCode);
+    }
+    const timestamp = Date.now();
+    return xored + "|||" + timestamp + "|||" + ENCRYPTION_SALT;
+  } catch (e) {
+    console.error("🔴 Encryption failed:", e);
+    return data;
   }
-
-  // Load Supabase library
-  console.log("📡 Loading Supabase library...");
-  var script = document.createElement("script");
-  script.src =
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-  script.onload = function () {
-    try {
-      if (
-        typeof window.supabase !== "undefined" &&
-        window.supabase.createClient
-      ) {
-        supabaseClient = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_ANON_KEY,
-        );
-        supabaseInitialized = true;
-        console.log("✅ Supabase loaded and connected");
-      } else {
-        console.log("⚠️ Supabase library not available");
-      }
-    } catch (e) {
-      console.log("⚠️ Supabase connection error:", e);
-    }
-  };
-  script.onerror = function () {
-    console.log("❌ Failed to load Supabase library");
-  };
-  document.head.appendChild(script);
 }
 
-// Start loading
-initSupabase();
+function secureDecrypt(data) {
+  try {
+    if (!data || typeof data !== "string") return data;
+    if (!data.includes("|||" + ENCRYPTION_SALT)) return data;
+    const parts = data.split("|||");
+    const xored = parts[0];
+    const timestamp = parseInt(parts[1]);
+    if (Date.now() - timestamp > 86400000) return null;
+    let decoded = "";
+    for (let i = 0; i < xored.length; i++) {
+      const charCode = xored.charCodeAt(i) ^ 47;
+      decoded += String.fromCharCode(charCode);
+    }
+    const json = decodeURIComponent(atob(decoded));
+    return JSON.parse(json);
+  } catch (e) {
+    console.error("🔴 Decryption failed:", e);
+    return null;
+  }
+}
 
-// ============ PAYMENT SYSTEM STATE ============
-let paymentEnabled = true; // Default: enabled
+function sanitizeInput(input) {
+  if (!input) return "";
+  if (typeof input !== "string") return "";
+  const div = document.createElement("div");
+  div.textContent = input;
+  let sanitized = div.innerHTML;
+  const dangerous = [
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /<[^>]*>/g,
+    /on\w+="[^"]*"/g,
+    /on\w+='[^']*'/g,
+    /javascript:/gi,
+    /eval\(/gi,
+    /document\./gi,
+    /window\./gi,
+    /localStorage\./gi,
+    /sessionStorage\./gi,
+  ];
+  for (let i = 0; i < dangerous.length; i++) {
+    sanitized = sanitized.replace(dangerous[i], "");
+  }
+  return sanitized.trim();
+}
+
+function displaySafe(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function displaySafeHTML(html) {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  const dangerous = [
+    "script",
+    "iframe",
+    "object",
+    "embed",
+    "form",
+    "input",
+    "button",
+  ];
+  for (let i = 0; i < dangerous.length; i++) {
+    const elements = div.getElementsByTagName(dangerous[i]);
+    while (elements.length > 0) {
+      elements[0].parentNode.removeChild(elements[0]);
+    }
+  }
+  const allElements = div.getElementsByTagName("*");
+  for (let i = 0; i < allElements.length; i++) {
+    const attrs = allElements[i].attributes;
+    for (let j = attrs.length - 1; j >= 0; j--) {
+      if (attrs[j].name.startsWith("on")) {
+        allElements[i].removeAttribute(attrs[j].name);
+      }
+    }
+  }
+  return div.innerHTML;
+}
 
 // ============================================
-// STATE VARIABLES
+// 🔄 DATABASE ABSTRACTION LAYER
+// NEVER CHANGE THIS CODE AGAIN!
 // ============================================
-let currentUser = null;
-let currentTab = "open";
-let currentGigId = null;
-let pendingRegistration = null;
-let pendingOtp = null;
-let resetData = null;
-let resetTimerInterval = null;
-let resetTimeLeft = 600;
-let isProcessing = false;
-let cameraStream = null;
-let cameraActive = false;
-let isOnline = true;
 
-// ============================================
-// ADMIN PHONES
-// ============================================
-const ADMIN_PHONES = ["0703428192", "0711991467"];
+const Database = {
+  // Configuration - CHANGE THIS WHEN YOU UPGRADE
+  config: {
+    provider: "supabase",
+    url: "https://rqvijxpbdrholshzhusb.supabase.co",
+    key: "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO",
+    serviceKey:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmlqeHBiZHJob2xzaHpodXNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3NjE4NSwiZXhwIjoyMDk4MTUyMTg1fQ.Ypd8iKnvD3By_75yEE1VRSVnJw7SGK6_IqLugRu2nCA",
+    maxConnections: 10,
+    timeout: 30000,
+    retries: 3,
+    cacheTTL: 300,
+  },
 
-// ============================================
-// EMAILJS CONFIG (KEEP FOR REFERENCE, BUT USING SERVER NOW)
-// ============================================
-const EMAILJS_CONFIG = {
-  serviceID: "service_hw35xfu",
-  publicKey: "vc371wcNfQy56zlH8",
-  otpTemplateID: "template_qycsjak",
-  resetTemplateID: "template_0787ox7",
+  // ============================================
+  // 🔄 USER FUNCTIONS
+  // ============================================
+
+  users: {
+    get: async function (phone) {
+      return await this._execute("users", "select", {
+        filter: { phone: phone },
+        single: true,
+      });
+    },
+    getAll: async function (options) {
+      options = options || {};
+      return await this._execute("users", "select", {
+        limit: options.limit || 20,
+        offset: options.offset || 0,
+        orderBy: options.orderBy || "created_at",
+        order: options.order || "desc",
+      });
+    },
+    create: async function (userData) {
+      return await this._execute("users", "insert", {
+        data: userData,
+      });
+    },
+    update: async function (phone, updates) {
+      return await this._execute("users", "update", {
+        filter: { phone: phone },
+        data: updates,
+      });
+    },
+    delete: async function (phone) {
+      return await this._execute("users", "delete", {
+        filter: { phone: phone },
+      });
+    },
+    count: async function () {
+      return await this._execute("users", "count", {});
+    },
+  },
+
+  // ============================================
+  // 🔄 GIG FUNCTIONS
+  // ============================================
+
+  gigs: {
+    get: async function (id) {
+      return await this._execute("gigs", "select", {
+        filter: { id: id },
+        single: true,
+      });
+    },
+    getAll: async function (options) {
+      options = options || {};
+      return await this._execute("gigs", "select", {
+        filter: options.filter || {},
+        limit: options.limit || 50,
+        offset: options.offset || 0,
+        orderBy: options.orderBy || "created_at",
+        order: options.order || "desc",
+      });
+    },
+    create: async function (gigData) {
+      return await this._execute("gigs", "insert", {
+        data: gigData,
+      });
+    },
+    update: async function (id, updates) {
+      return await this._execute("gigs", "update", {
+        filter: { id: id },
+        data: updates,
+      });
+    },
+    delete: async function (id) {
+      return await this._execute("gigs", "delete", {
+        filter: { id: id },
+      });
+    },
+  },
+
+  // ============================================
+  // 🔄 PAYMENT FUNCTIONS
+  // ============================================
+
+  payments: {
+    create: async function (paymentData) {
+      return await this._execute("payments", "insert", {
+        data: paymentData,
+      });
+    },
+    getByUser: async function (phone) {
+      return await this._execute("payments", "select", {
+        filter: { phone: phone },
+        orderBy: "created_at",
+        order: "desc",
+      });
+    },
+    verify: async function (code) {
+      return await this._execute("payments", "update", {
+        filter: { code: code },
+        data: { verified: true, verified_at: new Date().toISOString() },
+      });
+    },
+  },
+
+  // ============================================
+  // 🔄 CHAT FUNCTIONS
+  // ============================================
+
+  chat: {
+    getMessages: async function (gigId) {
+      return await this._execute("chat_messages", "select", {
+        filter: { gig_id: gigId },
+        orderBy: "created_at",
+        order: "asc",
+      });
+    },
+    sendMessage: async function (messageData) {
+      return await this._execute("chat_messages", "insert", {
+        data: messageData,
+      });
+    },
+  },
+
+  // ============================================
+  // 🔄 EXECUTION ENGINE
+  // ============================================
+
+  _cache: {},
+
+  _execute: async function (table, operation, params) {
+    const cacheKey = `${table}_${operation}_${JSON.stringify(params)}`;
+    const cacheTime = 60000;
+
+    if (operation === "select" || operation === "count") {
+      const cached = this._cache[cacheKey];
+      if (cached && Date.now() - cached.time < cacheTime) {
+        Monitor.log("cache_hit", { key: cacheKey });
+        return cached.data;
+      }
+      Monitor.log("cache_miss", { key: cacheKey });
+    }
+
+    try {
+      let result;
+      if (this.config.provider === "supabase") {
+        result = await this._executeSupabase(table, operation, params);
+      } else {
+        throw new Error("Unknown database provider");
+      }
+
+      if (operation === "select" || operation === "count") {
+        this._cache[cacheKey] = { data: result, time: Date.now() };
+        // Limit cache size
+        const keys = Object.keys(this._cache);
+        if (keys.length > 100) {
+          const oldest = keys.sort(
+            (a, b) => this._cache[a].time - this._cache[b].time,
+          )[0];
+          delete this._cache[oldest];
+        }
+      }
+
+      Monitor.log("success", { table, operation });
+      return result;
+    } catch (error) {
+      Monitor.log("error", { table, operation, error: error.message });
+      if (params.retry !== false) {
+        return await this._retry(table, operation, params);
+      }
+      throw error;
+    }
+  },
+
+  _executeSupabase: async function (table, operation, params) {
+    const client = supabaseClient;
+    let query = client.from(table);
+
+    if (operation === "select") {
+      query = query.select("*");
+      if (params.filter) {
+        for (const key in params.filter) {
+          if (params.filter[key] !== undefined && params.filter[key] !== null) {
+            query = query.eq(key, params.filter[key]);
+          }
+        }
+      }
+      if (params.limit) query = query.limit(params.limit);
+      if (params.offset)
+        query = query.range(params.offset, params.offset + params.limit - 1);
+      if (params.orderBy)
+        query = query.order(params.orderBy, {
+          ascending: params.order === "asc",
+        });
+      if (params.single) {
+        const { data, error } = await query.single();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    }
+
+    if (operation === "insert") {
+      const { data, error } = await query.insert(params.data).select();
+      if (error) throw error;
+      return data;
+    }
+
+    if (operation === "update") {
+      let updateQuery = query;
+      if (params.filter) {
+        for (const key in params.filter) {
+          if (params.filter[key] !== undefined && params.filter[key] !== null) {
+            updateQuery = updateQuery.eq(key, params.filter[key]);
+          }
+        }
+      }
+      const { data, error } = await updateQuery.update(params.data).select();
+      if (error) throw error;
+      return data;
+    }
+
+    if (operation === "delete") {
+      let deleteQuery = query;
+      if (params.filter) {
+        for (const key in params.filter) {
+          if (params.filter[key] !== undefined && params.filter[key] !== null) {
+            deleteQuery = deleteQuery.eq(key, params.filter[key]);
+          }
+        }
+      }
+      const { error } = await deleteQuery.delete();
+      if (error) throw error;
+      return { success: true };
+    }
+
+    if (operation === "count") {
+      const { count, error } = await query.select("*", {
+        count: "exact",
+        head: true,
+      });
+      if (error) throw error;
+      return count;
+    }
+
+    throw new Error(`Unknown operation: ${operation}`);
+  },
+
+  _retry: async function (table, operation, params, attempt) {
+    attempt = attempt || 1;
+    const maxRetries = this.config.retries || 3;
+    const delay = 1000 * Math.pow(2, attempt - 1);
+    if (attempt > maxRetries) {
+      throw new Error(`Failed after ${maxRetries} retries`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    console.log(`🔄 Retry ${attempt}/${maxRetries} for ${table}.${operation}`);
+    try {
+      return await this._execute(table, operation, { ...params, retry: false });
+    } catch (error) {
+      return await this._retry(table, operation, params, attempt + 1);
+    }
+  },
+
+  _clearCache: function () {
+    this._cache = {};
+    console.log("🗑️ Cache cleared");
+  },
 };
 
 // ============================================
-// SERVER URL FOR EMAILS
+// 📊 MONITORING SYSTEM
 // ============================================
-const SERVER_URL = "http://localhost:3000";
+
+const Monitor = {
+  stats: {
+    queries: 0,
+    cacheHits: 0,
+    cacheMisses: 0,
+    errors: 0,
+    lastMinuteQueries: 0,
+  },
+
+  log: function (type, data) {
+    this.stats.queries++;
+    this.stats.lastMinuteQueries++;
+    if (type === "cache_hit") this.stats.cacheHits++;
+    if (type === "cache_miss") this.stats.cacheMisses++;
+    if (type === "error") this.stats.errors++;
+
+    if (this.stats.lastMinuteQueries > 50) {
+      console.warn(
+        `⚠️ High query rate: ${this.stats.lastMinuteQueries}/minute`,
+      );
+    }
+  },
+
+  getReport: function () {
+    const total = this.stats.cacheHits + this.stats.cacheMisses;
+    return {
+      totalQueries: this.stats.queries,
+      cacheHitRate:
+        total > 0
+          ? ((this.stats.cacheHits / total) * 100).toFixed(1) + "%"
+          : "0%",
+      errors: this.stats.errors,
+      queriesLastMinute: this.stats.lastMinuteQueries,
+    };
+  },
+
+  reset: function () {
+    this.stats.lastMinuteQueries = 0;
+  },
+};
+
+setInterval(function () {
+  Monitor.reset();
+}, 60000);
+
+console.log("✅ Database abstraction layer loaded");
+console.log("📊 Monitor active");
 
 // ============================================
-// 📧 EMAIL FUNCTIONS - USING SERVER
+// 📱 UNIVERSAL CAMERA SUPPORT
 // ============================================
+
+function openCamera(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) {
+    showToast("Error: Input not found.", "error");
+    return;
+  }
+
+  if (!Adaptive.features.camera) {
+    showToast("📸 Camera not supported. Please upload a photo.", "info");
+    input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    return;
+  }
+
+  if (
+    Device.type === "mobile" &&
+    window.location.protocol !== "https:" &&
+    window.location.hostname !== "localhost"
+  ) {
+    showToast("🔒 Please use HTTPS for camera on phones.", "warning");
+    input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    return;
+  }
+
+  if (Device.capabilities.memory <= 1.5) {
+    showToast("⚠️ Low memory device. Using file upload.", "warning");
+    input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    return;
+  }
+
+  input.value = "";
+  if (cameraActive) closeCamera();
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    input.removeAttribute("capture");
+    input.setAttribute("accept", "image/*");
+    input.click();
+    return;
+  }
+
+  const videoSettings = {
+    video: {
+      facingMode: "user",
+      width: { ideal: Device.capabilities.memory <= 2 ? 320 : 640 },
+      height: { ideal: Device.capabilities.memory <= 2 ? 240 : 480 },
+    },
+    audio: false,
+  };
+
+  showCameraModal(input, videoSettings);
+}
+
+function showCameraModal(input, videoSettings) {
+  const overlay = document.createElement("div");
+  overlay.id = "cameraOverlay";
+  overlay.style.cssText =
+    "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;";
+
+  const video = document.createElement("video");
+  video.id = "cameraVideo";
+  video.style.cssText =
+    "width:100%;max-width:500px;max-height:70vh;border-radius:12px;background:#000;transform:scaleX(-1);object-fit:cover;";
+  video.autoplay = true;
+  video.playsInline = true;
+
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText =
+    "display:flex;gap:20px;margin-top:20px;width:100%;max-width:400px;justify-content:center;";
+
+  const captureBtn = document.createElement("button");
+  captureBtn.textContent = "📸 CAPTURE";
+  captureBtn.style.cssText =
+    "padding:15px 40px;background:#006400;color:#FFD700;border:none;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;flex:1;";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "✕ CLOSE";
+  cancelBtn.style.cssText =
+    "padding:15px 30px;background:#cc0000;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;flex:1;";
+
+  buttonContainer.appendChild(captureBtn);
+  buttonContainer.appendChild(cancelBtn);
+  overlay.appendChild(video);
+  overlay.appendChild(buttonContainer);
+  document.body.appendChild(overlay);
+
+  navigator.mediaDevices
+    .getUserMedia(videoSettings)
+    .then(function (stream) {
+      cameraStream = stream;
+      cameraActive = true;
+      video.srcObject = stream;
+    })
+    .catch(function (err) {
+      console.error("Camera error:", err);
+      document.body.removeChild(overlay);
+      input.removeAttribute("capture");
+      input.setAttribute("accept", "image/*");
+      input.click();
+      showToast("Camera not available. Please select a file.", "warning");
+    });
+
+  captureBtn.onclick = function () {
+    capturePhoto(video, input, overlay);
+  };
+
+  cancelBtn.onclick = function () {
+    closeCamera();
+    document.body.removeChild(overlay);
+  };
+
+  overlay.onclick = function (e) {
+    if (e.target === overlay) {
+      closeCamera();
+      document.body.removeChild(overlay);
+    }
+  };
+}
+
+function capturePhoto(video, input, overlay) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    fetch(dataUrl)
+      .then(function (res) {
+        return res.blob();
+      })
+      .then(function (blob) {
+        const file = new File([blob], "camera-photo.jpg", {
+          type: "image/jpeg",
+        });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+        const event = new Event("change", { bubbles: true });
+        input.dispatchEvent(event);
+        closeCamera();
+        document.body.removeChild(overlay);
+        showToast("✅ Photo captured!", "success");
+      });
+  } catch (e) {
+    console.error("Capture error:", e);
+    showToast("Failed to capture photo. Please try again.", "error");
+  }
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    cameraStream = null;
+  }
+  cameraActive = false;
+  const video = document.getElementById("cameraVideo");
+  if (video) {
+    video.srcObject = null;
+  }
+  const overlay = document.getElementById("cameraOverlay");
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
+// ============================================
+// 📸 ADAPTIVE IMAGE COMPRESSION
+// ============================================
+
+function compressImage(file, maxWidth, maxHeight, quality) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        const settings = Adaptive.images;
+        let width = img.width;
+        let height = img.height;
+        let targetWidth = maxWidth || settings.maxWidth;
+        let targetHeight = maxHeight || settings.maxHeight;
+        let targetQuality = quality || settings.quality;
+
+        if (Device.capabilities.memory <= 2) {
+          targetWidth = Math.min(targetWidth, 300);
+          targetHeight = Math.min(targetHeight, 300);
+          targetQuality = Math.min(targetQuality, 0.5);
+        }
+
+        if (width > targetWidth) {
+          height = (height * targetWidth) / width;
+          width = targetWidth;
+        }
+        if (height > targetHeight) {
+          width = (width * targetHeight) / height;
+          height = targetHeight;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
+        const ctx = canvas.getContext("2d");
+        const finalQuality =
+          Device.capabilities.memory <= 2 ? 0.5 : targetQuality;
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", finalQuality);
+        canvas.width = 0;
+        canvas.height = 0;
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================
+// 📂 ADAPTIVE FILE VALIDATION
+// ============================================
+
+function validateFileUpload(file) {
+  if (!file) {
+    return { valid: false, message: "No file selected." };
+  }
+
+  const settings = Adaptive.images;
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
+    "image/gif",
+    "image/heic",
+    "image/heif",
+  ];
+
+  if (Device.capabilities.memory <= 2) {
+    if (file.type === "image/heic" || file.type === "image/heif") {
+      return {
+        valid: false,
+        message:
+          "HEIC format not supported on this device. Please use JPG or PNG.",
+      };
+    }
+  }
+
+  if (allowedTypes.indexOf(file.type) === -1) {
+    return {
+      valid: false,
+      message: "File type not allowed. Use JPG, PNG, WEBP, or GIF.",
+    };
+  }
+
+  const maxSize = settings.maxFileSize;
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      message: `File too large. Max ${maxSize / 1024 / 1024}MB for this device.`,
+    };
+  }
+
+  if (Device.capabilities.memory <= 1.5 && file.size > 2 * 1024 * 1024) {
+    return {
+      valid: false,
+      message: "File too large for this device. Max 2MB.",
+    };
+  }
+
+  const ext = "." + file.name.split(".").pop().toLowerCase();
+  const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+  if (allowedExts.indexOf(ext) === -1) {
+    return { valid: false, message: "Invalid file extension." };
+  }
+
+  return { valid: true, message: "File validated successfully." };
+}
+
+// ============================================
+// 🔒 ADAPTIVE PASSWORD VALIDATION
+// ============================================
+
+function validatePasswordStrength(password) {
+  if (Device.capabilities.memory <= 1.5) {
+    return {
+      valid: password.length >= 6,
+      issues:
+        password.length < 6 ? ["Password must be at least 6 characters"] : [],
+      score: password.length >= 6 ? 60 : 0,
+      strength: password.length >= 6 ? "medium" : "weak",
+      message:
+        password.length >= 6
+          ? "✅ Password length OK."
+          : "⚠️ Password must be at least 6 characters.",
+    };
+  }
+
+  const issues = [];
+  let score = 0;
+  let strength = "weak";
+
+  if (password.length < 6) {
+    issues.push("At least 6 characters");
+  } else if (password.length >= 12) {
+    score += 25;
+  } else {
+    score += 15;
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    issues.push("At least one uppercase letter");
+  } else {
+    score += 15;
+  }
+
+  if (!/[a-z]/.test(password)) {
+    issues.push("At least one lowercase letter");
+  } else {
+    score += 15;
+  }
+
+  if (!/[0-9]/.test(password)) {
+    issues.push("At least one number");
+  } else {
+    score += 15;
+  }
+
+  if (Device.capabilities.memory > 2) {
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      issues.push("At least one special character");
+    } else {
+      score += 15;
+    }
+  }
+
+  if (score >= 60) strength = "strong";
+  else if (score >= 35) strength = "medium";
+  else strength = "weak";
+
+  return {
+    valid:
+      issues.length === 0 ||
+      (Device.capabilities.memory <= 1.5 && password.length >= 6),
+    issues: issues,
+    score: score,
+    strength: strength,
+    message:
+      issues.length === 0
+        ? "✅ Password is strong!"
+        : "⚠️ Please fix the issues above.",
+  };
+}
+
+// ============================================
+// 🌐 NETWORK RETRY
+// ============================================
+
+function networkRetry(fn, maxRetries) {
+  maxRetries = maxRetries || (Device.type === "mobile" ? 5 : 3);
+  let attempt = 0;
+  const baseDelay =
+    Device.capabilities.connection === "slow-2g"
+      ? 3000
+      : Device.capabilities.connection === "2g"
+        ? 2000
+        : Device.capabilities.connection === "3g"
+          ? 1000
+          : 500;
+
+  return new Promise(function (resolve, reject) {
+    function tryAttempt() {
+      attempt++;
+      fn()
+        .then(resolve)
+        .catch(function (err) {
+          if (attempt < maxRetries) {
+            const delay = baseDelay * attempt;
+            console.log(`📡 Retry ${attempt}/${maxRetries} in ${delay}ms`);
+            setTimeout(tryAttempt, delay);
+          } else {
+            reject(err);
+          }
+        });
+    }
+    tryAttempt();
+  });
+}
+
+// ============================================
+// 🎨 ADAPTIVE UI RENDERING
+// ============================================
+
+function renderAdaptive(container, data, template) {
+  if (Device.capabilities.memory <= 2) {
+    const batchSize = Device.capabilities.memory <= 1.5 ? 5 : 10;
+    let index = 0;
+    function renderBatch() {
+      const batch = data.slice(index, index + batchSize);
+      if (batch.length === 0) return;
+      batch.forEach(function (item) {
+        container.innerHTML += template(item);
+      });
+      index += batchSize;
+      if (index < data.length) {
+        requestAnimationFrame(renderBatch);
+      }
+    }
+    renderBatch();
+  } else {
+    data.forEach(function (item) {
+      container.innerHTML += template(item);
+    });
+  }
+}
+
+// ============================================
+// 📋 RATE LIMITING
+// ============================================
+
+function checkRateLimit(action, maxPerMinute, maxPerHour, maxPerDay) {
+  maxPerMinute = maxPerMinute || 5;
+  maxPerHour = maxPerHour || 20;
+  maxPerDay = maxPerDay || 50;
+
+  const now = new Date();
+  const userKey = currentUser ? currentUser.phone : "anonymous";
+  const ipKey = getIPHash();
+
+  const minuteKey = `rate_${action}_minute_${now.getMinutes()}_${now.getHours()}_${now.toDateString()}_${userKey}_${ipKey}`;
+  const minuteCount = parseInt(localStorage.getItem(minuteKey) || "0");
+  if (minuteCount >= maxPerMinute) {
+    showToast(`⚠️ Too many ${action} attempts. Wait a moment.`, "error");
+    return false;
+  }
+
+  const hourKey = `rate_${action}_hour_${now.getHours()}_${now.toDateString()}_${userKey}_${ipKey}`;
+  const hourCount = parseInt(localStorage.getItem(hourKey) || "0");
+  if (hourCount >= maxPerHour) {
+    showToast(`⚠️ Too many ${action} attempts this hour.`, "error");
+    return false;
+  }
+
+  const dayKey = `rate_${action}_day_${now.toDateString()}_${userKey}_${ipKey}`;
+  const dayCount = parseInt(localStorage.getItem(dayKey) || "0");
+  if (dayCount >= maxPerDay) {
+    showToast(`⚠️ Too many ${action} attempts today.`, "error");
+    return false;
+  }
+
+  localStorage.setItem(minuteKey, minuteCount + 1);
+  localStorage.setItem(hourKey, hourCount + 1);
+  localStorage.setItem(dayKey, dayCount + 1);
+  return true;
+}
+
+function getIPHash() {
+  const info =
+    navigator.userAgent + navigator.language + screen.width + screen.height;
+  let hash = 0;
+  for (let i = 0; i < info.length; i++) {
+    hash = (hash << 5) - hash + info.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return "ip_" + Math.abs(hash).toString(36);
+}
+
+// ============================================
+// 🔐 SESSION MANAGEMENT
+// ============================================
+
+const SESSION_TIMEOUT = 10; // 10 minutes
+
+function startSession(user) {
+  const session = {
+    userId: user.phone,
+    userName: user.name,
+    userEmail: user.email || "",
+    loginTime: Date.now(),
+    expiresAt: Date.now() + SESSION_TIMEOUT * 60 * 1000,
+    token: generateSecureToken(128),
+    fingerprint: getFingerprint(),
+    ip: getIPHash(),
+    userAgent: navigator.userAgent,
+    lastActivity: Date.now(),
+  };
+  const encrypted = secureEncrypt(session);
+  localStorage.setItem("gkode_session", encrypted);
+  return session;
+}
+
+function validateSession() {
+  const sessionData = localStorage.getItem("gkode_session");
+  if (!sessionData) return false;
+  try {
+    const session = secureDecrypt(sessionData);
+    if (!session || !session.expiresAt) return false;
+    if (Date.now() > session.expiresAt) {
+      localStorage.removeItem("gkode_session");
+      return false;
+    }
+    if (session.fingerprint !== getFingerprint()) {
+      localStorage.removeItem("gkode_session");
+      return false;
+    }
+    return session;
+  } catch (e) {
+    localStorage.removeItem("gkode_session");
+    return false;
+  }
+}
+
+function refreshSession() {
+  const sessionData = localStorage.getItem("gkode_session");
+  if (!sessionData) return false;
+  try {
+    const session = secureDecrypt(sessionData);
+    if (!session) return false;
+    session.expiresAt = Date.now() + SESSION_TIMEOUT * 60 * 1000;
+    session.lastActivity = Date.now();
+    localStorage.setItem("gkode_session", secureEncrypt(session));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getFingerprint() {
+  const parts = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    navigator.hardwareConcurrency || 0,
+    navigator.deviceMemory || 0,
+  ];
+  try {
+    return btoa(parts.join("|||"));
+  } catch (e) {
+    return parts.join("|||");
+  }
+}
+
+function generateSecureToken(length) {
+  length = length || 64;
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
+  let token = "";
+  const array = new Uint8Array(length);
+  try {
+    crypto.getRandomValues(array);
+    for (let i = 0; i < length; i++) {
+      token += chars.charAt(array[i] % chars.length);
+    }
+  } catch (e) {
+    for (let i = 0; i < length; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+  }
+  return token;
+}
+
+// ============================================
+// 📧 EMAIL FUNCTIONS (Using Server)
+// ============================================
+
+const SERVER_URL = "http://localhost:3000";
 
 async function sendOTPEmail(email, name, code) {
   try {
     const response = await fetch(`${SERVER_URL}/api/send-otp`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        name: name || "User",
-        code: code,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, name: name || "User", code: code }),
     });
-
     const data = await response.json();
-
     if (data.success) {
       console.log("✅ OTP email sent!");
       showToast("📧 Verification code sent to your email!", "success");
@@ -139,18 +1199,10 @@ async function sendResetEmail(email, name, code) {
   try {
     const response = await fetch(`${SERVER_URL}/api/send-reset`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        name: name || "User",
-        code: code,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, name: name || "User", code: code }),
     });
-
     const data = await response.json();
-
     if (data.success) {
       console.log("✅ Reset email sent!");
       showToast("📧 Reset code sent to your email!", "success");
@@ -168,80 +1220,38 @@ async function sendResetEmail(email, name, code) {
 }
 
 // ============================================
-// LOAD PAYMENT SETTINGS FROM LOCAL STORAGE
+// ⏰ SESSION MONITOR
 // ============================================
-function loadPaymentSettings() {
-  try {
-    const saved = localStorage.getItem("gkode_payment_enabled");
-    if (saved !== null) {
-      paymentEnabled = saved === "true";
+
+let securityInterval = null;
+
+function initSecurity() {
+  const session = validateSession();
+  if (!session && currentUser) {
+    showToast("⏰ Session expired. Please login again.", "warning");
+    if (typeof logout === "function") logout();
+  }
+
+  if (securityInterval) clearInterval(securityInterval);
+  securityInterval = setInterval(function () {
+    if (currentUser) {
+      const session = validateSession();
+      if (!session) {
+        showToast("⏰ Session expired. Please login again.", "warning");
+        if (typeof logout === "function") logout();
+      } else {
+        refreshSession();
+      }
     }
-    console.log(
-      "💳 Payment system:",
-      paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
-    );
-  } catch (e) {
-    console.log("Payment settings load error:", e);
-  }
+  }, 30000);
+
+  console.log("🛡️ Security initialized");
 }
 
 // ============================================
-// CHECK IF PAYMENT IS ENABLED
+// 📦 TOAST SYSTEM
 // ============================================
-function isPaymentEnabled() {
-  return paymentEnabled;
-}
 
-// ============================================
-// CHECK IF USER CAN ACCESS FEATURES
-// ============================================
-function canAccessFeatures() {
-  if (!currentUser) return false;
-
-  if (!isPaymentEnabled()) {
-    showToast(
-      "⚠️ System is in testing mode. Features are disabled.",
-      "warning",
-    );
-    return false;
-  }
-
-  if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to access features.",
-      "warning",
-    );
-    showScreen("payment");
-    return false;
-  }
-
-  return true;
-}
-
-// ============================================
-// CHECK ONLINE STATUS
-// ============================================
-function checkOnlineStatus() {
-  isOnline = navigator.onLine;
-  if (!isOnline) {
-    showToast("⚠️ You are offline. Using local data.", "warning");
-  }
-  return isOnline;
-}
-
-window.addEventListener("online", function () {
-  isOnline = true;
-  showToast("✅ Back online! Syncing data...", "success");
-});
-
-window.addEventListener("offline", function () {
-  isOnline = false;
-  showToast("⚠️ You are offline. Changes will sync later.", "warning");
-});
-
-// ============================================
-// TOAST FUNCTION
-// ============================================
 function showToast(message, type) {
   type = type || "info";
   const container = document.getElementById("toast-container");
@@ -274,8 +1284,153 @@ function showToast(message, type) {
 }
 
 // ============================================
-// DATA HELPERS (LOCAL FALLBACK)
+// 🚀 SUPABASE CLIENT
 // ============================================
+
+const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
+let supabaseClient = null;
+let supabaseInitialized = false;
+
+function initSupabase() {
+  if (supabaseInitialized) return;
+  if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+    try {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+      supabaseInitialized = true;
+      console.log("✅ Supabase connected");
+      return;
+    } catch (e) {
+      console.log("⚠️ Supabase init error:", e);
+    }
+  }
+  console.log("📡 Loading Supabase library...");
+  var script = document.createElement("script");
+  script.src =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  script.onload = function () {
+    try {
+      if (
+        typeof window.supabase !== "undefined" &&
+        window.supabase.createClient
+      ) {
+        supabaseClient = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY,
+        );
+        supabaseInitialized = true;
+        console.log("✅ Supabase loaded and connected");
+      } else {
+        console.log("⚠️ Supabase library not available");
+      }
+    } catch (e) {
+      console.log("⚠️ Supabase connection error:", e);
+    }
+  };
+  script.onerror = function () {
+    console.log("❌ Failed to load Supabase library");
+  };
+  document.head.appendChild(script);
+}
+
+initSupabase();
+
+// ============================================
+// 📦 STATE VARIABLES
+// ============================================
+
+let paymentEnabled = true;
+let currentUser = null;
+let currentTab = "open";
+let currentGigId = null;
+let pendingRegistration = null;
+let pendingOtp = null;
+let resetData = null;
+let resetTimerInterval = null;
+let resetTimeLeft = 600;
+let isProcessing = false;
+let cameraStream = null;
+let cameraActive = false;
+let isOnline = true;
+
+// ============================================
+// ADMIN PHONES
+// ============================================
+
+const ADMIN_PHONES = ["0703428192", "0711991467"];
+
+// ============================================
+// LOAD PAYMENT SETTINGS
+// ============================================
+
+function loadPaymentSettings() {
+  try {
+    const saved = localStorage.getItem("gkode_payment_enabled");
+    if (saved !== null) {
+      paymentEnabled = saved === "true";
+    }
+    console.log(
+      "💳 Payment system:",
+      paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
+    );
+  } catch (e) {
+    console.log("Payment settings load error:", e);
+  }
+}
+
+function isPaymentEnabled() {
+  return paymentEnabled;
+}
+
+function canAccessFeatures() {
+  if (!currentUser) return false;
+  if (!isPaymentEnabled()) {
+    showToast(
+      "⚠️ System is in testing mode. Features are disabled.",
+      "warning",
+    );
+    return false;
+  }
+  if (!currentUser.isPaid && !currentUser.is_paid) {
+    showToast(
+      "💳 Please pay the one-time fee of Ksh 300 to access features.",
+      "warning",
+    );
+    showScreen("payment");
+    return false;
+  }
+  return true;
+}
+
+// ============================================
+// CHECK ONLINE STATUS
+// ============================================
+
+function checkOnlineStatus() {
+  isOnline = navigator.onLine;
+  if (!isOnline) {
+    showToast("⚠️ You are offline. Using local data.", "warning");
+  }
+  return isOnline;
+}
+
+window.addEventListener("online", function () {
+  isOnline = true;
+  showToast("✅ Back online! Syncing data...", "success");
+});
+
+window.addEventListener("offline", function () {
+  isOnline = false;
+  showToast("⚠️ You are offline. Changes will sync later.", "warning");
+});
+
+// ============================================
+// 📂 DATA HELPERS
+// ============================================
+
 function getData(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -290,42 +1445,36 @@ function getUsersLocal() {
 function setUsersLocal(users) {
   localStorage.setItem("gkode_users", JSON.stringify(users));
 }
-
 function getGigsLocal() {
   return getData("gkode_gigs");
 }
 function setGigsLocal(gigs) {
   localStorage.setItem("gkode_gigs", JSON.stringify(gigs));
 }
-
 function getCompaniesLocal() {
   return getData("gkode_companies");
 }
 function setCompaniesLocal(companies) {
   localStorage.setItem("gkode_companies", JSON.stringify(companies));
 }
-
 function getProductsLocal() {
   return getData("gkode_products");
 }
 function setProductsLocal(products) {
   localStorage.setItem("gkode_products", JSON.stringify(products));
 }
-
 function getProfessions() {
   return getData("gkode_professions");
 }
 function setProfessions(professions) {
   localStorage.setItem("gkode_professions", JSON.stringify(professions));
 }
-
 function getCategories() {
   return getData("gkode_categories");
 }
 function setCategories(categories) {
   localStorage.setItem("gkode_categories", JSON.stringify(categories));
 }
-
 function getComplaints() {
   return getData("gkode_complaints");
 }
@@ -342,6 +1491,7 @@ function getBackups() {
 // ============================================
 // READ FILE AS DATA URL
 // ============================================
+
 function readFileAsDataURL(file) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
@@ -354,50 +1504,9 @@ function readFileAsDataURL(file) {
 }
 
 // ============================================
-// COMPRESS IMAGE
-// ============================================
-function compressImage(file, maxWidth, maxHeight, quality) {
-  maxWidth = maxWidth || 400;
-  maxHeight = maxHeight || 400;
-  quality = quality || 0.7;
-
-  return new Promise(function (resolve, reject) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const img = new Image();
-      img.onload = function () {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// ============================================
 // UPLOAD TO SUPABASE STORAGE
 // ============================================
+
 async function uploadToSupabase(file, bucket, folder) {
   if (!supabaseInitialized || !isOnline) {
     console.log("⚠️ Supabase not ready or offline, using base64 fallback");
@@ -415,10 +1524,7 @@ async function uploadToSupabase(file, bucket, folder) {
 
     const { data, error } = await supabaseClient.storage
       .from(bucket)
-      .upload(fileName, fileObj, {
-        cacheControl: "3600",
-        upsert: true,
-      });
+      .upload(fileName, fileObj, { cacheControl: "3600", upsert: true });
 
     if (error) throw error;
 
@@ -435,8 +1541,215 @@ async function uploadToSupabase(file, bucket, folder) {
 }
 
 // ============================================
-// NAVIGATION
+// 🎨 PROFESSIONS & CATEGORIES
 // ============================================
+
+const defaultProfessions = [
+  "Plumber",
+  "Electrician",
+  "Carpenter",
+  "Painter",
+  "Mechanic",
+  "Hairdresser",
+  "Tailor",
+  "Chef",
+  "Driver",
+  "Teacher",
+  "Nurse",
+  "Accountant",
+  "Architect",
+  "Baker",
+  "Barber",
+  "Builder",
+  "Cleaner",
+  "Cook",
+  "Doctor",
+  "Engineer",
+  "Farmer",
+  "Gardener",
+  "Lawyer",
+  "Mason",
+  "Photographer",
+  "Roofer",
+  "Security Guard",
+  "Surveyor",
+  "Tiler",
+  "Tour Guide",
+  "Translator",
+  "Vet",
+  "Welder",
+  "Writer",
+];
+
+function getAllProfessions() {
+  const saved = getProfessions();
+  const all = defaultProfessions.slice();
+  for (var i = 0; i < saved.length; i++) {
+    if (all.indexOf(saved[i]) === -1) all.push(saved[i]);
+  }
+  all.sort();
+  return all;
+}
+
+function populateProfessionDropdown() {
+  const dropdown = document.getElementById("regProfession");
+  if (!dropdown) return;
+  while (dropdown.options.length > 1) dropdown.remove(1);
+  const all = getAllProfessions();
+  for (var i = 0; i < all.length; i++) {
+    const opt = document.createElement("option");
+    opt.value = all[i];
+    opt.textContent = all[i];
+    dropdown.appendChild(opt);
+  }
+  const otherOpt = document.createElement("option");
+  otherOpt.value = "Other";
+  otherOpt.textContent = "Other (Add New)";
+  dropdown.appendChild(otherOpt);
+}
+
+function checkProfession() {
+  const profession = document.getElementById("regProfession")?.value || "";
+  const box = document.getElementById("otherProfessionBox");
+  if (box) box.style.display = profession === "Other" ? "block" : "none";
+}
+
+function saveNewProfession(professionName) {
+  if (!professionName || professionName.trim().length < 3) {
+    showToast("Enter a valid profession name.", "error");
+    return null;
+  }
+  const formatted = professionName
+    .trim()
+    .split(" ")
+    .map(function (w) {
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(" ");
+  const all = getAllProfessions();
+  if (all.indexOf(formatted) !== -1) return formatted;
+  const saved = getProfessions();
+  saved.push(formatted);
+  setProfessions(saved);
+  populateProfessionDropdown();
+  showToast('✅ New profession "' + formatted + '" saved!', "success");
+  return formatted;
+}
+
+const defaultCategories = [
+  "Cement",
+  "Pipes",
+  "Taps",
+  "Electrical",
+  "Paint",
+  "Timber",
+  "Steel",
+  "Tiles",
+  "Roofing",
+  "Tools",
+  "Beauty",
+  "Food",
+  "Seeds",
+  "Auto Parts",
+  "Hardware",
+];
+
+function getAllCategories() {
+  const saved = getCategories();
+  const all = defaultCategories.slice();
+  for (var i = 0; i < saved.length; i++) {
+    if (all.indexOf(saved[i]) === -1) all.push(saved[i]);
+  }
+  all.sort();
+  return all;
+}
+
+function populateCategoryDropdown() {
+  const dropdown = document.getElementById("marketCategory");
+  if (!dropdown) return;
+  while (dropdown.options.length > 1) dropdown.remove(1);
+  const all = getAllCategories();
+  for (var i = 0; i < all.length; i++) {
+    const opt = document.createElement("option");
+    opt.value = all[i];
+    opt.textContent = all[i];
+    dropdown.appendChild(opt);
+  }
+}
+
+// ============================================
+// 📱 MOBILE INPUT FIXES
+// ============================================
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Fix phone inputs
+  document.querySelectorAll('input[type="tel"]').forEach(function (input) {
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("inputmode", "numeric");
+  });
+
+  // Fix password inputs
+  document.querySelectorAll('input[type="password"]').forEach(function (input) {
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
+  });
+});
+
+// ============================================
+// 🎨 CLEAR IMAGE PREVIEW
+// ============================================
+
+function clearImage(inputId, previewId, containerId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+  if (input) input.value = "";
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+  if (container) container.style.display = "none";
+}
+
+function setupFilePreview(inputId, previewId, containerId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+  if (!input) return;
+
+  input.addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (!file) {
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    // Validate file
+    const validation = validateFileUpload(file);
+    if (!validation.valid) {
+      showToast(validation.message, "error");
+      input.value = "";
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    if (preview && container) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+        container.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// ============================================
+// 🔄 NAVIGATION
+// ============================================
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(function (s) {
     s.classList.remove("active");
@@ -501,343 +1814,9 @@ function togglePassword(fieldId, icon) {
 }
 
 // ============================================
-// PROFESSIONS
+// 📝 REGISTER
 // ============================================
-const defaultProfessions = [
-  "Plumber",
-  "Electrician",
-  "Carpenter",
-  "Painter",
-  "Mechanic",
-  "Hairdresser",
-  "Tailor",
-  "Chef",
-  "Driver",
-  "Teacher",
-  "Nurse",
-  "Accountant",
-  "Architect",
-  "Baker",
-  "Barber",
-  "Builder",
-  "Cleaner",
-  "Cook",
-  "Doctor",
-  "Engineer",
-  "Farmer",
-  "Gardener",
-  "Lawyer",
-  "Mason",
-  "Photographer",
-  "Roofer",
-  "Security Guard",
-  "Surveyor",
-  "Tiler",
-  "Tour Guide",
-  "Translator",
-  "Vet",
-  "Welder",
-  "Writer",
-];
 
-function getAllProfessions() {
-  const saved = getProfessions();
-  const all = defaultProfessions.slice();
-  for (var i = 0; i < saved.length; i++) {
-    if (all.indexOf(saved[i]) === -1) {
-      all.push(saved[i]);
-    }
-  }
-  all.sort();
-  return all;
-}
-
-function populateProfessionDropdown() {
-  const dropdown = document.getElementById("regProfession");
-  if (!dropdown) return;
-  while (dropdown.options.length > 1) dropdown.remove(1);
-  const all = getAllProfessions();
-  for (var i = 0; i < all.length; i++) {
-    const opt = document.createElement("option");
-    opt.value = all[i];
-    opt.textContent = all[i];
-    dropdown.appendChild(opt);
-  }
-  const otherOpt = document.createElement("option");
-  otherOpt.value = "Other";
-  otherOpt.textContent = "Other (Add New)";
-  dropdown.appendChild(otherOpt);
-}
-
-function checkProfession() {
-  const profession = document.getElementById("regProfession")?.value || "";
-  const box = document.getElementById("otherProfessionBox");
-  if (box) box.style.display = profession === "Other" ? "block" : "none";
-}
-
-function saveNewProfession(professionName) {
-  if (!professionName || professionName.trim().length < 3) {
-    showToast("Enter a valid profession name.", "error");
-    return null;
-  }
-  const formatted = professionName
-    .trim()
-    .split(" ")
-    .map(function (w) {
-      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-    })
-    .join(" ");
-  const all = getAllProfessions();
-  if (all.indexOf(formatted) !== -1) return formatted;
-  const saved = getProfessions();
-  saved.push(formatted);
-  setProfessions(saved);
-  populateProfessionDropdown();
-  showToast('✅ New profession "' + formatted + '" saved!', "success");
-  return formatted;
-}
-
-// ============================================
-// CATEGORIES
-// ============================================
-const defaultCategories = [
-  "Cement",
-  "Pipes",
-  "Taps",
-  "Electrical",
-  "Paint",
-  "Timber",
-  "Steel",
-  "Tiles",
-  "Roofing",
-  "Tools",
-  "Beauty",
-  "Food",
-  "Seeds",
-  "Auto Parts",
-  "Hardware",
-];
-
-function getAllCategories() {
-  const saved = getCategories();
-  const all = defaultCategories.slice();
-  for (var i = 0; i < saved.length; i++) {
-    if (all.indexOf(saved[i]) === -1) {
-      all.push(saved[i]);
-    }
-  }
-  all.sort();
-  return all;
-}
-
-function populateCategoryDropdown() {
-  const dropdown = document.getElementById("marketCategory");
-  if (!dropdown) return;
-  while (dropdown.options.length > 1) dropdown.remove(1);
-  const all = getAllCategories();
-  for (var i = 0; i < all.length; i++) {
-    const opt = document.createElement("option");
-    opt.value = all[i];
-    opt.textContent = all[i];
-    dropdown.appendChild(opt);
-  }
-}
-
-// ============================================
-// CAMERA FUNCTIONS
-// ============================================
-function openCamera(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) {
-    showToast("Error: Input not found.", "error");
-    return;
-  }
-  input.value = "";
-  if (cameraActive) {
-    closeCamera();
-  }
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    input.removeAttribute("capture");
-    input.setAttribute("accept", "image/*");
-    input.click();
-    return;
-  }
-  showCameraModal(input);
-}
-
-function showCameraModal(input) {
-  const overlay = document.createElement("div");
-  overlay.id = "cameraOverlay";
-  overlay.style.cssText =
-    "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;";
-
-  const video = document.createElement("video");
-  video.id = "cameraVideo";
-  video.style.cssText =
-    "width:100%;max-width:500px;max-height:70vh;border-radius:12px;background:#000;transform:scaleX(-1);object-fit:cover;";
-  video.autoplay = true;
-  video.playsInline = true;
-
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.cssText =
-    "display:flex;gap:20px;margin-top:20px;width:100%;max-width:400px;justify-content:center;";
-
-  const captureBtn = document.createElement("button");
-  captureBtn.textContent = "📸 CAPTURE";
-  captureBtn.style.cssText =
-    "padding:15px 40px;background:#006400;color:#FFD700;border:none;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;flex:1;";
-
-  const cancelBtn = document.createElement("button");
-  cancelBtn.textContent = "✕ CLOSE";
-  cancelBtn.style.cssText =
-    "padding:15px 30px;background:#cc0000;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;flex:1;";
-
-  buttonContainer.appendChild(captureBtn);
-  buttonContainer.appendChild(cancelBtn);
-  overlay.appendChild(video);
-  overlay.appendChild(buttonContainer);
-  document.body.appendChild(overlay);
-
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-      },
-      audio: false,
-    })
-    .then(function (stream) {
-      cameraStream = stream;
-      cameraActive = true;
-      video.srcObject = stream;
-    })
-    .catch(function (err) {
-      console.error("Camera error:", err);
-      document.body.removeChild(overlay);
-      input.removeAttribute("capture");
-      input.setAttribute("accept", "image/*");
-      input.click();
-      showToast("Camera not available. Please select a file.", "warning");
-    });
-
-  captureBtn.onclick = function () {
-    capturePhoto(video, input, overlay);
-  };
-
-  cancelBtn.onclick = function () {
-    closeCamera();
-    document.body.removeChild(overlay);
-  };
-
-  overlay.onclick = function (e) {
-    if (e.target === overlay) {
-      closeCamera();
-      document.body.removeChild(overlay);
-    }
-  };
-}
-
-function capturePhoto(video, input, overlay) {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-
-    fetch(dataUrl)
-      .then(function (res) {
-        return res.blob();
-      })
-      .then(function (blob) {
-        const file = new File([blob], "camera-photo.jpg", {
-          type: "image/jpeg",
-        });
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        input.files = dataTransfer.files;
-        const event = new Event("change", { bubbles: true });
-        input.dispatchEvent(event);
-        closeCamera();
-        document.body.removeChild(overlay);
-        showToast("✅ Photo captured!", "success");
-      });
-  } catch (e) {
-    console.error("Capture error:", e);
-    showToast("Failed to capture photo. Please try again.", "error");
-  }
-}
-
-function closeCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(function (track) {
-      track.stop();
-    });
-    cameraStream = null;
-  }
-  cameraActive = false;
-  const video = document.getElementById("cameraVideo");
-  if (video) {
-    video.srcObject = null;
-  }
-}
-
-function clearImage(inputId, previewId, containerId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const container = document.getElementById(containerId);
-  if (input) input.value = "";
-  if (preview) {
-    preview.src = "";
-    preview.style.display = "none";
-  }
-  if (container) container.style.display = "none";
-}
-
-function setupFilePreview(inputId, previewId, containerId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const container = document.getElementById(containerId);
-  if (!input) return;
-
-  input.addEventListener("change", function (e) {
-    const file = e.target.files[0];
-    if (!file) {
-      if (container) container.style.display = "none";
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      showToast("Please select an image file.", "error");
-      input.value = "";
-      if (container) container.style.display = "none";
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Image too large. Maximum 5MB.", "error");
-      input.value = "";
-      if (container) container.style.display = "none";
-      return;
-    }
-    if (preview && container) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        preview.src = e.target.result;
-        preview.style.display = "block";
-        container.style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-}
-
-// ============================================
-// REGISTER - CLOUD FIRST
-// ============================================
 async function register(e) {
   if (e) e.preventDefault();
   const btn = document.getElementById("registerBtn");
@@ -865,6 +1844,16 @@ async function register(e) {
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
+    // Validate password for device
+    const passwordStrength = validatePasswordStrength(password);
+    if (!passwordStrength.valid) {
+      showToast(passwordStrength.message, "error");
+      btn.disabled = false;
+      btn.textContent = "REGISTER";
+      isProcessing = false;
+      return;
+    }
+
     if (
       !name ||
       !phone ||
@@ -887,20 +1876,27 @@ async function register(e) {
       isProcessing = false;
       return;
     }
-    if (
-      password.length < 6 ||
-      !/[a-zA-Z]/.test(password) ||
-      !/\d/.test(password)
-    ) {
-      showToast(
-        "Password must be 6+ characters with letters and numbers",
-        "error",
-      );
+
+    // Validate phone number (remove non-numeric)
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 10 || cleanPhone.length > 12) {
+      showToast("Please enter a valid phone number (10 digits)", "error");
       btn.disabled = false;
       btn.textContent = "REGISTER";
       isProcessing = false;
       return;
     }
+
+    // Validate ID (remove non-numeric)
+    const cleanId = id.replace(/\D/g, "");
+    if (cleanId.length < 5 || cleanId.length > 8) {
+      showToast("Please enter a valid ID number (5-8 digits)", "error");
+      btn.disabled = false;
+      btn.textContent = "REGISTER";
+      isProcessing = false;
+      return;
+    }
+
     if (!photoFile || !idScanFile) {
       showToast("Please upload profile photo and ID scan", "error");
       btn.disabled = false;
@@ -908,6 +1904,26 @@ async function register(e) {
       isProcessing = false;
       return;
     }
+
+    // Validate files
+    const photoValidation = validateFileUpload(photoFile);
+    if (!photoValidation.valid) {
+      showToast("Profile photo: " + photoValidation.message, "error");
+      btn.disabled = false;
+      btn.textContent = "REGISTER";
+      isProcessing = false;
+      return;
+    }
+
+    const idValidation = validateFileUpload(idScanFile);
+    if (!idValidation.valid) {
+      showToast("ID scan: " + idValidation.message, "error");
+      btn.disabled = false;
+      btn.textContent = "REGISTER";
+      isProcessing = false;
+      return;
+    }
+
     if (!terms) {
       showToast("Please agree to the Terms of Use", "error");
       btn.disabled = false;
@@ -916,15 +1932,12 @@ async function register(e) {
       return;
     }
 
+    // Check for existing user
     if (supabaseInitialized && isOnline) {
       try {
-        const { data: existingUser, error: checkError } = await supabaseClient
-          .from("users")
-          .select("phone, email")
-          .or("phone.eq." + phone + ",email.eq." + email);
-
-        if (!checkError && existingUser && existingUser.length > 0) {
-          showToast("Phone or email already registered", "error");
+        const existing = await Database.users.get(cleanPhone);
+        if (existing) {
+          showToast("Phone number already registered", "error");
           btn.disabled = false;
           btn.textContent = "REGISTER";
           isProcessing = false;
@@ -954,21 +1967,23 @@ async function register(e) {
     }
 
     btn.textContent = "⏳ UPLOADING IMAGES...";
+
+    // Compress and upload with adaptive settings
     const photoUrl = await uploadToSupabase(
       photoFile,
       "profiles",
-      "user_" + phone,
+      "user_" + cleanPhone,
     );
     const idScanUrl = await uploadToSupabase(
       idScanFile,
       "ids",
-      "user_" + phone,
+      "user_" + cleanPhone,
     );
 
     const user = {
       name: name,
-      phone: phone,
-      id: id,
+      phone: cleanPhone,
+      id: cleanId,
       email: email,
       password: password,
       location: location,
@@ -1063,30 +2078,32 @@ async function completeRegistration() {
 
     if (supabaseInitialized && isOnline) {
       try {
-        const { error } = await supabaseClient.from("users").insert({
-          phone: user.phone,
-          national_id: user.id,
-          email: user.email,
-          full_name: user.name,
-          location: user.location,
-          profession: user.profession,
-          skills: user.skills
-            ? user.skills.split(",").map(function (s) {
-                return s.trim();
-              })
-            : [],
-          photo_url: user.photo,
-          id_scan_url: user.idScan,
-          password_hash: user.password,
-          rating: 0,
-          review_count: 0,
-          strikes: 0,
-          is_paid: false,
-          is_banned: false,
-          created_at: new Date().toISOString(),
-          last_active: new Date().toISOString(),
+        const result = await networkRetry(function () {
+          return supabaseClient.from("users").insert({
+            phone: user.phone,
+            national_id: user.id,
+            email: user.email,
+            full_name: user.name,
+            location: user.location,
+            profession: user.profession,
+            skills: user.skills
+              ? user.skills.split(",").map(function (s) {
+                  return s.trim();
+                })
+              : [],
+            photo_url: user.photo,
+            id_scan_url: user.idScan,
+            password_hash: user.password,
+            rating: 0,
+            review_count: 0,
+            strikes: 0,
+            is_paid: false,
+            is_banned: false,
+            created_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
+          });
         });
-        if (!error) saved = true;
+        if (!result.error) saved = true;
       } catch (e) {
         console.log("Supabase save error:", e);
       }
@@ -1126,8 +2143,9 @@ async function completeRegistration() {
 }
 
 // ============================================
-// LOGIN - CLOUD FIRST
+// 🔐 LOGIN
 // ============================================
+
 async function login(e) {
   e.preventDefault();
 
@@ -1136,7 +2154,10 @@ async function login(e) {
   btn.textContent = "⏳ LOGGING IN...";
 
   try {
-    const phone = document.getElementById("loginPhone").value.trim();
+    const phone = document
+      .getElementById("loginPhone")
+      .value.trim()
+      .replace(/\D/g, "");
     const password = document.getElementById("loginPassword").value;
     const rememberMe = document.getElementById("rememberMe").checked;
 
@@ -1149,14 +2170,8 @@ async function login(e) {
 
     if (supabaseInitialized && isOnline) {
       try {
-        const { data: users, error: findError } = await supabaseClient
-          .from("users")
-          .select("*")
-          .eq("phone", phone);
-
-        if (!findError && users && users.length > 0) {
-          const user = users[0];
-
+        const user = await Database.users.get(phone);
+        if (user) {
           if (user.password_hash !== password) {
             showToast("❌ Wrong password.", "error");
             btn.disabled = false;
@@ -1172,10 +2187,9 @@ async function login(e) {
           }
 
           try {
-            await supabaseClient
-              .from("users")
-              .update({ last_active: new Date().toISOString() })
-              .eq("id", user.id);
+            await Database.users.update(phone, {
+              last_active: new Date().toISOString(),
+            });
           } catch (updateErr) {
             console.log("Could not update last_active:", updateErr);
           }
@@ -1218,6 +2232,7 @@ async function login(e) {
           showToast("Welcome back, " + user.full_name + "!", "success");
           showScreen("home");
           loadGigs();
+          initSecurity();
           btn.disabled = false;
           btn.textContent = "LOGIN";
           return;
@@ -1258,6 +2273,7 @@ async function login(e) {
     showToast("Welcome back, " + localUser.name + "!", "success");
     showScreen("home");
     loadGigs();
+    initSecurity();
   } catch (err) {
     showToast("Login error: " + err.message, "error");
     console.error("Login error:", err);
@@ -1268,19 +2284,25 @@ async function login(e) {
 }
 
 // ============================================
-// LOGOUT
+// 🚪 LOGOUT
 // ============================================
+
 function logout() {
   currentUser = null;
   localStorage.removeItem("gkode_currentUser");
   sessionStorage.removeItem("gkode_currentUser");
+  if (securityInterval) {
+    clearInterval(securityInterval);
+    securityInterval = null;
+  }
   showToast("Logged out.", "info");
   showScreen("welcome");
 }
 
 // ============================================
-// RESET PASSWORD
+// 🔑 RESET PASSWORD
 // ============================================
+
 async function sendResetCode() {
   const btn = document.getElementById("sendResetBtn");
   btn.disabled = true;
@@ -1394,8 +2416,14 @@ async function verifyResetIdentity() {
 
   try {
     const enteredCode = document.getElementById("resetOtp").value.trim();
-    const phone = document.getElementById("resetPhone").value.trim();
-    const id = document.getElementById("resetID").value.trim();
+    const phone = document
+      .getElementById("resetPhone")
+      .value.trim()
+      .replace(/\D/g, "");
+    const id = document
+      .getElementById("resetID")
+      .value.trim()
+      .replace(/\D/g, "");
     const profession = document.getElementById("resetProfession").value.trim();
     const location = document.getElementById("resetLocation").value.trim();
 
@@ -1501,8 +2529,9 @@ async function resetPassword() {
     const newPassword = document.getElementById("newPassword").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
 
-    if (newPassword.length < 6) {
-      showToast("❌ Password must be at least 6 characters.", "error");
+    const passwordStrength = validatePasswordStrength(newPassword);
+    if (!passwordStrength.valid) {
+      showToast(passwordStrength.message, "error");
       if (btn) {
         btn.disabled = false;
         btn.textContent = "RESET PASSWORD";
@@ -1620,8 +2649,9 @@ function updateResetTimerDisplay() {
 }
 
 // ============================================
-// GIG FUNCTIONS - WITH PAYMENT CHECK
+// 📋 GIG FUNCTIONS
 // ============================================
+
 function postGig(e) {
   if (e) e.preventDefault();
   if (!currentUser) {
@@ -1645,6 +2675,9 @@ function postGig(e) {
     showScreen("payment");
     return;
   }
+
+  // Rate limit
+  if (!checkRateLimit("gig", 5, 20, 50)) return;
 
   const btn = document.getElementById("postGigBtn");
   if (!btn || isProcessing) return;
@@ -1682,13 +2715,13 @@ function postGig(e) {
 
     const gig = {
       id: Date.now().toString(),
-      title: title,
-      skill: skill,
-      location: location,
+      title: sanitizeInput(title),
+      skill: sanitizeInput(skill),
+      location: sanitizeInput(location),
       urgency: urgency,
       budgetMin: budgetMin,
       budgetMax: budgetMax,
-      description: description,
+      description: sanitizeInput(description),
       client: currentUser.name,
       clientPhone: currentUser.phone,
       status: "Open",
@@ -1705,9 +2738,8 @@ function postGig(e) {
 
     if (supabaseInitialized && isOnline) {
       try {
-        supabaseClient
-          .from("gigs")
-          .insert({
+        networkRetry(function () {
+          return supabaseClient.from("gigs").insert({
             id: gig.id,
             title: gig.title,
             skill: gig.skill,
@@ -1722,11 +2754,8 @@ function postGig(e) {
             gps_lat: gig.gpsLat,
             gps_lon: gig.gpsLon,
             created_at: gig.createdAt,
-          })
-          .then(function (result) {
-            if (result.error)
-              console.log("Supabase gig save error:", result.error);
           });
+        });
       } catch (err) {
         console.log("Could not save gig to Supabase:", err);
       }
@@ -1800,33 +2829,12 @@ async function loadGigs() {
 
   if (supabaseInitialized && isOnline) {
     try {
-      const { data, error } = await supabaseClient
-        .from("gigs")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        gigs = data.map(function (g) {
-          return {
-            id: g.id,
-            title: g.title,
-            skill: g.skill,
-            location: g.location,
-            urgency: g.urgency || "Normal",
-            budgetMin: g.budget_min,
-            budgetMax: g.budget_max,
-            description: g.description,
-            client: g.client_name,
-            clientPhone: g.client_phone,
-            status: g.status || "Open",
-            worker: g.worker_name || "",
-            workerPhone: g.worker_phone || "",
-            gpsLat: g.gps_lat,
-            gpsLon: g.gps_lon,
-            createdAt: g.created_at,
-          };
-        });
-      }
+      const data = await Database.gigs.getAll({
+        limit: Device.capabilities.memory <= 2 ? 20 : 50,
+        filter:
+          currentTab === "open" ? { status: "Open" } : { status: "Assigned" },
+      });
+      gigs = data || [];
     } catch (err) {
       console.log("Could not load gigs from Supabase:", err);
     }
@@ -1857,9 +2865,7 @@ async function loadGigs() {
     return;
   }
 
-  var html = "";
-  for (var i = 0; i < filtered.length; i++) {
-    var g = filtered[i];
+  function renderGigCard(g) {
     var open = g.status === "Open";
     var urgencyColor =
       g.urgency === "Emergency"
@@ -1868,11 +2874,11 @@ async function loadGigs() {
           ? "#ff9800"
           : "#006400";
 
-    html +=
+    var html =
       '<div class="gig-card" style="border-left:4px solid ' +
       urgencyColor +
       ';">';
-    html += '<div class="gig-title">' + g.title + "</div>";
+    html += '<div class="gig-title">' + displaySafe(g.title) + "</div>";
     html +=
       '<span class="badge ' +
       (open ? "badge-open" : "badge-taken") +
@@ -1880,8 +2886,12 @@ async function loadGigs() {
       (open ? "🟢 OPEN" : "🔴 TAKEN") +
       "</span>";
     html +=
-      '<div class="gig-meta">👤 ' + g.client + " | 🛠️ " + g.skill + "</div>";
-    html += '<div class="gig-meta">📍 ' + g.location + "</div>";
+      '<div class="gig-meta">👤 ' +
+      displaySafe(g.client) +
+      " | 🛠️ " +
+      displaySafe(g.skill) +
+      "</div>";
+    html += '<div class="gig-meta">📍 ' + displaySafe(g.location) + "</div>";
     html +=
       '<div class="gig-budget">💰 Ksh ' +
       g.budgetMin +
@@ -1909,8 +2919,20 @@ async function loadGigs() {
         "')\">💬 Chat</button></div>";
     }
     html += "</div>";
+    return html;
   }
-  container.innerHTML = html;
+
+  // Use adaptive rendering
+  if (Device.capabilities.memory <= 2) {
+    container.innerHTML = "";
+    renderAdaptive(container, filtered, renderGigCard);
+  } else {
+    var html = "";
+    filtered.forEach(function (g) {
+      html += renderGigCard(g);
+    });
+    container.innerHTML = html;
+  }
 }
 
 function acceptGig(id) {
@@ -1965,19 +2987,17 @@ function acceptGig(id) {
 
   if (supabaseInitialized && isOnline) {
     try {
-      supabaseClient
-        .from("gigs")
-        .update({
-          status: "Assigned",
-          worker_name: currentUser.name,
-          worker_phone: currentUser.phone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .then(function (result) {
-          if (result.error)
-            console.log("Supabase gig update error:", result.error);
-        });
+      networkRetry(function () {
+        return supabaseClient
+          .from("gigs")
+          .update({
+            status: "Assigned",
+            worker_name: currentUser.name,
+            worker_phone: currentUser.phone,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id);
+      });
     } catch (err) {
       console.log("Could not update gig in Supabase:", err);
     }
@@ -1989,8 +3009,9 @@ function acceptGig(id) {
 }
 
 // ============================================
-// CHAT FUNCTIONS
+// 💬 CHAT FUNCTIONS
 // ============================================
+
 function openChat(id) {
   currentGigId = id;
   document.getElementById("chatGigId").value = id;
@@ -2005,7 +3026,7 @@ function openChat(id) {
   if (gig) {
     var partner = gig.client === currentUser.name ? gig.worker : gig.client;
     document.getElementById("chatPartner").textContent =
-      "💬 Chat with " + partner;
+      "💬 Chat with " + displaySafe(partner);
   }
   showScreen("chat");
   loadChatMessages(id);
@@ -2025,16 +3046,17 @@ function loadChatMessages(id) {
     var msg = messages[i];
     var isSent = msg.sender === currentUser.name;
     html += '<div class="chat-message ' + (isSent ? "sent" : "received") + '">';
-    if (!isSent) html += '<div class="sender">' + msg.sender + "</div>";
+    if (!isSent)
+      html += '<div class="sender">' + displaySafe(msg.sender) + "</div>";
     if (msg.isLocation) {
       html +=
         '📍 <a href="' +
-        msg.text +
+        displaySafe(msg.text) +
         '" target="_blank" style="color:' +
         (isSent ? "#FFD700" : "#006400") +
         ';">View Location</a>';
     } else {
-      html += msg.text;
+      html += displaySafe(msg.text);
     }
     html +=
       '<div class="time">' + new Date(msg.time).toLocaleTimeString() + "</div>";
@@ -2052,7 +3074,7 @@ function sendMessage(e) {
   const messages = JSON.parse(localStorage.getItem("gkode_chat_" + id) || "[]");
   messages.push({
     sender: currentUser.name,
-    text: text,
+    text: sanitizeInput(text),
     time: new Date().toISOString(),
     isLocation: false,
   });
@@ -2125,8 +3147,9 @@ function navigateToClient() {
 }
 
 // ============================================
-// PROFILE FUNCTIONS
+// 👤 PROFILE FUNCTIONS
 // ============================================
+
 function loadProfile() {
   if (!currentUser) return;
   document.getElementById("profileName").textContent =
@@ -2176,7 +3199,7 @@ function loadProfile() {
       var g = myGigs[i];
       html +=
         '<div style="background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:8px;">';
-      html += "<strong>" + g.title + "</strong> — " + g.status;
+      html += "<strong>" + displaySafe(g.title) + "</strong> — " + g.status;
       if (g.status === "Assigned" && g.worker === currentUser.name) {
         html +=
           " <button onclick=\"openChat('" +
@@ -2209,8 +3232,9 @@ function openAdminPanel() {
 }
 
 // ============================================
-// MARKETPLACE FUNCTIONS - WITH PAYMENT CHECK
+// 🛒 MARKETPLACE FUNCTIONS
 // ============================================
+
 function loadMarketplace() {
   var container = document.getElementById("marketplaceList");
   if (!container) return;
@@ -2236,8 +3260,13 @@ function loadMarketplace() {
   for (var i = 0; i < products.length; i++) {
     var p = products[i];
     html += '<div class="gig-card">';
-    html += "<h3>" + p.name + "</h3>";
-    html += "<p>🏢 " + p.companyName + " | " + p.category + "</p>";
+    html += "<h3>" + displaySafe(p.name) + "</h3>";
+    html +=
+      "<p>🏢 " +
+      displaySafe(p.companyName) +
+      " | " +
+      displaySafe(p.category) +
+      "</p>";
     html += "<p>💰 Ksh " + p.price + "/" + p.unit + "</p>";
     html += "<p>📦 Stock: " + p.stock + "</p>";
     if (currentUser && (currentUser.isPaid || currentUser.is_paid)) {
@@ -2290,8 +3319,9 @@ function buyProduct(id) {
 }
 
 // ============================================
-// COMPANY FUNCTIONS - WITH PAYMENT CHECK
+// 🏢 COMPANY FUNCTIONS
 // ============================================
+
 function registerCompany(e) {
   if (e) e.preventDefault();
   if (!currentUser) {
@@ -2352,13 +3382,13 @@ function registerCompany(e) {
 
     var company = {
       id: Date.now().toString(),
-      name: name,
-      type: type,
-      regNo: regNo,
-      location: location,
+      name: sanitizeInput(name),
+      type: sanitizeInput(type),
+      regNo: sanitizeInput(regNo),
+      location: sanitizeInput(location),
       phone: phone,
-      email: email,
-      desc: desc,
+      email: email || "",
+      desc: sanitizeInput(desc),
       owner: currentUser.name,
       ownerPhone: currentUser.phone,
       registeredAt: new Date().toISOString(),
@@ -2371,9 +3401,8 @@ function registerCompany(e) {
 
     if (supabaseInitialized && isOnline) {
       try {
-        supabaseClient
-          .from("companies")
-          .insert({
+        networkRetry(function () {
+          return supabaseClient.from("companies").insert({
             id: company.id,
             name: company.name,
             type: company.type,
@@ -2385,11 +3414,8 @@ function registerCompany(e) {
             owner_phone: company.ownerPhone,
             owner_name: company.owner,
             created_at: company.registeredAt,
-          })
-          .then(function (result) {
-            if (result.error)
-              console.log("Supabase company save error:", result.error);
           });
+        });
       } catch (err) {
         console.log("Could not save company to Supabase:", err);
       }
@@ -2425,15 +3451,15 @@ function loadCompanyDashboard() {
   }
   document.getElementById("compInfo").innerHTML =
     "<h3>" +
-    myComp.name +
+    displaySafe(myComp.name) +
     "</h3><p>🏢 " +
-    myComp.type +
+    displaySafe(myComp.type) +
     " | 📍 " +
-    myComp.location +
+    displaySafe(myComp.location) +
     "</p><p>📞 " +
     myComp.phone +
     "</p><p>📜 Reg No: " +
-    myComp.regNo +
+    displaySafe(myComp.regNo) +
     "</p>";
   showCompTab("products");
 }
@@ -2466,10 +3492,10 @@ function showCompTab(tab) {
     for (var i = 0; i < myProducts.length; i++) {
       var p = myProducts[i];
       html += '<div class="gig-card">';
-      html += "<h3>" + p.name + "</h3>";
+      html += "<h3>" + displaySafe(p.name) + "</h3>";
       html +=
         "<p>" +
-        p.category +
+        displaySafe(p.category) +
         " | Ksh " +
         p.price +
         "/" +
@@ -2554,12 +3580,12 @@ function addProduct(e) {
       id: Date.now().toString(),
       companyId: myComp.id,
       companyName: myComp.name,
-      name: name,
-      category: category,
-      unit: unit,
+      name: sanitizeInput(name),
+      category: sanitizeInput(category),
+      unit: sanitizeInput(unit),
       price: price,
       stock: stock,
-      desc: desc,
+      desc: sanitizeInput(desc),
       createdAt: new Date().toISOString(),
     };
 
@@ -2569,9 +3595,8 @@ function addProduct(e) {
 
     if (supabaseInitialized && isOnline) {
       try {
-        supabaseClient
-          .from("products")
-          .insert({
+        networkRetry(function () {
+          return supabaseClient.from("products").insert({
             id: product.id,
             company_id: product.companyId,
             company_name: product.companyName,
@@ -2582,11 +3607,8 @@ function addProduct(e) {
             stock: product.stock,
             description: product.desc,
             created_at: product.createdAt,
-          })
-          .then(function (result) {
-            if (result.error)
-              console.log("Supabase product save error:", result.error);
           });
+        });
       } catch (err) {
         console.log("Could not save product to Supabase:", err);
       }
@@ -2620,8 +3642,9 @@ function deleteProduct(id) {
 }
 
 // ============================================
-// PAYMENT FUNCTIONS
+// 💳 PAYMENT FUNCTIONS
 // ============================================
+
 function getPaymentSettings() {
   try {
     return JSON.parse(localStorage.getItem("gkode_payment_settings") || "{}");
@@ -2721,8 +3744,9 @@ function verifyMpesaPayment() {
 }
 
 // ============================================
-// EMERGENCY
+// 🚨 EMERGENCY
 // ============================================
+
 function emergencyCall() {
   if (confirm("🚨 EMERGENCY\n\nTap OK to open emergency contacts.")) {
     window.location.href = "emergency.html";
@@ -2730,8 +3754,9 @@ function emergencyCall() {
 }
 
 // ============================================
-// UPDATE BOTTOM NAV
+// 🔄 UPDATE BOTTOM NAV
 // ============================================
+
 function updateBottomNav() {
   var nav = document.getElementById("bottomNav");
   if (!nav) return;
@@ -2743,8 +3768,9 @@ function updateBottomNav() {
 }
 
 // ============================================
-// RESET
+// 🔄 RESET
 // ============================================
+
 function resetEverything() {
   if (
     !confirm(
@@ -2759,8 +3785,9 @@ function resetEverything() {
 }
 
 // ============================================
-// LEGAL & EXPORT
+// ⚖️ LEGAL & EXPORT
 // ============================================
+
 function showLegalNotice(type) {
   var notices = {
     privacy:
@@ -2851,8 +3878,9 @@ function deleteAccount() {
 }
 
 // ============================================
-// SYNC ALL LOCAL USERS TO SUPABASE
+// 🔄 SYNC ALL LOCAL USERS TO SUPABASE
 // ============================================
+
 async function syncAllUsersToCloud() {
   if (!supabaseInitialized || !isOnline) {
     showToast("❌ Supabase not connected or offline!", "error");
@@ -2873,32 +3901,33 @@ async function syncAllUsersToCloud() {
 
   for (var i = 0; i < localUsers.length; i++) {
     try {
-      var { error } = await supabaseClient.from("users").upsert(
-        {
-          phone: localUsers[i].phone,
-          national_id: localUsers[i].id,
-          email: localUsers[i].email,
-          full_name: localUsers[i].name,
-          location: localUsers[i].location,
-          profession: localUsers[i].profession,
-          skills: localUsers[i].skills ? [localUsers[i].skills] : [],
-          photo_url: localUsers[i].photo,
-          password_hash: localUsers[i].password,
-          rating: localUsers[i].rating || 0,
-          review_count: localUsers[i].reviewCount || 0,
-          strikes: localUsers[i].strikes || 0,
-          is_paid: localUsers[i].isPaid || false,
-          is_banned: localUsers[i].isBanned || false,
-          last_active: new Date().toISOString(),
-        },
-        { onConflict: "phone" },
-      );
-
-      if (!error) {
+      var result = await networkRetry(function () {
+        return supabaseClient.from("users").upsert(
+          {
+            phone: localUsers[i].phone,
+            national_id: localUsers[i].id,
+            email: localUsers[i].email,
+            full_name: localUsers[i].name,
+            location: localUsers[i].location,
+            profession: localUsers[i].profession,
+            skills: localUsers[i].skills ? [localUsers[i].skills] : [],
+            photo_url: localUsers[i].photo,
+            password_hash: localUsers[i].password,
+            rating: localUsers[i].rating || 0,
+            review_count: localUsers[i].reviewCount || 0,
+            strikes: localUsers[i].strikes || 0,
+            is_paid: localUsers[i].isPaid || false,
+            is_banned: localUsers[i].isBanned || false,
+            last_active: new Date().toISOString(),
+          },
+          { onConflict: "phone" },
+        );
+      });
+      if (!result.error) {
         successCount++;
       } else {
         failCount++;
-        console.error("Sync error for", localUsers[i].phone, error);
+        console.error("Sync error for", localUsers[i].phone, result.error);
       }
     } catch (err) {
       failCount++;
@@ -2915,16 +3944,13 @@ async function syncAllUsersToCloud() {
 // ============================================
 // 🚀 INIT
 // ============================================
+
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 G-KODE v4.0 (Cloud-First) loading...");
-  console.log(
-    "📡 Online status:",
-    navigator.onLine ? "✅ Online" : "❌ Offline",
-  );
-  console.log(
-    "💳 Payment system:",
-    paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
-  );
+  console.log("🚀 G-KODE v5.0 (Universal) loading...");
+  console.log("🌐 Device:", Device.type);
+  console.log("📊 Memory:", Device.capabilities.memory + "GB");
+  console.log("📡 Online:", navigator.onLine ? "✅" : "❌");
+  console.log("💳 Payment:", paymentEnabled ? "ACTIVE" : "DISABLED");
 
   populateProfessionDropdown();
   populateCategoryDropdown();
@@ -2933,6 +3959,18 @@ document.addEventListener("DOMContentLoaded", function () {
   setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
 
   loadPaymentSettings();
+
+  // Add mobile input fixes
+  document.querySelectorAll('input[type="tel"]').forEach(function (input) {
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("inputmode", "numeric");
+  });
+
+  document.querySelectorAll('input[type="password"]').forEach(function (input) {
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
+  });
 
   var savedUser =
     localStorage.getItem("gkode_user") ||
@@ -2948,6 +3986,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showScreen("home");
         loadGigs();
         updateBottomNav();
+        initSecurity();
         if (supabaseInitialized && isOnline) {
           syncAllUsersToCloud();
         }
@@ -2960,10 +3999,19 @@ document.addEventListener("DOMContentLoaded", function () {
     showScreen("welcome");
   }
 
-  console.log("🚀 G-KODE v4.0 loaded successfully!");
-  console.log(
-    "📊 Using Supabase as primary data source with localStorage fallback",
-  );
+  console.log("🚀 G-KODE v5.0 loaded successfully!");
+  console.log("📊 Universal compatibility enabled");
+  console.log("📱 Device optimized for:", Device.type);
   console.log("☁️ Supabase URL:", SUPABASE_URL);
-  console.log("📧 Email configured to use server.");
+  console.log("📧 Email: Server configured");
 });
+
+// Expose for debugging
+window._app = {
+  Device: Device,
+  Adaptive: Adaptive,
+  Database: Database,
+  Monitor: Monitor,
+  currentUser: currentUser,
+  supabaseClient: supabaseClient,
+};
