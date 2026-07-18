@@ -1169,7 +1169,7 @@ function generateSecureToken(length) {
 // 📧 EMAIL FUNCTIONS (Using Server)
 // ============================================
 
-const SERVER_URL = "http://localhost:3000";
+const SERVER_URL = "https://g-kode-main.onrender.com";
 
 async function sendOTPEmail(email, name, code) {
   try {
