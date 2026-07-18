@@ -1,3 +1,8 @@
+// ============================================
+// G-KODE - CLOUD-FIRST VERSION v4.0
+// All data stored in Supabase with localStorage fallback
+// ============================================
+
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = "https://rqvijxpbdrholshzhusb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO";
@@ -80,7 +85,7 @@ let isOnline = true;
 const ADMIN_PHONES = ["0703428192", "0711991467"];
 
 // ============================================
-// EMAILJS CONFIG
+// EMAILJS CONFIG (KEEP FOR REFERENCE, BUT USING SERVER NOW)
 // ============================================
 const EMAILJS_CONFIG = {
   serviceID: "service_hw35xfu",
@@ -90,60 +95,77 @@ const EMAILJS_CONFIG = {
 };
 
 // ============================================
-// SUPABASE INIT - FIXED
+// SERVER URL FOR EMAILS
 // ============================================
-function initSupabase() {
-  // If already initialized, skip
-  if (supabaseInitialized) return;
+const SERVER_URL = "http://localhost:3000";
 
-  // Check if Supabase is available
-  if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
-    try {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      supabaseInitialized = true;
-      console.log("✅ Supabase connected");
-      return;
-    } catch (e) {
-      console.log("⚠️ Supabase init error:", e);
+// ============================================
+// 📧 EMAIL FUNCTIONS - USING SERVER
+// ============================================
+
+async function sendOTPEmail(email, name, code) {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/send-otp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        name: name || "User",
+        code: code,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("✅ OTP email sent!");
+      showToast("📧 Verification code sent to your email!", "success");
+      return true;
+    } else {
+      console.error("❌ OTP email failed:", data.error);
+      showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
+      return false;
     }
+  } catch (error) {
+    console.error("❌ OTP email error:", error);
+    showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
+    return false;
   }
-
-  // Load Supabase library if not available
-  console.log("📡 Loading Supabase library...");
-  var script = document.createElement("script");
-  script.src =
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-  script.onload = function () {
-    try {
-      // Check if library loaded successfully
-      if (
-        typeof window.supabase !== "undefined" &&
-        window.supabase.createClient
-      ) {
-        supabase = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_ANON_KEY,
-        );
-        supabaseInitialized = true;
-        console.log("✅ Supabase loaded and connected");
-      } else {
-        console.log(
-          "⚠️ Supabase library loaded but createClient not available",
-        );
-      }
-    } catch (e) {
-      console.log("⚠️ Supabase connection error:", e);
-    }
-  };
-  script.onerror = function () {
-    console.log("❌ Failed to load Supabase library");
-    showToast("⚠️ Cannot connect to cloud. Please refresh.", "warning");
-  };
-  document.head.appendChild(script);
 }
 
-// Call it
-initSupabase();
+async function sendResetEmail(email, name, code) {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/send-reset`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        name: name || "User",
+        code: code,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("✅ Reset email sent!");
+      showToast("📧 Reset code sent to your email!", "success");
+      return true;
+    } else {
+      console.error("❌ Reset email failed:", data.error);
+      showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Reset email error:", error);
+    showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
+    return false;
+  }
+}
 
 // ============================================
 // LOAD PAYMENT SETTINGS FROM LOCAL STORAGE
@@ -176,7 +198,6 @@ function isPaymentEnabled() {
 function canAccessFeatures() {
   if (!currentUser) return false;
 
-  // If payment is disabled (testing mode), block all features
   if (!isPaymentEnabled()) {
     showToast(
       "⚠️ System is in testing mode. Features are disabled.",
@@ -185,7 +206,6 @@ function canAccessFeatures() {
     return false;
   }
 
-  // If user is not paid, block features
   if (!currentUser.isPaid && !currentUser.is_paid) {
     showToast(
       "💳 Please pay the one-time fee of Ksh 300 to access features.",
@@ -393,7 +413,7 @@ async function uploadToSupabase(file, bucket, folder) {
     const fileName = folder + "/" + Date.now() + "." + fileExt;
     const fileObj = new File([blob], fileName, { type: "image/jpeg" });
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseClient.storage
       .from(bucket)
       .upload(fileName, fileObj, {
         cacheControl: "3600",
@@ -402,7 +422,7 @@ async function uploadToSupabase(file, bucket, folder) {
 
     if (error) throw error;
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabaseClient.storage
       .from(bucket)
       .getPublicUrl(fileName);
 
@@ -411,79 +431,6 @@ async function uploadToSupabase(file, bucket, folder) {
   } catch (error) {
     console.error("Upload error:", error);
     return readFileAsDataURL(file);
-  }
-}
-
-// ============================================
-// 📧 EMAIL FUNCTIONS - FIXED WITH FALLBACKS
-// ============================================
-// ============================================
-// 📧 EMAIL FUNCTIONS - USING SERVER
-// ============================================
-
-const SERVER_URL = "http://localhost:3000"; // Your server URL
-
-async function sendOTPEmail(email, name, code) {
-  try {
-    const response = await fetch(`${SERVER_URL}/api/send-otp`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        name: name || "User",
-        code: code,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      console.log("✅ OTP email sent!");
-      showToast("📧 Verification code sent to your email!", "success");
-      return true;
-    } else {
-      console.error("❌ OTP email failed:", data.error);
-      showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
-      return false;
-    }
-  } catch (error) {
-    console.error("❌ OTP email error:", error);
-    showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
-    return false;
-  }
-}
-
-async function sendResetEmail(email, name, code) {
-  try {
-    const response = await fetch(`${SERVER_URL}/api/send-reset`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        name: name || "User",
-        code: code,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      console.log("✅ Reset email sent!");
-      showToast("📧 Reset code sent to your email!", "success");
-      return true;
-    } else {
-      console.error("❌ Reset email failed:", data.error);
-      showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
-      return false;
-    }
-  } catch (error) {
-    console.error("❌ Reset email error:", error);
-    showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
-    return false;
   }
 }
 
@@ -515,7 +462,6 @@ function showScreen(id) {
   }
 
   if (id === "home") {
-    // Check if user can access features before loading gigs
     if (isPaymentEnabled() && currentUser && currentUser.isPaid) {
       loadGigs();
     } else if (isPaymentEnabled() && currentUser && !currentUser.isPaid) {
@@ -525,7 +471,6 @@ function showScreen(id) {
       );
       showScreen("payment");
     } else if (!isPaymentEnabled()) {
-      // Testing mode - show maintenance message
       document.getElementById("gigsList").innerHTML = `
                 <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
                     <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
@@ -971,10 +916,9 @@ async function register(e) {
       return;
     }
 
-    // ✅ CHECK SUPABASE FIRST (if online)
     if (supabaseInitialized && isOnline) {
       try {
-        const { data: existingUser, error: checkError } = await supabase
+        const { data: existingUser, error: checkError } = await supabaseClient
           .from("users")
           .select("phone, email")
           .or("phone.eq." + phone + ",email.eq." + email);
@@ -1117,10 +1061,9 @@ async function completeRegistration() {
     const user = pendingRegistration;
     let saved = false;
 
-    // ✅ SAVE TO SUPABASE FIRST (if online)
     if (supabaseInitialized && isOnline) {
       try {
-        const { error } = await supabase.from("users").insert({
+        const { error } = await supabaseClient.from("users").insert({
           phone: user.phone,
           national_id: user.id,
           email: user.email,
@@ -1149,7 +1092,6 @@ async function completeRegistration() {
       }
     }
 
-    // Save to localStorage as backup
     let users = getUsersLocal();
     users.push(user);
     setUsersLocal(users);
@@ -1205,10 +1147,9 @@ async function login(e) {
       return;
     }
 
-    // ✅ CHECK SUPABASE FIRST (if online)
     if (supabaseInitialized && isOnline) {
       try {
-        const { data: users, error: findError } = await supabase
+        const { data: users, error: findError } = await supabaseClient
           .from("users")
           .select("*")
           .eq("phone", phone);
@@ -1230,9 +1171,8 @@ async function login(e) {
             return;
           }
 
-          // Update last_active
           try {
-            await supabase
+            await supabaseClient
               .from("users")
               .update({ last_active: new Date().toISOString() })
               .eq("id", user.id);
@@ -1287,7 +1227,6 @@ async function login(e) {
       }
     }
 
-    // ✅ FALLBACK TO LOCAL
     const localUsers = getUsersLocal();
     const localUser = localUsers.find(function (u) {
       return u.phone === phone;
@@ -1359,10 +1298,9 @@ async function sendResetCode() {
 
     let user = null;
 
-    // ✅ CHECK SUPABASE FIRST
     if (supabaseInitialized && isOnline) {
       try {
-        const { data: users, error: findError } = await supabase
+        const { data: users, error: findError } = await supabaseClient
           .from("users")
           .select("*")
           .eq("email", email);
@@ -1375,7 +1313,6 @@ async function sendResetCode() {
       }
     }
 
-    // ✅ FALLBACK TO LOCAL
     if (!user) {
       const localUsers = getUsersLocal();
       const localUser = localUsers.find(function (u) {
@@ -1591,16 +1528,14 @@ async function resetPassword() {
       return;
     }
 
-    // ✅ Update in Supabase
     if (supabaseInitialized && isOnline) {
       try {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
           .from("users")
           .update({ password_hash: newPassword })
           .eq("id", resetData.userId);
 
         if (!updateError) {
-          // Also update local
           const localUsers = getUsersLocal();
           for (var i = 0; i < localUsers.length; i++) {
             if (localUsers[i].phone === resetData.phone) {
@@ -1628,7 +1563,6 @@ async function resetPassword() {
       }
     }
 
-    // ✅ FALLBACK: Update local only
     const localUsers = getUsersLocal();
     for (var i = 0; i < localUsers.length; i++) {
       if (localUsers[i].phone === resetData.phone) {
@@ -1695,7 +1629,6 @@ function postGig(e) {
     return;
   }
 
-  // ✅ CHECK PAYMENT STATUS
   if (!isPaymentEnabled()) {
     showToast(
       "⚠️ System is in testing mode. Posting gigs is disabled.",
@@ -1766,15 +1699,13 @@ function postGig(e) {
       createdAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
     let gigs = getGigsLocal();
     gigs.push(gig);
     setGigsLocal(gigs);
 
-    // ✅ Also save to Supabase if online
     if (supabaseInitialized && isOnline) {
       try {
-        supabase
+        supabaseClient
           .from("gigs")
           .insert({
             id: gig.id,
@@ -1853,7 +1784,6 @@ async function loadGigs() {
   const container = document.getElementById("gigsList");
   if (!container) return;
 
-  // ✅ CHECK PAYMENT STATUS
   if (!isPaymentEnabled()) {
     container.innerHTML = `
             <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
@@ -1868,10 +1798,9 @@ async function loadGigs() {
 
   let gigs = [];
 
-  // ✅ Try Supabase first
   if (supabaseInitialized && isOnline) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("gigs")
         .select("*")
         .order("created_at", { ascending: false });
@@ -1903,7 +1832,6 @@ async function loadGigs() {
     }
   }
 
-  // ✅ Fallback to local
   if (gigs.length === 0) {
     gigs = getGigsLocal();
   }
@@ -1961,7 +1889,6 @@ async function loadGigs() {
       g.budgetMax +
       "</div>";
     if (open) {
-      // ✅ Check if user can accept gigs
       if (
         isPaymentEnabled() &&
         currentUser &&
@@ -1992,7 +1919,6 @@ function acceptGig(id) {
     return;
   }
 
-  // ✅ CHECK PAYMENT STATUS
   if (!isPaymentEnabled()) {
     showToast(
       "⚠️ System is in testing mode. Accepting gigs is disabled.",
@@ -2037,10 +1963,9 @@ function acceptGig(id) {
 
   setGigsLocal(gigs);
 
-  // ✅ Update in Supabase
   if (supabaseInitialized && isOnline) {
     try {
-      supabase
+      supabaseClient
         .from("gigs")
         .update({
           status: "Assigned",
@@ -2290,7 +2215,6 @@ function loadMarketplace() {
   var container = document.getElementById("marketplaceList");
   if (!container) return;
 
-  // ✅ CHECK PAYMENT STATUS
   if (!isPaymentEnabled()) {
     container.innerHTML = `
             <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
@@ -2445,10 +2369,9 @@ function registerCompany(e) {
     companies.push(company);
     setCompaniesLocal(companies);
 
-    // ✅ Save to Supabase
     if (supabaseInitialized && isOnline) {
       try {
-        supabase
+        supabaseClient
           .from("companies")
           .insert({
             id: company.id,
@@ -2644,10 +2567,9 @@ function addProduct(e) {
     products.push(product);
     setProductsLocal(products);
 
-    // ✅ Save to Supabase
     if (supabaseInitialized && isOnline) {
       try {
-        supabase
+        supabaseClient
           .from("products")
           .insert({
             id: product.id,
@@ -2951,7 +2873,7 @@ async function syncAllUsersToCloud() {
 
   for (var i = 0; i < localUsers.length; i++) {
     try {
-      var { error } = await supabase.from("users").upsert(
+      var { error } = await supabaseClient.from("users").upsert(
         {
           phone: localUsers[i].phone,
           national_id: localUsers[i].id,
@@ -3010,10 +2932,8 @@ document.addEventListener("DOMContentLoaded", function () {
   setupFilePreview("regPhoto", "photoPreview", "photoPreviewContainer");
   setupFilePreview("regIDScan", "idPreview", "idPreviewContainer");
 
-  // Load payment settings from localStorage
   loadPaymentSettings();
 
-  // Check for saved session
   var savedUser =
     localStorage.getItem("gkode_user") ||
     localStorage.getItem("gkode_currentUser");
@@ -3028,7 +2948,6 @@ document.addEventListener("DOMContentLoaded", function () {
         showScreen("home");
         loadGigs();
         updateBottomNav();
-        // Try to sync user to cloud
         if (supabaseInitialized && isOnline) {
           syncAllUsersToCloud();
         }
@@ -3046,5 +2965,5 @@ document.addEventListener("DOMContentLoaded", function () {
     "📊 Using Supabase as primary data source with localStorage fallback",
   );
   console.log("☁️ Supabase URL:", SUPABASE_URL);
-  console.log("📧 EmailJS configured.");
+  console.log("📧 Email configured to use server.");
 });
