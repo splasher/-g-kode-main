@@ -1073,7 +1073,7 @@ function getIPHash() {
 // 🔐 SESSION MANAGEMENT
 // ============================================
 
-const SESSION_TIMEOUT = 10; // 10 minutes
+const SESSION_TIMEOUT = 60; // 60 minutes (increased from 10)
 
 function startSession(user) {
   const session = {
@@ -1099,14 +1099,21 @@ function validateSession() {
   try {
     const session = secureDecrypt(sessionData);
     if (!session || !session.expiresAt) return false;
-    if (Date.now() > session.expiresAt) {
+    // Give 1 minute grace period
+    if (Date.now() > session.expiresAt + 60000) {
       localStorage.removeItem("gkode_session");
       return false;
     }
-    if (session.fingerprint !== getFingerprint()) {
-      localStorage.removeItem("gkode_session");
-      return false;
+    // Relax fingerprint check
+    if (session.fingerprint) {
+      const currentFingerprint = getFingerprint();
+      if (session.fingerprint !== currentFingerprint) {
+        console.warn("⚠️ Fingerprint mismatch, but keeping session");
+      }
     }
+    // Refresh session
+    session.expiresAt = Date.now() + SESSION_TIMEOUT * 60 * 1000;
+    localStorage.setItem("gkode_session", secureEncrypt(session));
     return session;
   } catch (e) {
     localStorage.removeItem("gkode_session");
@@ -1220,7 +1227,7 @@ async function sendResetEmail(email, name, code) {
 }
 
 // ============================================
-// ⏰ SESSION MONITOR (FIXED VERSION)
+// ⏰ SESSION MONITOR (FIXED - NO AUTO-LOGOUT)
 // ============================================
 
 let securityInterval = null;
@@ -1254,6 +1261,22 @@ function initSecurity() {
   }, 300000); // 5 minutes (300,000ms)
 
   console.log("🛡️ Security initialized (Light Mode)");
+}
+
+// ============================================
+// 🛡️ LIGHT SECURITY (No Auto-Logout)
+// ============================================
+
+function initSecurityLight() {
+  console.log("🛡️ Security initialized (Light Mode - No auto-logout)");
+
+  // ✅ User stays logged in until they manually click Logout
+  // ✅ No session expiration checks
+  // ✅ No automatic logout
+
+  if (currentUser) {
+    console.log("👤 User session active:", currentUser.name);
+  }
 }
 
 // ============================================
@@ -2149,6 +2172,7 @@ async function completeRegistration() {
     }
   }
 }
+
 // ============================================
 // 🔐 LOGIN (FIXED - No Auto-Logout)
 // ============================================
@@ -2300,6 +2324,7 @@ async function login(e) {
   btn.disabled = false;
   btn.textContent = "LOGIN";
 }
+
 // ============================================
 // 🚪 LOGOUT
 // ============================================
@@ -4003,7 +4028,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showScreen("home");
         loadGigs();
         updateBottomNav();
-        initSecurity();
+        initSecurityLight();
         if (supabaseInitialized && isOnline) {
           syncAllUsersToCloud();
         }
