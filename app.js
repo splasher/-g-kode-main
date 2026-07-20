@@ -1220,32 +1220,40 @@ async function sendResetEmail(email, name, code) {
 }
 
 // ============================================
-// ⏰ SESSION MONITOR
+// ⏰ SESSION MONITOR (FIXED VERSION)
 // ============================================
 
 let securityInterval = null;
 
 function initSecurity() {
-  const session = validateSession();
-  if (!session && currentUser) {
-    showToast("⏰ Session expired. Please login again.", "warning");
-    if (typeof logout === "function") logout();
+  // Only validate session if user is logged in
+  if (!currentUser) {
+    console.log("🛡️ No user logged in");
+    return;
   }
 
+  // Check session once on login
+  const session = validateSession();
+  if (!session) {
+    console.log("⚠️ Session invalid, but keeping user logged in");
+    // Don't logout automatically - let user logout manually
+  } else {
+    console.log("✅ Session valid for:", currentUser.name);
+  }
+
+  // Clear any existing interval
   if (securityInterval) clearInterval(securityInterval);
+
+  // ✅ Less aggressive: check every 5 minutes instead of 30 seconds
   securityInterval = setInterval(function () {
     if (currentUser) {
-      const session = validateSession();
-      if (!session) {
-        showToast("⏰ Session expired. Please login again.", "warning");
-        if (typeof logout === "function") logout();
-      } else {
-        refreshSession();
-      }
+      // Silently refresh session without notifying user
+      refreshSession();
+      console.log("🔄 Session refreshed for:", currentUser.name);
     }
-  }, 30000);
+  }, 300000); // 5 minutes (300,000ms)
 
-  console.log("🛡️ Security initialized");
+  console.log("🛡️ Security initialized (Light Mode)");
 }
 
 // ============================================
@@ -2141,9 +2149,8 @@ async function completeRegistration() {
     }
   }
 }
-
 // ============================================
-// 🔐 LOGIN
+// 🔐 LOGIN (FIXED - No Auto-Logout)
 // ============================================
 
 async function login(e) {
@@ -2216,6 +2223,7 @@ async function login(e) {
             registeredAt: user.created_at,
           };
 
+          // Save to localStorage
           if (rememberMe) {
             localStorage.setItem(
               "gkode_currentUser",
@@ -2228,11 +2236,17 @@ async function login(e) {
             );
           }
 
+          // Also save as main user
+          localStorage.setItem("gkode_user", JSON.stringify(currentUser));
+
           document.getElementById("loginForm").reset();
           showToast("Welcome back, " + user.full_name + "!", "success");
+
+          // ✅ Initialize security WITHOUT auto-logout
+          initSecurityLight();
+
           showScreen("home");
           loadGigs();
-          initSecurity();
           btn.disabled = false;
           btn.textContent = "LOGIN";
           return;
@@ -2242,6 +2256,7 @@ async function login(e) {
       }
     }
 
+    // ✅ FALLBACK TO LOCAL
     const localUsers = getUsersLocal();
     const localUser = localUsers.find(function (u) {
       return u.phone === phone;
@@ -2271,9 +2286,12 @@ async function login(e) {
     currentUser = localUser;
     localStorage.setItem("gkode_user", JSON.stringify(localUser));
     showToast("Welcome back, " + localUser.name + "!", "success");
+
+    // ✅ Initialize security WITHOUT auto-logout
+    initSecurityLight();
+
     showScreen("home");
     loadGigs();
-    initSecurity();
   } catch (err) {
     showToast("Login error: " + err.message, "error");
     console.error("Login error:", err);
@@ -2282,7 +2300,6 @@ async function login(e) {
   btn.disabled = false;
   btn.textContent = "LOGIN";
 }
-
 // ============================================
 // 🚪 LOGOUT
 // ============================================
