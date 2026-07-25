@@ -33,32 +33,23 @@ const Device = {
       else if (Device.type === "mobile") memory = 2;
       else if (Device.type === "tablet") memory = 4;
       else memory = 8;
-    } catch (e) {
-      memory = 2;
-    }
+    } catch (e) { memory = 2; }
 
     let cores = 2;
     try {
       if (navigator.hardwareConcurrency) cores = navigator.hardwareConcurrency;
-    } catch (e) {
-      cores = 2;
-    }
+    } catch (e) { cores = 2; }
 
     return {
       memory: memory,
       cores: cores,
-      hasCamera: !!(
-        navigator.mediaDevices && navigator.mediaDevices.getUserMedia
-      ),
+      hasCamera: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
       isTouch: "ontouchstart" in window || navigator.maxTouchPoints > 0,
       connection: (function () {
         try {
-          if (navigator.connection)
-            return navigator.connection.effectiveType || "unknown";
+          if (navigator.connection) return navigator.connection.effectiveType || "unknown";
           return "unknown";
-        } catch (e) {
-          return "unknown";
-        }
+        } catch (e) { return "unknown"; }
       })(),
     };
   })(),
@@ -83,48 +74,22 @@ console.log("🌐 Device:", Device.summary());
 
 const Adaptive = {
   images: {
-    maxWidth:
-      Device.capabilities.memory <= 2
-        ? 200
-        : Device.capabilities.memory <= 4
-          ? 400
-          : 800,
-    maxHeight:
-      Device.capabilities.memory <= 2
-        ? 200
-        : Device.capabilities.memory <= 4
-          ? 400
-          : 800,
-    quality:
-      Device.capabilities.memory <= 2
-        ? 0.4
-        : Device.capabilities.memory <= 4
-          ? 0.6
-          : 0.8,
-    maxFileSize:
-      Device.capabilities.memory <= 2
-        ? 2 * 1024 * 1024
-        : Device.capabilities.memory <= 4
-          ? 4 * 1024 * 1024
-          : 10 * 1024 * 1024,
+    maxWidth: Device.capabilities.memory <= 2 ? 200 : Device.capabilities.memory <= 4 ? 400 : 800,
+    maxHeight: Device.capabilities.memory <= 2 ? 200 : Device.capabilities.memory <= 4 ? 400 : 800,
+    quality: Device.capabilities.memory <= 2 ? 0.4 : Device.capabilities.memory <= 4 ? 0.6 : 0.8,
+    maxFileSize: Device.capabilities.memory <= 2 ? 2 * 1024 * 1024 : Device.capabilities.memory <= 4 ? 4 * 1024 * 1024 : 10 * 1024 * 1024,
   },
   features: {
     camera: Device.capabilities.hasCamera && Device.capabilities.memory > 1,
     liveLocation: Device.capabilities.memory > 1,
     animations: Device.capabilities.memory > 1.5,
-    backgroundSync:
-      Device.capabilities.memory > 2 && "serviceWorker" in navigator,
+    backgroundSync: Device.capabilities.memory > 2 && "serviceWorker" in navigator,
     highQuality: Device.capabilities.memory > 4,
   },
   performance: {
     debounceDelay: Device.capabilities.memory <= 2 ? 500 : 300,
     throttleDelay: Device.capabilities.memory <= 2 ? 300 : 100,
-    batchSize:
-      Device.capabilities.memory <= 2
-        ? 5
-        : Device.capabilities.memory <= 4
-          ? 20
-          : 50,
+    batchSize: Device.capabilities.memory <= 2 ? 5 : Device.capabilities.memory <= 4 ? 20 : 50,
     cacheTTL: Device.capabilities.memory <= 2 ? 60 : 300,
   },
 };
@@ -211,15 +176,7 @@ function displaySafeHTML(html) {
   if (!html) return "";
   const div = document.createElement("div");
   div.innerHTML = html;
-  const dangerous = [
-    "script",
-    "iframe",
-    "object",
-    "embed",
-    "form",
-    "input",
-    "button",
-  ];
+  const dangerous = ["script", "iframe", "object", "embed", "form", "input", "button"];
   for (let i = 0; i < dangerous.length; i++) {
     const elements = div.getElementsByTagName(dangerous[i]);
     while (elements.length > 0) {
@@ -247,8 +204,7 @@ const Database = {
     provider: "supabase",
     url: "https://rqvijxpbdrholshzhusb.supabase.co",
     key: "sb_publishable_lw88kFd0iSFNmkGDfczPMg_1j_ptRUO",
-    serviceKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmlqeHBiZHJob2xzaHpodXNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3NjE4NSwiZXhwIjoyMDk4MTUyMTg1fQ.Ypd8iKnvD3By_75yEE1VRSVnJw7SGK6_IqLugRu2nCA",
+    serviceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdmlqeHBiZHJob2xzaHpodXNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3NjE4NSwiZXhwIjoyMDk4MTUyMTg1fQ.Ypd8iKnvD3By_75yEE1VRSVnJw7SGK6_IqLugRu2nCA",
     maxConnections: 10,
     timeout: 30000,
     retries: 3,
@@ -390,9 +346,7 @@ const Database = {
         this._cache[cacheKey] = { data: result, time: Date.now() };
         const keys = Object.keys(this._cache);
         if (keys.length > 100) {
-          const oldest = keys.sort(
-            (a, b) => this._cache[a].time - this._cache[b].time,
-          )[0];
+          const oldest = keys.sort((a, b) => this._cache[a].time - this._cache[b].time)[0];
           delete this._cache[oldest];
         }
       }
@@ -422,12 +376,8 @@ const Database = {
         }
       }
       if (params.limit) query = query.limit(params.limit);
-      if (params.offset)
-        query = query.range(params.offset, params.offset + params.limit - 1);
-      if (params.orderBy)
-        query = query.order(params.orderBy, {
-          ascending: params.order === "asc",
-        });
+      if (params.offset) query = query.range(params.offset, params.offset + params.limit - 1);
+      if (params.orderBy) query = query.order(params.orderBy, { ascending: params.order === "asc" });
       if (params.single) {
         const { data, error } = await query.single();
         if (error) throw error;
@@ -473,10 +423,7 @@ const Database = {
     }
 
     if (operation === "count") {
-      const { count, error } = await query.select("*", {
-        count: "exact",
-        head: true,
-      });
+      const { count, error } = await query.select("*", { count: "exact", head: true });
       if (error) throw error;
       return count;
     }
@@ -527,9 +474,7 @@ const Monitor = {
     if (type === "error") this.stats.errors++;
 
     if (this.stats.lastMinuteQueries > 50) {
-      console.warn(
-        `⚠️ High query rate: ${this.stats.lastMinuteQueries}/minute`,
-      );
+      console.warn(`⚠️ High query rate: ${this.stats.lastMinuteQueries}/minute`);
     }
   },
 
@@ -537,10 +482,7 @@ const Monitor = {
     const total = this.stats.cacheHits + this.stats.cacheMisses;
     return {
       totalQueries: this.stats.queries,
-      cacheHitRate:
-        total > 0
-          ? ((this.stats.cacheHits / total) * 100).toFixed(1) + "%"
-          : "0%",
+      cacheHitRate: total > 0 ? ((this.stats.cacheHits / total) * 100).toFixed(1) + "%" : "0%",
       errors: this.stats.errors,
       queriesLastMinute: this.stats.lastMinuteQueries,
     };
@@ -577,11 +519,7 @@ function openCamera(inputId) {
     return;
   }
 
-  if (
-    Device.type === "mobile" &&
-    window.location.protocol !== "https:" &&
-    window.location.hostname !== "localhost"
-  ) {
+  if (Device.type === "mobile" && window.location.protocol !== "https:" && window.location.hostname !== "localhost") {
     showToast("🔒 Please use HTTPS for camera on phones.", "warning");
     input.removeAttribute("capture");
     input.setAttribute("accept", "image/*");
@@ -652,8 +590,7 @@ function showCameraModal(input, videoSettings) {
   overlay.appendChild(buttonContainer);
   document.body.appendChild(overlay);
 
-  navigator.mediaDevices
-    .getUserMedia(videoSettings)
+  navigator.mediaDevices.getUserMedia(videoSettings)
     .then(function (stream) {
       cameraStream = stream;
       cameraActive = true;
@@ -696,13 +633,9 @@ function capturePhoto(video, input, overlay) {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     fetch(dataUrl)
-      .then(function (res) {
-        return res.blob();
-      })
+      .then(function (res) { return res.blob(); })
       .then(function (blob) {
-        const file = new File([blob], "camera-photo.jpg", {
-          type: "image/jpeg",
-        });
+        const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" });
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         input.files = dataTransfer.files;
@@ -772,8 +705,7 @@ function compressImage(file, maxWidth, maxHeight, quality) {
         canvas.width = Math.round(width);
         canvas.height = Math.round(height);
         const ctx = canvas.getContext("2d");
-        const finalQuality =
-          Device.capabilities.memory <= 2 ? 0.5 : targetQuality;
+        const finalQuality = Device.capabilities.memory <= 2 ? 0.5 : targetQuality;
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL("image/jpeg", finalQuality);
         canvas.width = 0;
@@ -798,46 +730,25 @@ function validateFileUpload(file) {
   }
 
   const settings = Adaptive.images;
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/jpg",
-    "image/webp",
-    "image/gif",
-    "image/heic",
-    "image/heif",
-  ];
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp", "image/gif", "image/heic", "image/heif"];
 
   if (Device.capabilities.memory <= 2) {
     if (file.type === "image/heic" || file.type === "image/heif") {
-      return {
-        valid: false,
-        message:
-          "HEIC format not supported on this device. Please use JPG or PNG.",
-      };
+      return { valid: false, message: "HEIC format not supported on this device. Please use JPG or PNG." };
     }
   }
 
   if (allowedTypes.indexOf(file.type) === -1) {
-    return {
-      valid: false,
-      message: "File type not allowed. Use JPG, PNG, WEBP, or GIF.",
-    };
+    return { valid: false, message: "File type not allowed. Use JPG, PNG, WEBP, or GIF." };
   }
 
   const maxSize = settings.maxFileSize;
   if (file.size > maxSize) {
-    return {
-      valid: false,
-      message: `File too large. Max ${maxSize / 1024 / 1024}MB for this device.`,
-    };
+    return { valid: false, message: `File too large. Max ${maxSize / 1024 / 1024}MB for this device.` };
   }
 
   if (Device.capabilities.memory <= 1.5 && file.size > 2 * 1024 * 1024) {
-    return {
-      valid: false,
-      message: "File too large for this device. Max 2MB.",
-    };
+    return { valid: false, message: "File too large for this device. Max 2MB." };
   }
 
   const ext = "." + file.name.split(".").pop().toLowerCase();
@@ -857,14 +768,10 @@ function validatePasswordStrength(password) {
   if (Device.capabilities.memory <= 1.5) {
     return {
       valid: password.length >= 6,
-      issues:
-        password.length < 6 ? ["Password must be at least 6 characters"] : [],
+      issues: password.length < 6 ? ["Password must be at least 6 characters"] : [],
       score: password.length >= 6 ? 60 : 0,
       strength: password.length >= 6 ? "medium" : "weak",
-      message:
-        password.length >= 6
-          ? "✅ Password length OK."
-          : "⚠️ Password must be at least 6 characters.",
+      message: password.length >= 6 ? "✅ Password length OK." : "⚠️ Password must be at least 6 characters.",
     };
   }
 
@@ -911,16 +818,11 @@ function validatePasswordStrength(password) {
   else strength = "weak";
 
   return {
-    valid:
-      issues.length === 0 ||
-      (Device.capabilities.memory <= 1.5 && password.length >= 6),
+    valid: issues.length === 0 || (Device.capabilities.memory <= 1.5 && password.length >= 6),
     issues: issues,
     score: score,
     strength: strength,
-    message:
-      issues.length === 0
-        ? "✅ Password is strong!"
-        : "⚠️ Please fix the issues above.",
+    message: issues.length === 0 ? "✅ Password is strong!" : "⚠️ Please fix the issues above.",
   };
 }
 
@@ -932,13 +834,9 @@ function networkRetry(fn, maxRetries) {
   maxRetries = maxRetries || (Device.type === "mobile" ? 5 : 3);
   let attempt = 0;
   const baseDelay =
-    Device.capabilities.connection === "slow-2g"
-      ? 3000
-      : Device.capabilities.connection === "2g"
-        ? 2000
-        : Device.capabilities.connection === "3g"
-          ? 1000
-          : 500;
+    Device.capabilities.connection === "slow-2g" ? 3000 :
+    Device.capabilities.connection === "2g" ? 2000 :
+    Device.capabilities.connection === "3g" ? 1000 : 500;
 
   return new Promise(function (resolve, reject) {
     function tryAttempt() {
@@ -1027,8 +925,7 @@ function checkRateLimit(action, maxPerMinute, maxPerHour, maxPerDay) {
 }
 
 function getIPHash() {
-  const info =
-    navigator.userAgent + navigator.language + screen.width + screen.height;
+  const info = navigator.userAgent + navigator.language + screen.width + screen.height;
   let hash = 0;
   for (let i = 0; i < info.length; i++) {
     hash = (hash << 5) - hash + info.charCodeAt(i);
@@ -1120,8 +1017,7 @@ function getFingerprint() {
 
 function generateSecureToken(length) {
   length = length || 64;
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
   let token = "";
   const array = new Uint8Array(length);
   try {
@@ -1138,51 +1034,57 @@ function generateSecureToken(length) {
 }
 
 // ============================================
-// 🔐 GOOGLE AUTHENTICATION
+// 🔐 GOOGLE AUTHENTICATION (Login Only)
 // ============================================
 
 async function signInWithGoogle() {
   try {
     const { data, error } = await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
-        redirectTo: 'http://localhost:5500',
+        redirectTo: window.location.origin + '/index.html',
         queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
     });
 
     if (error) throw error;
-    console.log("🔐 Google sign-in initiated");
+    console.log('🔐 Google sign-in initiated');
   } catch (error) {
-    console.error("❌ Google sign-in error:", error);
-    showToast("❌ Google sign-in failed: " + error.message, "error");
+    console.error('❌ Google sign-in error:', error);
+    showToast('❌ Google sign-in failed: ' + error.message, 'error');
   }
 }
 
-async function signOut() {
+// ============================================
+// 📧 PASSWORD RESET (Supabase Built-in)
+// ============================================
+
+async function sendResetLink() {
+  const email = document.getElementById("resetEmail")?.value?.trim();
+  
+  if (!email) {
+    showToast("❌ Please enter your email address.", "error");
+    return;
+  }
+
   try {
-    const { error } = await supabaseClient.auth.signOut();
+    const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password.html',
+    });
+
     if (error) throw error;
-    currentUser = null;
-    localStorage.removeItem("gkode_user");
-    localStorage.removeItem("gkode_currentUser");
-    showToast("✅ Signed out successfully", "success");
-    showScreen("welcome");
+
+    showToast("📧 Password reset link sent to your email!", "success");
+    document.getElementById("resetEmail").value = "";
+    
   } catch (error) {
-    console.error("❌ Sign out error:", error);
-    showToast("❌ Sign out failed: " + error.message, "error");
+    console.error("❌ Reset error:", error);
+    showToast("❌ Failed to send reset link: " + error.message, "error");
   }
 }
-
-// ============================================
-// 📧 EMAIL FUNCTIONS (REMOVED - Using Google Auth)
-// ============================================
-
-// All OTP email functions have been REMOVED
-// Users now authenticate with Google
 
 // ============================================
 // ⏰ SESSION MONITOR
@@ -1245,10 +1147,7 @@ function initSupabase() {
   if (supabaseInitialized) return;
   if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
     try {
-      supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY,
-      );
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       supabaseInitialized = true;
       console.log("✅ Supabase connected");
       return;
@@ -1258,18 +1157,11 @@ function initSupabase() {
   }
   console.log("📡 Loading Supabase library...");
   var script = document.createElement("script");
-  script.src =
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
   script.onload = function () {
     try {
-      if (
-        typeof window.supabase !== "undefined" &&
-        window.supabase.createClient
-      ) {
-        supabaseClient = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_ANON_KEY,
-        );
+      if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         supabaseInitialized = true;
         console.log("✅ Supabase loaded and connected");
       } else {
@@ -1320,10 +1212,7 @@ function loadPaymentSettings() {
     if (saved !== null) {
       paymentEnabled = saved === "true";
     }
-    console.log(
-      "💳 Payment system:",
-      paymentEnabled ? "ACTIVE" : "DISABLED (Testing)",
-    );
+    console.log("💳 Payment system:", paymentEnabled ? "ACTIVE" : "DISABLED (Testing)");
   } catch (e) {
     console.log("Payment settings load error:", e);
   }
@@ -1336,17 +1225,11 @@ function isPaymentEnabled() {
 function canAccessFeatures() {
   if (!currentUser) return false;
   if (!isPaymentEnabled()) {
-    showToast(
-      "⚠️ System is in testing mode. Features are disabled.",
-      "warning",
-    );
+    showToast("⚠️ System is in testing mode. Features are disabled.", "warning");
     return false;
   }
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to access features.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to access features.", "warning");
     showScreen("payment");
     return false;
   }
@@ -1493,40 +1376,11 @@ async function uploadToSupabase(file, bucket, folder) {
 // ============================================
 
 const defaultProfessions = [
-  "Plumber",
-  "Electrician",
-  "Carpenter",
-  "Painter",
-  "Mechanic",
-  "Hairdresser",
-  "Tailor",
-  "Chef",
-  "Driver",
-  "Teacher",
-  "Nurse",
-  "Accountant",
-  "Architect",
-  "Baker",
-  "Barber",
-  "Builder",
-  "Cleaner",
-  "Cook",
-  "Doctor",
-  "Engineer",
-  "Farmer",
-  "Gardener",
-  "Lawyer",
-  "Mason",
-  "Photographer",
-  "Roofer",
-  "Security Guard",
-  "Surveyor",
-  "Tiler",
-  "Tour Guide",
-  "Translator",
-  "Vet",
-  "Welder",
-  "Writer",
+  "Plumber", "Electrician", "Carpenter", "Painter", "Mechanic", "Hairdresser", "Tailor", "Chef",
+  "Driver", "Teacher", "Nurse", "Accountant", "Architect", "Baker", "Barber", "Builder",
+  "Cleaner", "Cook", "Doctor", "Engineer", "Farmer", "Gardener", "Lawyer", "Mason",
+  "Photographer", "Roofer", "Security Guard", "Surveyor", "Tiler", "Tour Guide",
+  "Translator", "Vet", "Welder", "Writer"
 ];
 
 function getAllProfessions() {
@@ -1585,21 +1439,8 @@ function saveNewProfession(professionName) {
 }
 
 const defaultCategories = [
-  "Cement",
-  "Pipes",
-  "Taps",
-  "Electrical",
-  "Paint",
-  "Timber",
-  "Steel",
-  "Tiles",
-  "Roofing",
-  "Tools",
-  "Beauty",
-  "Food",
-  "Seeds",
-  "Auto Parts",
-  "Hardware",
+  "Cement", "Pipes", "Taps", "Electrical", "Paint", "Timber", "Steel", "Tiles",
+  "Roofing", "Tools", "Beauty", "Food", "Seeds", "Auto Parts", "Hardware"
 ];
 
 function getAllCategories() {
@@ -1704,14 +1545,8 @@ function showScreen(id) {
 
   const nav = document.getElementById("bottomNav");
   const allowed = [
-    "home",
-    "postGig",
-    "profile",
-    "chat",
-    "marketplace",
-    "companyRegister",
-    "companyDashboard",
-    "addProduct",
+    "home", "postGig", "profile", "chat", "marketplace",
+    "companyRegister", "companyDashboard", "addProduct"
   ];
   if (currentUser && allowed.indexOf(id) !== -1) {
     if (nav) nav.classList.remove("hidden");
@@ -1723,10 +1558,7 @@ function showScreen(id) {
     if (isPaymentEnabled() && currentUser && currentUser.isPaid) {
       loadGigs();
     } else if (isPaymentEnabled() && currentUser && !currentUser.isPaid) {
-      showToast(
-        "💳 Please pay the one-time fee of Ksh 300 to access features.",
-        "warning",
-      );
+      showToast("💳 Please pay the one-time fee of Ksh 300 to access features.", "warning");
       showScreen("payment");
     } else if (!isPaymentEnabled()) {
       document.getElementById("gigsList").innerHTML = `
@@ -1775,15 +1607,11 @@ async function register(e) {
     const phone = document.getElementById("regPhone")?.value?.trim() || "";
     const id = document.getElementById("regID")?.value?.trim() || "";
     const email = document.getElementById("regEmail")?.value?.trim() || "";
-    const password =
-      document.getElementById("regPassword")?.value?.trim() || "";
-    const confirmPassword =
-      document.getElementById("regConfirmPassword")?.value?.trim() || "";
-    const location =
-      document.getElementById("regLocation")?.value?.trim() || "";
+    const password = document.getElementById("regPassword")?.value?.trim() || "";
+    const confirmPassword = document.getElementById("regConfirmPassword")?.value?.trim() || "";
+    const location = document.getElementById("regLocation")?.value?.trim() || "";
     const profession = document.getElementById("regProfession")?.value || "";
-    const otherProfession =
-      document.getElementById("regOtherProfession")?.value?.trim() || "";
+    const otherProfession = document.getElementById("regOtherProfession")?.value?.trim() || "";
     const skills = document.getElementById("regSkills")?.value?.trim() || "";
     const photoFile = document.getElementById("regPhoto")?.files[0];
     const idScanFile = document.getElementById("regIDScan")?.files[0];
@@ -1798,15 +1626,7 @@ async function register(e) {
       return;
     }
 
-    if (
-      !name ||
-      !phone ||
-      !id ||
-      !email ||
-      !password ||
-      !location ||
-      !profession
-    ) {
+    if (!name || !phone || !id || !email || !password || !location || !profession) {
       showToast("Please fill all required fields", "error");
       btn.disabled = false;
       btn.textContent = "REGISTER";
@@ -1909,16 +1729,8 @@ async function register(e) {
 
     btn.textContent = "⏳ UPLOADING IMAGES...";
 
-    const photoUrl = await uploadToSupabase(
-      photoFile,
-      "profiles",
-      "user_" + cleanPhone,
-    );
-    const idScanUrl = await uploadToSupabase(
-      idScanFile,
-      "ids",
-      "user_" + cleanPhone,
-    );
+    const photoUrl = await uploadToSupabase(photoFile, "profiles", "user_" + cleanPhone);
+    const idScanUrl = await uploadToSupabase(idScanFile, "ids", "user_" + cleanPhone);
 
     const user = {
       name: name,
@@ -1936,7 +1748,7 @@ async function register(e) {
       strikes: 0,
       rating: 0,
       reviewCount: 0,
-      registeredAt: new Date().toISOString(),
+      registeredAt: new Date().toISOString()
     };
 
     btn.textContent = "⏳ SAVING USER...";
@@ -1951,11 +1763,7 @@ async function register(e) {
             full_name: user.name,
             location: user.location,
             profession: user.profession,
-            skills: user.skills
-              ? user.skills.split(",").map(function (s) {
-                  return s.trim();
-                })
-              : [],
+            skills: user.skills ? user.skills.split(",").map(function (s) { return s.trim(); }) : [],
             photo_url: user.photo,
             id_scan_url: user.idScan,
             password_hash: user.password,
@@ -1965,7 +1773,7 @@ async function register(e) {
             is_paid: false,
             is_banned: false,
             created_at: new Date().toISOString(),
-            last_active: new Date().toISOString(),
+            last_active: new Date().toISOString()
           });
         });
         if (!result.error) {
@@ -1976,10 +1784,7 @@ async function register(e) {
           currentUser = user;
           localStorage.setItem("gkode_user", JSON.stringify(user));
 
-          showToast(
-            "✅ Registration successful! Welcome " + user.name + "!",
-            "success",
-          );
+          showToast("✅ Registration successful! Welcome " + user.name + "!", "success");
           showScreen("home");
           loadGigs();
           btn.disabled = false;
@@ -2000,12 +1805,10 @@ async function register(e) {
     currentUser = user;
     localStorage.setItem("gkode_user", JSON.stringify(user));
 
-    showToast(
-      "✅ Registration successful! Welcome " + user.name + "!",
-      "success",
-    );
+    showToast("✅ Registration successful! Welcome " + user.name + "!", "success");
     showScreen("home");
     loadGigs();
+
   } catch (error) {
     console.error("Registration error:", error);
     showToast("Registration error: " + error.message, "error");
@@ -2028,10 +1831,7 @@ async function login(e) {
   btn.textContent = "⏳ LOGGING IN...";
 
   try {
-    const phone = document
-      .getElementById("loginPhone")
-      .value.trim()
-      .replace(/\D/g, "");
+    const phone = document.getElementById("loginPhone").value.trim().replace(/\D/g, "");
     const password = document.getElementById("loginPassword").value;
     const rememberMe = document.getElementById("rememberMe").checked;
 
@@ -2062,7 +1862,7 @@ async function login(e) {
 
           try {
             await Database.users.update(phone, {
-              last_active: new Date().toISOString(),
+              last_active: new Date().toISOString()
             });
           } catch (updateErr) {
             console.log("Could not update last_active:", updateErr);
@@ -2087,19 +1887,13 @@ async function login(e) {
             strikes: user.strikes || 0,
             rating: user.rating || 0,
             reviewCount: user.review_count || 0,
-            registeredAt: user.created_at,
+            registeredAt: user.created_at
           };
 
           if (rememberMe) {
-            localStorage.setItem(
-              "gkode_currentUser",
-              JSON.stringify(currentUser),
-            );
+            localStorage.setItem("gkode_currentUser", JSON.stringify(currentUser));
           } else {
-            sessionStorage.setItem(
-              "gkode_currentUser",
-              JSON.stringify(currentUser),
-            );
+            sessionStorage.setItem("gkode_currentUser", JSON.stringify(currentUser));
           }
 
           localStorage.setItem("gkode_user", JSON.stringify(currentUser));
@@ -2176,36 +1970,6 @@ function logout() {
 }
 
 // ============================================
-// 🔑 RESET PASSWORD (Supabase Built-in)
-// ============================================
-
-async function sendResetLink() {
-  const email = document.getElementById("resetEmail")?.value?.trim();
-
-  if (!email) {
-    showToast("❌ Please enter your email address.", "error");
-    return;
-  }
-
-  try {
-    const { data, error } = await supabaseClient.auth.resetPasswordForEmail(
-      email,
-      {
-        redirectTo: window.location.origin + "/reset-password.html",
-      },
-    );
-
-    if (error) throw error;
-
-    showToast("📧 Password reset link sent to your email!", "success");
-    document.getElementById("resetEmail").value = "";
-  } catch (error) {
-    console.error("❌ Reset error:", error);
-    showToast("❌ Failed to send reset link: " + error.message, "error");
-  }
-}
-
-// ============================================
 // 📋 GIG FUNCTIONS
 // ============================================
 
@@ -2217,18 +1981,12 @@ function postGig(e) {
   }
 
   if (!isPaymentEnabled()) {
-    showToast(
-      "⚠️ System is in testing mode. Posting gigs is disabled.",
-      "warning",
-    );
+    showToast("⚠️ System is in testing mode. Posting gigs is disabled.", "warning");
     return;
   }
 
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to post a gig.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to post a gig.", "warning");
     showScreen("payment");
     return;
   }
@@ -2244,13 +2002,10 @@ function postGig(e) {
   try {
     const title = document.getElementById("gigTitle")?.value?.trim() || "";
     const skill = document.getElementById("gigSkill")?.value?.trim() || "";
-    const location =
-      document.getElementById("gigLocation")?.value?.trim() || "";
+    const location = document.getElementById("gigLocation")?.value?.trim() || "";
     const urgency = document.getElementById("gigUrgency")?.value || "Normal";
-    const budgetMin =
-      parseInt(document.getElementById("gigBudgetMin")?.value) || 0;
-    const budgetMax =
-      parseInt(document.getElementById("gigBudgetMax")?.value) || 0;
+    const budgetMin = parseInt(document.getElementById("gigBudgetMin")?.value) || 0;
+    const budgetMax = parseInt(document.getElementById("gigBudgetMax")?.value) || 0;
     const description = document.getElementById("gigDesc")?.value?.trim() || "";
 
     if (!title || !skill || !location || !budgetMin || !budgetMax) {
@@ -2285,7 +2040,7 @@ function postGig(e) {
       workerPhone: "",
       gpsLat: document.getElementById("gigGPSLat")?.value || null,
       gpsLon: document.getElementById("gigGPSLon")?.value || null,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     let gigs = getGigsLocal();
@@ -2309,7 +2064,7 @@ function postGig(e) {
             status: gig.status,
             gps_lat: gig.gpsLat,
             gps_lon: gig.gpsLon,
-            created_at: gig.createdAt,
+            created_at: gig.createdAt
           });
         });
       } catch (err) {
@@ -2340,14 +2095,13 @@ function captureGigLocation() {
     function (pos) {
       document.getElementById("gigGPSLat").value = pos.coords.latitude;
       document.getElementById("gigGPSLon").value = pos.coords.longitude;
-      document.getElementById("gigLocationStatus").textContent =
-        "✅ Location captured!";
+      document.getElementById("gigLocationStatus").textContent = "✅ Location captured!";
       document.getElementById("gigLocationStatus").style.color = "#006400";
       showToast("✅ Location captured!", "success");
     },
     function () {
       showToast("❌ Enable GPS.", "error");
-    },
+    }
   );
 }
 
@@ -2387,8 +2141,7 @@ async function loadGigs() {
     try {
       const data = await Database.gigs.getAll({
         limit: Device.capabilities.memory <= 2 ? 20 : 50,
-        filter:
-          currentTab === "open" ? { status: "Open" } : { status: "Assigned" },
+        filter: currentTab === "open" ? { status: "Open" } : { status: "Assigned" }
       });
       gigs = data || [];
     } catch (err) {
@@ -2405,76 +2158,36 @@ async function loadGigs() {
     var g = gigs[i];
     if (currentTab === "open" && g.status === "Open") {
       filtered.push(g);
-    } else if (
-      currentTab === "taken" &&
-      (g.status === "Assigned" || g.status === "Taken")
-    ) {
+    } else if (currentTab === "taken" && (g.status === "Assigned" || g.status === "Taken")) {
       filtered.push(g);
     }
   }
 
   if (filtered.length === 0) {
-    container.innerHTML =
-      '<div style="padding:40px 0;text-align:center;color:#666;"><p>No ' +
-      currentTab +
-      " gigs found.</p></div>";
+    container.innerHTML = '<div style="padding:40px 0;text-align:center;color:#666;"><p>No ' + currentTab + ' gigs found.</p></div>';
     return;
   }
 
   function renderGigCard(g) {
     var open = g.status === "Open";
-    var urgencyColor =
-      g.urgency === "Emergency"
-        ? "#cc0000"
-        : g.urgency === "Urgent"
-          ? "#ff9800"
-          : "#006400";
+    var urgencyColor = g.urgency === "Emergency" ? "#cc0000" : g.urgency === "Urgent" ? "#ff9800" : "#006400";
 
-    var html =
-      '<div class="gig-card" style="border-left:4px solid ' +
-      urgencyColor +
-      ';">';
-    html += '<div class="gig-title">' + displaySafe(g.title) + "</div>";
-    html +=
-      '<span class="badge ' +
-      (open ? "badge-open" : "badge-taken") +
-      '">' +
-      (open ? "🟢 OPEN" : "🔴 TAKEN") +
-      "</span>";
-    html +=
-      '<div class="gig-meta">👤 ' +
-      displaySafe(g.client) +
-      " | 🛠️ " +
-      displaySafe(g.skill) +
-      "</div>";
-    html += '<div class="gig-meta">📍 ' + displaySafe(g.location) + "</div>";
-    html +=
-      '<div class="gig-budget">💰 Ksh ' +
-      g.budgetMin +
-      " - " +
-      g.budgetMax +
-      "</div>";
+    var html = '<div class="gig-card" style="border-left:4px solid ' + urgencyColor + ';">';
+    html += '<div class="gig-title">' + displaySafe(g.title) + '</div>';
+    html += '<span class="badge ' + (open ? "badge-open" : "badge-taken") + '">' + (open ? "🟢 OPEN" : "🔴 TAKEN") + '</span>';
+    html += '<div class="gig-meta">👤 ' + displaySafe(g.client) + ' | 🛠️ ' + displaySafe(g.skill) + '</div>';
+    html += '<div class="gig-meta">📍 ' + displaySafe(g.location) + '</div>';
+    html += '<div class="gig-budget">💰 Ksh ' + g.budgetMin + ' - ' + g.budgetMax + '</div>';
     if (open) {
-      if (
-        isPaymentEnabled() &&
-        currentUser &&
-        (currentUser.isPaid || currentUser.is_paid)
-      ) {
-        html +=
-          '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' +
-          g.id +
-          "')\">✅ ACCEPT</button></div>";
+      if (isPaymentEnabled() && currentUser && (currentUser.isPaid || currentUser.is_paid)) {
+        html += '<div class="gig-actions"><button class="btn-accept" onclick="acceptGig(\'' + g.id + '\')">✅ ACCEPT</button></div>';
       } else if (currentUser && !currentUser.isPaid && !currentUser.is_paid) {
-        html +=
-          '<div class="gig-actions"><button class="btn-accept" style="background:#ff9800;" onclick="showPaymentScreen()">💳 PAY TO ACCEPT</button></div>';
+        html += '<div class="gig-actions"><button class="btn-accept" style="background:#ff9800;" onclick="showPaymentScreen()">💳 PAY TO ACCEPT</button></div>';
       }
     } else {
-      html +=
-        '<div class="gig-actions"><button class="btn-chat" onclick="openChat(\'' +
-        g.id +
-        "')\">💬 Chat</button></div>";
+      html += '<div class="gig-actions"><button class="btn-chat" onclick="openChat(\'' + g.id + '\')">💬 Chat</button></div>';
     }
-    html += "</div>";
+    html += '</div>';
     return html;
   }
 
@@ -2497,18 +2210,12 @@ function acceptGig(id) {
   }
 
   if (!isPaymentEnabled()) {
-    showToast(
-      "⚠️ System is in testing mode. Accepting gigs is disabled.",
-      "warning",
-    );
+    showToast("⚠️ System is in testing mode. Accepting gigs is disabled.", "warning");
     return;
   }
 
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to accept gigs.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to accept gigs.", "warning");
     showScreen("payment");
     return;
   }
@@ -2549,7 +2256,7 @@ function acceptGig(id) {
             status: "Assigned",
             worker_name: currentUser.name,
             worker_phone: currentUser.phone,
-            updated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
           .eq("id", id);
       });
@@ -2580,8 +2287,7 @@ function openChat(id) {
   }
   if (gig) {
     var partner = gig.client === currentUser.name ? gig.worker : gig.client;
-    document.getElementById("chatPartner").textContent =
-      "💬 Chat with " + displaySafe(partner);
+    document.getElementById("chatPartner").textContent = "💬 Chat with " + displaySafe(partner);
   }
   showScreen("chat");
   loadChatMessages(id);
@@ -2592,8 +2298,7 @@ function loadChatMessages(id) {
   if (!container) return;
   const messages = JSON.parse(localStorage.getItem("gkode_chat_" + id) || "[]");
   if (messages.length === 0) {
-    container.innerHTML =
-      '<div style="color:#999;padding:20px;text-align:center;">No messages yet.</div>';
+    container.innerHTML = '<div style="color:#999;padding:20px;text-align:center;">No messages yet.</div>';
     return;
   }
   var html = "";
@@ -2601,20 +2306,13 @@ function loadChatMessages(id) {
     var msg = messages[i];
     var isSent = msg.sender === currentUser.name;
     html += '<div class="chat-message ' + (isSent ? "sent" : "received") + '">';
-    if (!isSent)
-      html += '<div class="sender">' + displaySafe(msg.sender) + "</div>";
+    if (!isSent) html += '<div class="sender">' + displaySafe(msg.sender) + "</div>";
     if (msg.isLocation) {
-      html +=
-        '📍 <a href="' +
-        displaySafe(msg.text) +
-        '" target="_blank" style="color:' +
-        (isSent ? "#FFD700" : "#006400") +
-        ';">View Location</a>';
+      html += '📍 <a href="' + displaySafe(msg.text) + '" target="_blank" style="color:' + (isSent ? "#FFD700" : "#006400") + ';">View Location</a>';
     } else {
       html += displaySafe(msg.text);
     }
-    html +=
-      '<div class="time">' + new Date(msg.time).toLocaleTimeString() + "</div>";
+    html += '<div class="time">' + new Date(msg.time).toLocaleTimeString() + "</div>";
     html += "</div>";
   }
   container.innerHTML = html;
@@ -2631,7 +2329,7 @@ function sendMessage(e) {
     sender: currentUser.name,
     text: sanitizeInput(text),
     time: new Date().toISOString(),
-    isLocation: false,
+    isLocation: false
   });
   localStorage.setItem("gkode_chat_" + id, JSON.stringify(messages));
   document.getElementById("chatInput").value = "";
@@ -2640,31 +2338,22 @@ function sendMessage(e) {
 
 function shareLiveLocation() {
   if (!currentUser || !navigator.geolocation) {
-    showToast(
-      !currentUser ? "Please login first." : "GPS not supported.",
-      "error",
-    );
+    showToast(!currentUser ? "Please login first." : "GPS not supported.", "error");
     return;
   }
   showToast("📍 Getting your location...", "info");
   navigator.geolocation.getCurrentPosition(
     function (pos) {
-      var url =
-        "https://www.google.com/maps?q=" +
-        pos.coords.latitude +
-        "," +
-        pos.coords.longitude;
+      var url = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
       var id = document.getElementById("chatGigId")?.value || "";
-      var messages = JSON.parse(
-        localStorage.getItem("gkode_chat_" + id) || "[]",
-      );
+      var messages = JSON.parse(localStorage.getItem("gkode_chat_" + id) || "[]");
       messages.push({
         sender: currentUser.name,
         text: url,
         time: new Date().toISOString(),
         isLocation: true,
         lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
+        lon: pos.coords.longitude
       });
       localStorage.setItem("gkode_chat_" + id, JSON.stringify(messages));
       window.open(url, "_blank");
@@ -2674,7 +2363,7 @@ function shareLiveLocation() {
     function () {
       showToast("❌ Could not get location.", "error");
     },
-    { enableHighAccuracy: true, timeout: 10000 },
+    { enableHighAccuracy: true, timeout: 10000 }
   );
 }
 
@@ -2692,11 +2381,7 @@ function navigateToClient() {
     showToast("No location data for this gig.", "error");
     return;
   }
-  var url =
-    "https://www.google.com/maps/dir/?api=1&destination=" +
-    gig.gpsLat +
-    "," +
-    gig.gpsLon;
+  var url = "https://www.google.com/maps/dir/?api=1&destination=" + gig.gpsLat + "," + gig.gpsLon;
   window.open(url, "_blank");
   showToast("🧭 Opening directions...", "info");
 }
@@ -2707,41 +2392,21 @@ function navigateToClient() {
 
 function loadProfile() {
   if (!currentUser) return;
-  document.getElementById("profileName").textContent =
-    currentUser.full_name || currentUser.name;
-  document.getElementById("profilePhone").textContent =
-    "📞 " + currentUser.phone;
-  document.getElementById("profileLocation").textContent =
-    "📍 " + currentUser.location;
-  document.getElementById("profileProfession").textContent =
-    "👔 " + currentUser.profession;
-  document.getElementById("profileSkills").textContent =
-    "🛠️ " +
-    (currentUser.skills
-      ? Array.isArray(currentUser.skills)
-        ? currentUser.skills.join(", ")
-        : currentUser.skills
-      : "None");
+  document.getElementById("profileName").textContent = currentUser.full_name || currentUser.name;
+  document.getElementById("profilePhone").textContent = "📞 " + currentUser.phone;
+  document.getElementById("profileLocation").textContent = "📍 " + currentUser.location;
+  document.getElementById("profileProfession").textContent = "👔 " + currentUser.profession;
+  document.getElementById("profileSkills").textContent = "🛠️ " + (currentUser.skills ? (Array.isArray(currentUser.skills) ? currentUser.skills.join(", ") : currentUser.skills) : "None");
   if (currentUser.photo_url || currentUser.photo) {
-    document.getElementById("profilePhoto").src =
-      currentUser.photo_url || currentUser.photo;
+    document.getElementById("profilePhoto").src = currentUser.photo_url || currentUser.photo;
   }
   var statusText = currentUser.is_paid ? "✅ Paid" : "🟡 Pending";
-  document.getElementById("profileStatus").innerHTML =
-    statusText +
-    " | ⭐ " +
-    (currentUser.rating || 0) +
-    " (" +
-    (currentUser.review_count || 0) +
-    " reviews)";
+  document.getElementById("profileStatus").innerHTML = statusText + " | ⭐ " + (currentUser.rating || 0) + " (" + (currentUser.review_count || 0) + " reviews)";
 
   var gigs = getGigsLocal();
   var myGigs = [];
   for (var i = 0; i < gigs.length; i++) {
-    if (
-      gigs[i].client === currentUser.name ||
-      gigs[i].worker === currentUser.name
-    ) {
+    if (gigs[i].client === currentUser.name || gigs[i].worker === currentUser.name) {
       myGigs.push(gigs[i]);
     }
   }
@@ -2752,14 +2417,10 @@ function loadProfile() {
     var html = "";
     for (var i = 0; i < myGigs.length; i++) {
       var g = myGigs[i];
-      html +=
-        '<div style="background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:8px;">';
+      html += '<div style="background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:8px;">';
       html += "<strong>" + displaySafe(g.title) + "</strong> — " + g.status;
       if (g.status === "Assigned" && g.worker === currentUser.name) {
-        html +=
-          " <button onclick=\"openChat('" +
-          g.id +
-          '\')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;">💬 Chat</button>';
+        html += ' <button onclick="openChat(\'' + g.id + '\')" style="background:#2196F3;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;">💬 Chat</button>';
       }
       html += "</div>";
     }
@@ -2807,8 +2468,7 @@ function loadMarketplace() {
 
   var products = getProductsLocal();
   if (products.length === 0) {
-    container.innerHTML =
-      '<div style="padding:40px 0;text-align:center;color:#666;"><p>No products available.</p></div>';
+    container.innerHTML = '<div style="padding:40px 0;text-align:center;color:#666;"><p>No products available.</p></div>';
     return;
   }
   var html = "";
@@ -2816,22 +2476,13 @@ function loadMarketplace() {
     var p = products[i];
     html += '<div class="gig-card">';
     html += "<h3>" + displaySafe(p.name) + "</h3>";
-    html +=
-      "<p>🏢 " +
-      displaySafe(p.companyName) +
-      " | " +
-      displaySafe(p.category) +
-      "</p>";
+    html += "<p>🏢 " + displaySafe(p.companyName) + " | " + displaySafe(p.category) + "</p>";
     html += "<p>💰 Ksh " + p.price + "/" + p.unit + "</p>";
     html += "<p>📦 Stock: " + p.stock + "</p>";
     if (currentUser && (currentUser.isPaid || currentUser.is_paid)) {
-      html +=
-        "<button onclick=\"buyProduct('" +
-        p.id +
-        '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
+      html += '<button onclick="buyProduct(\'' + p.id + '\')" style="background:#006400;color:#FFD700;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;">🛒 BUY</button>';
     } else {
-      html +=
-        '<button style="background:#ff9800;color:#000;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;" onclick="showPaymentScreen()">💳 PAY TO BUY</button>';
+      html += '<button style="background:#ff9800;color:#000;border:none;padding:10px;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;margin-top:5px;" onclick="showPaymentScreen()">💳 PAY TO BUY</button>';
     }
     html += "</div>";
   }
@@ -2844,10 +2495,7 @@ function buyProduct(id) {
     return;
   }
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to buy products.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to buy products.", "warning");
     showScreen("payment");
     return;
   }
@@ -2885,18 +2533,12 @@ function registerCompany(e) {
   }
 
   if (!isPaymentEnabled()) {
-    showToast(
-      "⚠️ System is in testing mode. Business registration is disabled.",
-      "warning",
-    );
+    showToast("⚠️ System is in testing mode. Business registration is disabled.", "warning");
     return;
   }
 
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to register a business.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to register a business.", "warning");
     showScreen("payment");
     return;
   }
@@ -2948,7 +2590,7 @@ function registerCompany(e) {
       ownerPhone: currentUser.phone,
       registeredAt: new Date().toISOString(),
       totalSales: 0,
-      totalCommission: 0,
+      totalCommission: 0
     };
 
     companies.push(company);
@@ -2968,7 +2610,7 @@ function registerCompany(e) {
             description: company.desc,
             owner_phone: company.ownerPhone,
             owner_name: company.owner,
-            created_at: company.registeredAt,
+            created_at: company.registeredAt
           });
         });
       } catch (err) {
@@ -3000,21 +2642,15 @@ function loadCompanyDashboard() {
     }
   }
   if (!myComp) {
-    document.getElementById("compInfo").innerHTML =
-      "<p>No business registered.</p>";
+    document.getElementById("compInfo").innerHTML = "<p>No business registered.</p>";
     return;
   }
   document.getElementById("compInfo").innerHTML =
-    "<h3>" +
-    displaySafe(myComp.name) +
-    "</h3><p>🏢 " +
-    displaySafe(myComp.type) +
-    " | 📍 " +
-    displaySafe(myComp.location) +
-    "</p><p>📞 " +
-    myComp.phone +
-    "</p><p>📜 Reg No: " +
-    displaySafe(myComp.regNo) +
+    "<h3>" + displaySafe(myComp.name) +
+    "</h3><p>🏢 " + displaySafe(myComp.type) +
+    " | 📍 " + displaySafe(myComp.location) +
+    "</p><p>📞 " + myComp.phone +
+    "</p><p>📜 Reg No: " + displaySafe(myComp.regNo) +
     "</p>";
   showCompTab("products");
 }
@@ -3048,20 +2684,8 @@ function showCompTab(tab) {
       var p = myProducts[i];
       html += '<div class="gig-card">';
       html += "<h3>" + displaySafe(p.name) + "</h3>";
-      html +=
-        "<p>" +
-        displaySafe(p.category) +
-        " | Ksh " +
-        p.price +
-        "/" +
-        p.unit +
-        " | Stock: " +
-        p.stock +
-        "</p>";
-      html +=
-        "<button onclick=\"deleteProduct('" +
-        p.id +
-        '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️ Delete</button>';
+      html += "<p>" + displaySafe(p.category) + " | Ksh " + p.price + "/" + p.unit + " | Stock: " + p.stock + "</p>";
+      html += '<button onclick="deleteProduct(\'' + p.id + '\')" style="background:#cc0000;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">🗑️ Delete</button>';
       html += "</div>";
     }
     content.innerHTML = html;
@@ -3071,10 +2695,8 @@ function showCompTab(tab) {
     var totalSales = myComp.totalSales || 0;
     var totalCommission = myComp.totalCommission || 0;
     content.innerHTML =
-      '<div class="admin-card"><p><strong>Total Sales:</strong> Ksh ' +
-      totalSales +
-      "</p><p><strong>Total Commission:</strong> Ksh " +
-      totalCommission +
+      '<div class="admin-card"><p><strong>Total Sales:</strong> Ksh ' + totalSales +
+      "</p><p><strong>Total Commission:</strong> Ksh " + totalCommission +
       "</p><p><strong>Commission Rate:</strong> 3%</p></div>";
   }
 }
@@ -3086,10 +2708,7 @@ function addProduct(e) {
     return;
   }
   if (!currentUser.isPaid && !currentUser.is_paid) {
-    showToast(
-      "💳 Please pay the one-time fee of Ksh 300 to add products.",
-      "warning",
-    );
+    showToast("💳 Please pay the one-time fee of Ksh 300 to add products.", "warning");
     showScreen("payment");
     return;
   }
@@ -3141,7 +2760,7 @@ function addProduct(e) {
       price: price,
       stock: stock,
       desc: sanitizeInput(desc),
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     var products = getProductsLocal();
@@ -3161,7 +2780,7 @@ function addProduct(e) {
             price: product.price,
             stock: product.stock,
             description: product.desc,
-            created_at: product.createdAt,
+            created_at: product.createdAt
           });
         });
       } catch (err) {
@@ -3201,11 +2820,7 @@ function deleteProduct(id) {
 // ============================================
 
 function getPaymentSettings() {
-  try {
-    return JSON.parse(localStorage.getItem("gkode_payment_settings") || "{}");
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem("gkode_payment_settings") || "{}"); } catch { return {}; }
 }
 
 function setPaymentSettings(settings) {
@@ -3246,19 +2861,13 @@ function verifyMpesaPayment() {
 
   var msg =
     "💳 PAYMENT BREAKDOWN\n\n" +
-    "💰 Total Amount: Ksh " +
-    amount +
+    "💰 Total Amount: Ksh " + amount +
     "\n" +
-    "📊 Commission (" +
-    commissionRate +
-    "%): Ksh " +
-    commission.toFixed(2) +
+    "📊 Commission (" + commissionRate + "%): Ksh " + commission.toFixed(2) +
     "\n" +
-    "🏦 You Pay: Ksh " +
-    amount +
+    "🏦 You Pay: Ksh " + amount +
     "\n" +
-    "🏢 G-KODE Bank: " +
-    (settings.bankName || "Equity Bank") +
+    "🏢 G-KODE Bank: " + (settings.bankName || "Equity Bank") +
     "\n\n" +
     "✅ Confirm payment?";
 
@@ -3276,7 +2885,7 @@ function verifyMpesaPayment() {
     sellerAmount: sellerAmount,
     type: "user_fee",
     verified: true,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   });
   localStorage.setItem("gkode_payments", JSON.stringify(payments));
 
@@ -3291,10 +2900,7 @@ function verifyMpesaPayment() {
   currentUser.isPaid = true;
   localStorage.setItem("gkode_user", JSON.stringify(currentUser));
 
-  showToast(
-    "✅ Payment verified! Commission: Ksh " + commission.toFixed(2),
-    "success",
-  );
+  showToast("✅ Payment verified! Commission: Ksh " + commission.toFixed(2), "success");
   showScreen("home");
 }
 
@@ -3327,12 +2933,7 @@ function updateBottomNav() {
 // ============================================
 
 function resetEverything() {
-  if (
-    !confirm(
-      "⚠️ WARNING: This will delete ALL data on this device!\n\nContinue?",
-    )
-  )
-    return;
+  if (!confirm("⚠️ WARNING: This will delete ALL data on this device!\n\nContinue?")) return;
   localStorage.clear();
   showToast("🔄 All data reset", "info");
   showScreen("welcome");
@@ -3345,12 +2946,9 @@ function resetEverything() {
 
 function showLegalNotice(type) {
   var notices = {
-    privacy:
-      "🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, profession, skills, photo, ID scan, GPS location.\n\nYour rights: Access, correct, delete anytime.",
-    terms:
-      "📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Kenyan law applies",
-    disclaimer:
-      "⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Use at your own risk",
+    privacy: "🔒 PRIVACY NOTICE\n\nWe collect: Name, phone, ID, email, location, profession, skills, photo, ID scan, GPS location.\n\nYour rights: Access, correct, delete anytime.",
+    terms: "📜 TERMS OF SERVICE\n\n1. G-KODE is a connector\n2. Users responsible for actions\n3. Kenyan law applies",
+    disclaimer: "⚠️ DISCLAIMER\n\n1. G-KODE provides platform connection\n2. We do not guarantee gig completion\n3. Use at your own risk"
   };
   alert(notices[type] || "Notice not found.");
 }
@@ -3365,14 +2963,11 @@ function exportUserData() {
     user: currentUser,
     userGigs: [],
     userOrders: [],
-    userPayments: [],
+    userPayments: []
   };
   var gigs = getGigsLocal();
   for (var i = 0; i < gigs.length; i++) {
-    if (
-      gigs[i].client === currentUser.name ||
-      gigs[i].worker === currentUser.name
-    ) {
+    if (gigs[i].client === currentUser.name || gigs[i].worker === currentUser.name) {
       data.userGigs.push(gigs[i]);
     }
   }
@@ -3382,13 +2977,10 @@ function exportUserData() {
       data.userPayments.push(payments[i]);
     }
   }
-  var blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  });
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download =
-    "gkode-my-data-" + new Date().toISOString().split("T")[0] + ".json";
+  a.download = "gkode-my-data-" + new Date().toISOString().split("T")[0] + ".json";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -3415,10 +3007,7 @@ function deleteAccount() {
   var gigs = getGigsLocal();
   var newGigs = [];
   for (var i = 0; i < gigs.length; i++) {
-    if (
-      gigs[i].client !== currentUser.name &&
-      gigs[i].worker !== currentUser.name
-    ) {
+    if (gigs[i].client !== currentUser.name && gigs[i].worker !== currentUser.name) {
       newGigs.push(gigs[i]);
     }
   }
@@ -3457,26 +3046,23 @@ async function syncAllUsersToCloud() {
   for (var i = 0; i < localUsers.length; i++) {
     try {
       var result = await networkRetry(function () {
-        return supabaseClient.from("users").upsert(
-          {
-            phone: localUsers[i].phone,
-            national_id: localUsers[i].id,
-            email: localUsers[i].email,
-            full_name: localUsers[i].name,
-            location: localUsers[i].location,
-            profession: localUsers[i].profession,
-            skills: localUsers[i].skills ? [localUsers[i].skills] : [],
-            photo_url: localUsers[i].photo,
-            password_hash: localUsers[i].password,
-            rating: localUsers[i].rating || 0,
-            review_count: localUsers[i].reviewCount || 0,
-            strikes: localUsers[i].strikes || 0,
-            is_paid: localUsers[i].isPaid || false,
-            is_banned: localUsers[i].isBanned || false,
-            last_active: new Date().toISOString(),
-          },
-          { onConflict: "phone" },
-        );
+        return supabaseClient.from("users").upsert({
+          phone: localUsers[i].phone,
+          national_id: localUsers[i].id,
+          email: localUsers[i].email,
+          full_name: localUsers[i].name,
+          location: localUsers[i].location,
+          profession: localUsers[i].profession,
+          skills: localUsers[i].skills ? [localUsers[i].skills] : [],
+          photo_url: localUsers[i].photo,
+          password_hash: localUsers[i].password,
+          rating: localUsers[i].rating || 0,
+          review_count: localUsers[i].reviewCount || 0,
+          strikes: localUsers[i].strikes || 0,
+          is_paid: localUsers[i].isPaid || false,
+          is_banned: localUsers[i].isBanned || false,
+          last_active: new Date().toISOString()
+        }, { onConflict: "phone" });
       });
       if (!result.error) {
         successCount++;
@@ -3490,10 +3076,7 @@ async function syncAllUsersToCloud() {
     }
   }
 
-  showToast(
-    "✅ Synced " + successCount + " users, " + failCount + " failed",
-    successCount > 0 ? "success" : "error",
-  );
+  showToast("✅ Synced " + successCount + " users, " + failCount + " failed", successCount > 0 ? "success" : "error");
 }
 
 // ============================================
@@ -3526,17 +3109,12 @@ document.addEventListener("DOMContentLoaded", function () {
     input.setAttribute("spellcheck", "false");
   });
 
-  var savedUser =
-    localStorage.getItem("gkode_user") ||
-    localStorage.getItem("gkode_currentUser");
+  var savedUser = localStorage.getItem("gkode_user") || localStorage.getItem("gkode_currentUser");
   if (savedUser) {
     try {
       currentUser = JSON.parse(savedUser);
       if (currentUser) {
-        console.log(
-          "✅ Auto-login:",
-          currentUser.full_name || currentUser.name,
-        );
+        console.log("✅ Auto-login:", currentUser.full_name || currentUser.name);
         showScreen("home");
         loadGigs();
         updateBottomNav();
