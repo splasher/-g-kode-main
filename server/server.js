@@ -25,7 +25,7 @@ const supabase = createClient(
 );
 
 // ============================================
-// EMAIL CONFIGURATION
+// EMAIL CONFIGURATION (For password reset emails via Supabase)
 // ============================================
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -116,10 +116,10 @@ app.get("/api/test-db", async (req, res) => {
 });
 
 // ============================================
-// 📧 EMAIL ROUTES
+// 📧 EMAIL ROUTES (For password reset - Supabase handles this)
 // ============================================
 
-// Send OTP email endpoint
+// Send OTP email endpoint - DEPRECATED, but kept for backwards compatibility
 app.post("/api/send-otp", async (req, res) => {
   try {
     const { email, name, code } = req.body;
@@ -157,7 +157,7 @@ app.post("/api/send-otp", async (req, res) => {
   }
 });
 
-// Send reset email endpoint
+// Send reset email endpoint - DEPRECATED, but kept for backwards compatibility
 app.post("/api/send-reset", async (req, res) => {
   try {
     const { email, name, code } = req.body;

@@ -9,7 +9,6 @@
 // ============================================
 
 const Device = {
-  // Detect device type
   type: (function () {
     const ua = navigator.userAgent;
     if (/Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(ua))
@@ -19,7 +18,6 @@ const Device = {
     return "unknown";
   })(),
 
-  // Detect screen size
   screen: {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -28,9 +26,8 @@ const Device = {
     isLarge: window.innerWidth >= 768,
   },
 
-  // Detect device capabilities
   capabilities: (function () {
-    let memory = 2; // Safe default
+    let memory = 2;
     try {
       if (navigator.deviceMemory) memory = navigator.deviceMemory;
       else if (Device.type === "mobile") memory = 2;
@@ -66,7 +63,6 @@ const Device = {
     };
   })(),
 
-  // Summary
   summary: function () {
     return {
       type: this.type,
@@ -86,7 +82,6 @@ console.log("🌐 Device:", Device.summary());
 // ============================================
 
 const Adaptive = {
-  // Image settings - Auto adjusts based on device
   images: {
     maxWidth:
       Device.capabilities.memory <= 2
@@ -113,8 +108,6 @@ const Adaptive = {
           ? 4 * 1024 * 1024
           : 10 * 1024 * 1024,
   },
-
-  // Feature flags
   features: {
     camera: Device.capabilities.hasCamera && Device.capabilities.memory > 1,
     liveLocation: Device.capabilities.memory > 1,
@@ -123,8 +116,6 @@ const Adaptive = {
       Device.capabilities.memory > 2 && "serviceWorker" in navigator,
     highQuality: Device.capabilities.memory > 4,
   },
-
-  // Performance settings
   performance: {
     debounceDelay: Device.capabilities.memory <= 2 ? 500 : 300,
     throttleDelay: Device.capabilities.memory <= 2 ? 300 : 100,
@@ -141,7 +132,7 @@ const Adaptive = {
 console.log("📊 Adaptive settings loaded:", Adaptive.features);
 
 // ============================================
-// 🛡️ SECURITY SYSTEM (HARDENED)
+// 🛡️ SECURITY SYSTEM
 // ============================================
 
 const ENCRYPTION_SALT = "G-KODE-ULTRA-2026-QUANTUM";
@@ -249,11 +240,9 @@ function displaySafeHTML(html) {
 
 // ============================================
 // 🔄 DATABASE ABSTRACTION LAYER
-// NEVER CHANGE THIS CODE AGAIN!
 // ============================================
 
 const Database = {
-  // Configuration - CHANGE THIS WHEN YOU UPGRADE
   config: {
     provider: "supabase",
     url: "https://rqvijxpbdrholshzhusb.supabase.co",
@@ -265,10 +254,6 @@ const Database = {
     retries: 3,
     cacheTTL: 300,
   },
-
-  // ============================================
-  // 🔄 USER FUNCTIONS
-  // ============================================
 
   users: {
     get: async function (phone) {
@@ -307,10 +292,6 @@ const Database = {
     },
   },
 
-  // ============================================
-  // 🔄 GIG FUNCTIONS
-  // ============================================
-
   gigs: {
     get: async function (id) {
       return await this._execute("gigs", "select", {
@@ -346,10 +327,6 @@ const Database = {
     },
   },
 
-  // ============================================
-  // 🔄 PAYMENT FUNCTIONS
-  // ============================================
-
   payments: {
     create: async function (paymentData) {
       return await this._execute("payments", "insert", {
@@ -371,10 +348,6 @@ const Database = {
     },
   },
 
-  // ============================================
-  // 🔄 CHAT FUNCTIONS
-  // ============================================
-
   chat: {
     getMessages: async function (gigId) {
       return await this._execute("chat_messages", "select", {
@@ -389,10 +362,6 @@ const Database = {
       });
     },
   },
-
-  // ============================================
-  // 🔄 EXECUTION ENGINE
-  // ============================================
 
   _cache: {},
 
@@ -419,7 +388,6 @@ const Database = {
 
       if (operation === "select" || operation === "count") {
         this._cache[cacheKey] = { data: result, time: Date.now() };
-        // Limit cache size
         const keys = Object.keys(this._cache);
         if (keys.length > 100) {
           const oldest = keys.sort(
@@ -1073,7 +1041,7 @@ function getIPHash() {
 // 🔐 SESSION MANAGEMENT
 // ============================================
 
-const SESSION_TIMEOUT = 60; // 60 minutes (increased from 10)
+const SESSION_TIMEOUT = 60;
 
 function startSession(user) {
   const session = {
@@ -1099,19 +1067,16 @@ function validateSession() {
   try {
     const session = secureDecrypt(sessionData);
     if (!session || !session.expiresAt) return false;
-    // Give 1 minute grace period
     if (Date.now() > session.expiresAt + 60000) {
       localStorage.removeItem("gkode_session");
       return false;
     }
-    // Relax fingerprint check
     if (session.fingerprint) {
       const currentFingerprint = getFingerprint();
       if (session.fingerprint !== currentFingerprint) {
         console.warn("⚠️ Fingerprint mismatch, but keeping session");
       }
     }
-    // Refresh session
     session.expiresAt = Date.now() + SESSION_TIMEOUT * 60 * 1000;
     localStorage.setItem("gkode_session", secureEncrypt(session));
     return session;
@@ -1173,107 +1138,60 @@ function generateSecureToken(length) {
 }
 
 // ============================================
-// 📧 EMAIL FUNCTIONS (Using Server)
+// 🔐 GOOGLE AUTHENTICATION
 // ============================================
 
-const SERVER_URL = "https://g-kode-main.onrender.com";
-
-async function sendOTPEmail(email, name, code) {
+async function signInWithGoogle() {
   try {
-    const response = await fetch(`${SERVER_URL}/api/send-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, name: name || "User", code: code }),
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     });
-    const data = await response.json();
-    if (data.success) {
-      console.log("✅ OTP email sent!");
-      showToast("📧 Verification code sent to your email!", "success");
-      return true;
-    } else {
-      console.error("❌ OTP email failed:", data.error);
-      showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
-      return false;
-    }
+
+    if (error) throw error;
+    console.log("🔐 Google sign-in initiated");
   } catch (error) {
-    console.error("❌ OTP email error:", error);
-    showToast(`📱 Your code: ${code} (Check spam folder)`, "info");
-    return false;
+    console.error("❌ Google sign-in error:", error);
+    showToast("❌ Google sign-in failed: " + error.message, "error");
   }
 }
 
-async function sendResetEmail(email, name, code) {
+async function signOut() {
   try {
-    const response = await fetch(`${SERVER_URL}/api/send-reset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, name: name || "User", code: code }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      console.log("✅ Reset email sent!");
-      showToast("📧 Reset code sent to your email!", "success");
-      return true;
-    } else {
-      console.error("❌ Reset email failed:", data.error);
-      showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
-      return false;
-    }
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+    currentUser = null;
+    localStorage.removeItem("gkode_user");
+    localStorage.removeItem("gkode_currentUser");
+    showToast("✅ Signed out successfully", "success");
+    showScreen("welcome");
   } catch (error) {
-    console.error("❌ Reset email error:", error);
-    showToast(`📱 Your reset code: ${code} (Check spam folder)`, "info");
-    return false;
+    console.error("❌ Sign out error:", error);
+    showToast("❌ Sign out failed: " + error.message, "error");
   }
 }
 
 // ============================================
-// ⏰ SESSION MONITOR (FIXED - NO AUTO-LOGOUT)
+// 📧 EMAIL FUNCTIONS (REMOVED - Using Google Auth)
+// ============================================
+
+// All OTP email functions have been REMOVED
+// Users now authenticate with Google
+
+// ============================================
+// ⏰ SESSION MONITOR
 // ============================================
 
 let securityInterval = null;
 
-function initSecurity() {
-  // Only validate session if user is logged in
-  if (!currentUser) {
-    console.log("🛡️ No user logged in");
-    return;
-  }
-
-  // Check session once on login
-  const session = validateSession();
-  if (!session) {
-    console.log("⚠️ Session invalid, but keeping user logged in");
-    // Don't logout automatically - let user logout manually
-  } else {
-    console.log("✅ Session valid for:", currentUser.name);
-  }
-
-  // Clear any existing interval
-  if (securityInterval) clearInterval(securityInterval);
-
-  // ✅ Less aggressive: check every 5 minutes instead of 30 seconds
-  securityInterval = setInterval(function () {
-    if (currentUser) {
-      // Silently refresh session without notifying user
-      refreshSession();
-      console.log("🔄 Session refreshed for:", currentUser.name);
-    }
-  }, 300000); // 5 minutes (300,000ms)
-
-  console.log("🛡️ Security initialized (Light Mode)");
-}
-
-// ============================================
-// 🛡️ LIGHT SECURITY (No Auto-Logout)
-// ============================================
-
 function initSecurityLight() {
   console.log("🛡️ Security initialized (Light Mode - No auto-logout)");
-
-  // ✅ User stays logged in until they manually click Logout
-  // ✅ No session expiration checks
-  // ✅ No automatic logout
-
   if (currentUser) {
     console.log("👤 User session active:", currentUser.name);
   }
@@ -1378,7 +1296,6 @@ let currentUser = null;
 let currentTab = "open";
 let currentGigId = null;
 let pendingRegistration = null;
-let pendingOtp = null;
 let resetData = null;
 let resetTimerInterval = null;
 let resetTimeLeft = 600;
@@ -1713,13 +1630,11 @@ function populateCategoryDropdown() {
 // ============================================
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Fix phone inputs
   document.querySelectorAll('input[type="tel"]').forEach(function (input) {
     input.setAttribute("autocomplete", "off");
     input.setAttribute("inputmode", "numeric");
   });
 
-  // Fix password inputs
   document.querySelectorAll('input[type="password"]').forEach(function (input) {
     input.setAttribute("autocorrect", "off");
     input.setAttribute("autocapitalize", "off");
@@ -1756,7 +1671,6 @@ function setupFilePreview(inputId, previewId, containerId) {
       return;
     }
 
-    // Validate file
     const validation = validateFileUpload(file);
     if (!validation.valid) {
       showToast(validation.message, "error");
@@ -1816,13 +1730,13 @@ function showScreen(id) {
       showScreen("payment");
     } else if (!isPaymentEnabled()) {
       document.getElementById("gigsList").innerHTML = `
-                <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
-                    <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
-                    <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
-                    <p style="color: #666;">Please check back later.</p>
-                    <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
-                </div>
-            `;
+        <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+          <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+          <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
+          <p style="color: #666;">Please check back later.</p>
+          <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+        </div>
+      `;
     } else {
       loadGigs();
     }
@@ -1845,7 +1759,7 @@ function togglePassword(fieldId, icon) {
 }
 
 // ============================================
-// 📝 REGISTER
+// 📝 REGISTER (NO OTP - INSTANT)
 // ============================================
 
 async function register(e) {
@@ -1875,7 +1789,6 @@ async function register(e) {
     const idScanFile = document.getElementById("regIDScan")?.files[0];
     const terms = document.getElementById("regTerms")?.checked || false;
 
-    // Validate password for device
     const passwordStrength = validatePasswordStrength(password);
     if (!passwordStrength.valid) {
       showToast(passwordStrength.message, "error");
@@ -1900,6 +1813,7 @@ async function register(e) {
       isProcessing = false;
       return;
     }
+
     if (password !== confirmPassword) {
       showToast("Passwords do not match", "error");
       btn.disabled = false;
@@ -1908,7 +1822,6 @@ async function register(e) {
       return;
     }
 
-    // Validate phone number (remove non-numeric)
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10 || cleanPhone.length > 12) {
       showToast("Please enter a valid phone number (10 digits)", "error");
@@ -1918,7 +1831,6 @@ async function register(e) {
       return;
     }
 
-    // Validate ID (remove non-numeric)
     const cleanId = id.replace(/\D/g, "");
     if (cleanId.length < 5 || cleanId.length > 8) {
       showToast("Please enter a valid ID number (5-8 digits)", "error");
@@ -1936,7 +1848,6 @@ async function register(e) {
       return;
     }
 
-    // Validate files
     const photoValidation = validateFileUpload(photoFile);
     if (!photoValidation.valid) {
       showToast("Profile photo: " + photoValidation.message, "error");
@@ -1963,7 +1874,6 @@ async function register(e) {
       return;
     }
 
-    // Check for existing user
     if (supabaseInitialized && isOnline) {
       try {
         const existing = await Database.users.get(cleanPhone);
@@ -1999,7 +1909,6 @@ async function register(e) {
 
     btn.textContent = "⏳ UPLOADING IMAGES...";
 
-    // Compress and upload with adaptive settings
     const photoUrl = await uploadToSupabase(
       photoFile,
       "profiles",
@@ -2030,82 +1939,7 @@ async function register(e) {
       registeredAt: new Date().toISOString(),
     };
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    pendingRegistration = user;
-    pendingOtp = otpCode;
-
-    btn.textContent = "⏳ SENDING OTP...";
-    try {
-      await sendOTPEmail(email, name, otpCode);
-    } catch (err) {
-      console.error("Send OTP error:", err);
-      showToast("📱 Your code: " + otpCode + " (Check spam folder)", "info");
-    }
-
-    const otpSection = document.getElementById("otpSection");
-    if (otpSection) otpSection.style.display = "block";
-    const otpInput = document.getElementById("regOtp");
-    if (otpInput) otpInput.focus();
-
-    btn.textContent = "VERIFY EMAIL";
-    btn.disabled = false;
-    isProcessing = false;
-  } catch (error) {
-    console.error("Registration error:", error);
-    showToast("Registration error: " + error.message, "error");
-    btn.disabled = false;
-    btn.textContent = "REGISTER";
-    isProcessing = false;
-  }
-}
-
-function verifyOtp() {
-  const enteredOtp = document.getElementById("regOtp")?.value?.trim() || "";
-  if (!enteredOtp) {
-    showToast("Please enter the verification code", "error");
-    return;
-  }
-  if (enteredOtp !== pendingOtp) {
-    showToast("❌ Invalid verification code. Please try again.", "error");
-    return;
-  }
-  completeRegistration();
-}
-
-async function resendOtp() {
-  if (!pendingRegistration) {
-    showToast("Please start registration again", "error");
-    return;
-  }
-  pendingOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  try {
-    await sendOTPEmail(
-      pendingRegistration.email,
-      pendingRegistration.name,
-      pendingOtp,
-    );
-    showToast("📧 New code sent to your email!", "success");
-  } catch (err) {
-    console.error("Resend OTP error:", err);
-    showToast("📱 Your new code: " + pendingOtp, "info");
-  }
-}
-
-async function completeRegistration() {
-  if (!pendingRegistration) {
-    showToast("No registration in progress", "error");
-    return;
-  }
-
-  const btn = document.getElementById("registerBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ COMPLETING...";
-  }
-
-  try {
-    const user = pendingRegistration;
-    let saved = false;
+    btn.textContent = "⏳ SAVING USER...";
 
     if (supabaseInitialized && isOnline) {
       try {
@@ -2134,12 +1968,31 @@ async function completeRegistration() {
             last_active: new Date().toISOString(),
           });
         });
-        if (!result.error) saved = true;
+        if (!result.error) {
+          let users = getUsersLocal();
+          users.push(user);
+          setUsersLocal(users);
+
+          currentUser = user;
+          localStorage.setItem("gkode_user", JSON.stringify(user));
+
+          showToast(
+            "✅ Registration successful! Welcome " + user.name + "!",
+            "success",
+          );
+          showScreen("home");
+          loadGigs();
+          btn.disabled = false;
+          btn.textContent = "REGISTER";
+          isProcessing = false;
+          return;
+        }
       } catch (e) {
         console.log("Supabase save error:", e);
       }
     }
 
+    // Fallback to localStorage only
     let users = getUsersLocal();
     users.push(user);
     setUsersLocal(users);
@@ -2147,34 +2000,24 @@ async function completeRegistration() {
     currentUser = user;
     localStorage.setItem("gkode_user", JSON.stringify(user));
 
-    pendingRegistration = null;
-    pendingOtp = null;
-    const otpSection = document.getElementById("otpSection");
-    if (otpSection) otpSection.style.display = "none";
-
     showToast(
-      saved ? "✅ User saved to cloud!" : "✅ Saved locally!",
+      "✅ Registration successful! Welcome " + user.name + "!",
       "success",
     );
     showScreen("home");
     loadGigs();
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-    }
   } catch (error) {
-    console.error("Complete registration error:", error);
-    showToast("Error completing registration: " + error.message, "error");
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "REGISTER";
-    }
+    console.error("Registration error:", error);
+    showToast("Registration error: " + error.message, "error");
   }
+
+  btn.disabled = false;
+  btn.textContent = "REGISTER";
+  isProcessing = false;
 }
 
 // ============================================
-// 🔐 LOGIN (FIXED - No Auto-Logout)
+// 🔐 LOGIN
 // ============================================
 
 async function login(e) {
@@ -2247,7 +2090,6 @@ async function login(e) {
             registeredAt: user.created_at,
           };
 
-          // Save to localStorage
           if (rememberMe) {
             localStorage.setItem(
               "gkode_currentUser",
@@ -2260,15 +2102,11 @@ async function login(e) {
             );
           }
 
-          // Also save as main user
           localStorage.setItem("gkode_user", JSON.stringify(currentUser));
 
           document.getElementById("loginForm").reset();
           showToast("Welcome back, " + user.full_name + "!", "success");
-
-          // ✅ Initialize security WITHOUT auto-logout
           initSecurityLight();
-
           showScreen("home");
           loadGigs();
           btn.disabled = false;
@@ -2280,7 +2118,6 @@ async function login(e) {
       }
     }
 
-    // ✅ FALLBACK TO LOCAL
     const localUsers = getUsersLocal();
     const localUser = localUsers.find(function (u) {
       return u.phone === phone;
@@ -2310,10 +2147,7 @@ async function login(e) {
     currentUser = localUser;
     localStorage.setItem("gkode_user", JSON.stringify(localUser));
     showToast("Welcome back, " + localUser.name + "!", "success");
-
-    // ✅ Initialize security WITHOUT auto-logout
     initSecurityLight();
-
     showScreen("home");
     loadGigs();
   } catch (err) {
@@ -2342,351 +2176,32 @@ function logout() {
 }
 
 // ============================================
-// 🔑 RESET PASSWORD
+// 🔑 RESET PASSWORD (Supabase Built-in)
 // ============================================
 
-async function sendResetCode() {
-  const btn = document.getElementById("sendResetBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ SENDING...";
+async function sendResetLink() {
+  const email = document.getElementById("resetEmail")?.value?.trim();
 
-  try {
-    const email = document.getElementById("resetEmail").value.trim();
-
-    if (!email) {
-      showToast("❌ Please enter your email.", "error");
-      btn.disabled = false;
-      btn.textContent = "📧 SEND RESET CODE";
-      return;
-    }
-
-    let user = null;
-
-    if (supabaseInitialized && isOnline) {
-      try {
-        const { data: users, error: findError } = await supabaseClient
-          .from("users")
-          .select("*")
-          .eq("email", email);
-
-        if (!findError && users && users.length > 0) {
-          user = users[0];
-        }
-      } catch (err) {
-        console.log("Supabase email check failed:", err);
-      }
-    }
-
-    if (!user) {
-      const localUsers = getUsersLocal();
-      const localUser = localUsers.find(function (u) {
-        return u.email === email;
-      });
-      if (localUser) {
-        user = {
-          phone: localUser.phone,
-          national_id: localUser.id,
-          profession: localUser.profession,
-          location: localUser.location,
-          full_name: localUser.name,
-          id: localUser.phone,
-        };
-      }
-    }
-
-    if (!user) {
-      showToast("❌ No account found with this email.", "error");
-      btn.disabled = false;
-      btn.textContent = "📧 SEND RESET CODE";
-      return;
-    }
-
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log("🔑 Reset Code:", resetCode);
-
-    try {
-      const emailSent = await sendResetEmail(
-        email,
-        user.full_name || "User",
-        resetCode,
-      );
-      if (!emailSent) {
-        showToast("⚠️ Email failed. Your code: " + resetCode, "warning");
-      } else {
-        showToast("📧 Reset code sent to " + email, "success");
-      }
-    } catch (err) {
-      console.error("Send reset email error:", err);
-      showToast(
-        "📱 Your reset code: " + resetCode + " (Check spam folder)",
-        "info",
-      );
-    }
-
-    resetData = {
-      email: email,
-      code: resetCode,
-      phone: user.phone,
-      national_id: user.national_id,
-      profession: user.profession,
-      location: user.location,
-      userId: user.id || user.phone,
-    };
-
-    document.getElementById("resetStep1").style.display = "none";
-    document.getElementById("resetStep2").style.display = "block";
-    document.getElementById("resetEmailDisplay").textContent = email;
-    document.getElementById("resetOtp").value = "";
-    document.getElementById("resetOtp").focus();
-
-    startResetTimer();
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Reset error:", err);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "📧 SEND RESET CODE";
-}
-
-async function verifyResetIdentity() {
-  const btn = document.getElementById("verifyBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ VERIFYING...";
-  }
-
-  try {
-    const enteredCode = document.getElementById("resetOtp").value.trim();
-    const phone = document
-      .getElementById("resetPhone")
-      .value.trim()
-      .replace(/\D/g, "");
-    const id = document
-      .getElementById("resetID")
-      .value.trim()
-      .replace(/\D/g, "");
-    const profession = document.getElementById("resetProfession").value.trim();
-    const location = document.getElementById("resetLocation").value.trim();
-
-    if (!enteredCode || enteredCode.length !== 6) {
-      showToast("❌ Please enter the 6-digit reset code.", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "VERIFY IDENTITY";
-      }
-      return;
-    }
-
-    if (!resetData) {
-      showToast("❌ Reset session expired. Please start over.", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "VERIFY IDENTITY";
-      }
-      return;
-    }
-
-    if (enteredCode !== resetData.code) {
-      showToast("❌ Invalid reset code. Please try again.", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "VERIFY IDENTITY";
-      }
-      return;
-    }
-
-    let errorMsg = "";
-
-    if (phone !== resetData.phone) {
-      errorMsg = "❌ Phone number does not match our records.";
-    } else if (id !== resetData.national_id) {
-      errorMsg = "❌ National ID does not match our records.";
-    } else if (
-      profession.toLowerCase() !== resetData.profession.toLowerCase()
-    ) {
-      errorMsg = "❌ Profession does not match our records.";
-    } else if (location.toLowerCase() !== resetData.location.toLowerCase()) {
-      errorMsg = "❌ Location does not match our records.";
-    }
-
-    if (errorMsg) {
-      showToast(errorMsg + " Please check your details.", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "VERIFY IDENTITY";
-      }
-      return;
-    }
-
-    document.getElementById("resetStep2").style.display = "none";
-    document.getElementById("resetStep3").style.display = "block";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("confirmPassword").value = "";
-    document.getElementById("newPassword").focus();
-
-    showToast("✅ Identity verified! Set your new password.", "success");
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Verification error:", err);
-  }
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "VERIFY IDENTITY";
-  }
-}
-
-async function resendResetCode() {
-  if (!resetData) {
-    showToast("❌ Reset session expired. Please start over.", "error");
+  if (!email) {
+    showToast("❌ Please enter your email address.", "error");
     return;
   }
 
-  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-  resetData.code = newCode;
-
   try {
-    const emailSent = await sendResetEmail(resetData.email, "User", newCode);
-    if (emailSent) {
-      showToast("📧 New reset code sent!", "success");
-      startResetTimer();
-    } else {
-      showToast("⚠️ Email failed. Your new code: " + newCode, "warning");
-    }
-  } catch (err) {
-    console.error("Resend reset error:", err);
-    showToast("📱 Your new code: " + newCode, "info");
-  }
-}
+    const { data, error } = await supabaseClient.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo: window.location.origin + "/reset-password.html",
+      },
+    );
 
-async function resetPassword() {
-  const btn = document.getElementById("resetPasswordBtn");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ RESETTING...";
-  }
+    if (error) throw error;
 
-  try {
-    const newPassword = document.getElementById("newPassword").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-
-    const passwordStrength = validatePasswordStrength(newPassword);
-    if (!passwordStrength.valid) {
-      showToast(passwordStrength.message, "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "RESET PASSWORD";
-      }
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast("❌ Passwords do not match!", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "RESET PASSWORD";
-      }
-      return;
-    }
-
-    if (!resetData) {
-      showToast("❌ Reset session expired. Please start over.", "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "RESET PASSWORD";
-      }
-      return;
-    }
-
-    if (supabaseInitialized && isOnline) {
-      try {
-        const { error: updateError } = await supabaseClient
-          .from("users")
-          .update({ password_hash: newPassword })
-          .eq("id", resetData.userId);
-
-        if (!updateError) {
-          const localUsers = getUsersLocal();
-          for (var i = 0; i < localUsers.length; i++) {
-            if (localUsers[i].phone === resetData.phone) {
-              localUsers[i].password = newPassword;
-              break;
-            }
-          }
-          setUsersLocal(localUsers);
-
-          resetData = null;
-          clearInterval(resetTimerInterval);
-          document.getElementById("resetStep3").style.display = "none";
-          document.getElementById("resetStep1").style.display = "block";
-          document.getElementById("resetEmail").value = "";
-          showToast("✅ Password reset successful! Please login.", "success");
-          showScreen("login");
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "RESET PASSWORD";
-          }
-          return;
-        }
-      } catch (err) {
-        console.log("Supabase reset failed, trying local:", err);
-      }
-    }
-
-    const localUsers = getUsersLocal();
-    for (var i = 0; i < localUsers.length; i++) {
-      if (localUsers[i].phone === resetData.phone) {
-        localUsers[i].password = newPassword;
-        break;
-      }
-    }
-    setUsersLocal(localUsers);
-
-    resetData = null;
-    clearInterval(resetTimerInterval);
-    document.getElementById("resetStep3").style.display = "none";
-    document.getElementById("resetStep1").style.display = "block";
+    showToast("📧 Password reset link sent to your email!", "success");
     document.getElementById("resetEmail").value = "";
-    showToast("✅ Password reset successful! (Local)", "success");
-    showScreen("login");
-  } catch (err) {
-    showToast("Error: " + err.message, "error");
-    console.error("Reset password error:", err);
-  }
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "RESET PASSWORD";
-  }
-}
-
-function startResetTimer() {
-  resetTimeLeft = 600;
-  updateResetTimerDisplay();
-
-  if (resetTimerInterval) clearInterval(resetTimerInterval);
-
-  resetTimerInterval = setInterval(function () {
-    resetTimeLeft--;
-    updateResetTimerDisplay();
-
-    if (resetTimeLeft <= 0) {
-      clearInterval(resetTimerInterval);
-      document.getElementById("resetCountdown").textContent = "00:00";
-      document.getElementById("resetCountdown").style.color = "#cc0000";
-      showToast("⏰ Reset code expired. Please resend.", "warning");
-    }
-  }, 1000);
-}
-
-function updateResetTimerDisplay() {
-  const minutes = Math.floor(resetTimeLeft / 60);
-  const seconds = resetTimeLeft % 60;
-  const display = document.getElementById("resetCountdown");
-  if (display) {
-    display.textContent =
-      String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+  } catch (error) {
+    console.error("❌ Reset error:", error);
+    showToast("❌ Failed to send reset link: " + error.message, "error");
   }
 }
 
@@ -2718,7 +2233,6 @@ function postGig(e) {
     return;
   }
 
-  // Rate limit
   if (!checkRateLimit("gig", 5, 20, 50)) return;
 
   const btn = document.getElementById("postGigBtn");
@@ -2857,13 +2371,13 @@ async function loadGigs() {
 
   if (!isPaymentEnabled()) {
     container.innerHTML = `
-            <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
-                <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
-                <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
-                <p style="color: #666;">Features are temporarily disabled.</p>
-                <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
-            </div>
-        `;
+      <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+        <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+        <p style="color: #666; margin-top: 10px;">G-KODE is currently in testing mode.</p>
+        <p style="color: #666;">Features are temporarily disabled.</p>
+        <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+      </div>
+    `;
     return;
   }
 
@@ -2964,7 +2478,6 @@ async function loadGigs() {
     return html;
   }
 
-  // Use adaptive rendering
   if (Device.capabilities.memory <= 2) {
     container.innerHTML = "";
     renderAdaptive(container, filtered, renderGigCard);
@@ -3283,12 +2796,12 @@ function loadMarketplace() {
 
   if (!isPaymentEnabled()) {
     container.innerHTML = `
-            <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
-                <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
-                <p style="color: #666; margin-top: 10px;">Marketplace is temporarily disabled.</p>
-                <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
-            </div>
-        `;
+      <div style="padding: 40px 20px; text-align: center; background: #fff3e0; border-radius: 12px; margin: 20px 0;">
+        <h3 style="color: #ff9800;">⚠️ System Maintenance</h3>
+        <p style="color: #666; margin-top: 10px;">Marketplace is temporarily disabled.</p>
+        <p style="color: #888; font-size: 12px; margin-top: 10px;">🇰🇪 Kenya Helping Kenya</p>
+      </div>
+    `;
     return;
   }
 
@@ -4002,7 +3515,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadPaymentSettings();
 
-  // Add mobile input fixes
   document.querySelectorAll('input[type="tel"]').forEach(function (input) {
     input.setAttribute("autocomplete", "off");
     input.setAttribute("inputmode", "numeric");
@@ -4045,7 +3557,6 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("📊 Universal compatibility enabled");
   console.log("📱 Device optimized for:", Device.type);
   console.log("☁️ Supabase URL:", SUPABASE_URL);
-  console.log("📧 Email: Server configured");
 });
 
 // Expose for debugging
